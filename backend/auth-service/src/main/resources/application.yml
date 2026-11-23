@@ -1,0 +1,30 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:temnhaninox_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:1789}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: auth_schema
+        format_sql: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:TemNhanInox2026SuperSecretJwtSigningKeyMustBeAtLeast64BytesLong!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

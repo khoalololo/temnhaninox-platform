@@ -1,6 +1,6 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 1 (Auth Service & API Gateway)
+## Current Phase: Phase 2 (`catalog-pricing-service` & S3 File Upload)
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -9,14 +9,14 @@
 - [x] Multi-module Maven parent (`backend/pom.xml`) & `common-dto` built and installed to local `.m2`
 - [x] Angular 18+ standalone workspace scaffolded with Tailwind CSS, Three.js, and `/api` proxy
 
-### Phase 1: `auth-service` (8081) & `api-gateway` (8080) [IN PROGRESS]
-- [ ] `auth-service`: `User` & `CustomerVatProfile` JPA entities + repositories
-- [ ] `auth-service`: `JwtTokenProvider`, Spring Security config, default `ADMIN` seeder (`admin@temnhaninox.com`)
-- [ ] `auth-service`: Register, Login, Profile (`/users/me`), and VAT Profile CRUD endpoints
-- [ ] `api-gateway`: Route definitions (`8081`, `8082`, `8083`), CORS (`localhost:4200`), JWT & `ADMIN` role `GlobalFilter`
-- [ ] Unit/slice tests passing via `mvn test -pl auth-service,api-gateway`
+### Phase 1: `auth-service` (8081) & `api-gateway` (8080) [COMPLETED]
+- [x] `auth-service`: `User` & `CustomerVatProfile` JPA entities + repositories (`auth_schema.users`, `auth_schema.customer_vat_profiles`)
+- [x] `auth-service`: `JwtTokenProvider`, `HeaderOrJwtAuthenticationFilter`, `SecurityConfig`, `DataInitializer` default `ADMIN` seeder (`admin@temnhaninox.com`)
+- [x] `auth-service`: Register (`POST /api/v1/auth/register`), Login (`POST /api/v1/auth/login`), Profile (`GET/PUT /api/v1/users/me`), VAT Profile CRUD (`GET/POST /api/v1/users/me/vat-profiles`, `DELETE /api/v1/users/me/vat-profiles/{id}`), and `GlobalExceptionHandler`
+- [x] `api-gateway`: Route definitions (`8081`, `8082`, `8083`), CORS (`http://localhost:4200`), `JwtAuthGlobalFilter` (public route bypass, JWT validation, `ADMIN` role guard on `/api/v1/admin/**`, `X-User-Id` & `X-User-Role` header injection)
+- [x] Unit/slice tests passing via `mvn test -pl auth-service,api-gateway` (16/16 tests passed: 10 in `auth-service`, 6 in `api-gateway`)
 
-### Phase 2: `catalog-pricing-service` (8082) & S3 File Upload [PENDING]
+### Phase 2: `catalog-pricing-service` (8082) & S3 File Upload [IN PROGRESS]
 - [ ] Entities & repositories (`Category`, `Material`, `ProcessingMethod`, `MaterialProcessingRule`, `Product`, `PricingRule`)
 - [ ] Deterministic `PricingEngineService` (thin sheet `<= 1mm` area formula vs. thick metal `> 1mm` mass formula, `1,000+` bulk discount, `10%` VAT, `50%` deposit)
 - [ ] Public catalog + quote endpoints, Admin CRUD endpoints, and S3 upload (`/api/v1/files/upload`)
