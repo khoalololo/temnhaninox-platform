@@ -1,0 +1,107 @@
+networks:
+  temnhaninox-net:
+    driver: bridge
+
+volumes:
+  s3data:
+
+services:
+  minio:
+    image: chrislusf/seaweedfs:latest
+    container_name: tni-minio
+    command: 'server -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=1024 -dir=/data'
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9333:9333"
+      - "8888:8888"
+    volumes:
+      - s3data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    networks:
+      - temnhaninox-net
+
+  auth-service:
+    build:
+      context: ../backend
+      dockerfile: auth-service/Dockerfile
+    container_name: tni-auth-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB:-temnhaninox_db}?currentSchema=auth_schema
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - temnhaninox-net
+
+  catalog-pricing-service:
+    build:
+      context: ../backend
+      dockerfile: catalog-pricing-service/Dockerfile
+    container_name: tni-catalog-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB:-temnhaninox_db}?currentSchema=catalog_pricing_schema
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+    depends_on:
+      - minio
+    networks:
+      - temnhaninox-net
+
+  order-service:
+    build:
+      context: ../backend
+      dockerfile: order-service/Dockerfile
+    container_name: tni-order-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB:-temnhaninox_db}?currentSchema=order_schema
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      CATALOG_SERVICE_URL: http://catalog-pricing-service:8082
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-SANDBOX}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-SANDBOXSECRET}
+    depends_on:
+      - catalog-pricing-service
+    networks:
+      - temnhaninox-net
+
+  api-gateway:
+    build:
+      context: ../backend
+      dockerfile: api-gateway/Dockerfile
+    container_name: tni-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - auth-service
+      - catalog-pricing-service
+      - order-service
+    networks:
+      - temnhaninox-net
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: tni-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - temnhaninox-net

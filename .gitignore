@@ -1,0 +1,22 @@
+# Environment & Secrets
+.env
+infra/.env
+
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.jar
+*.war
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# IDEs & OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
