@@ -1,6 +1,6 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 3 (`order-service`, State Machine & Payments)
+## Current Phase: Phase 3B (`order-service` — State Machine, Payments & Notifications)
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -22,18 +22,39 @@
 - [x] Public catalog (`GET /api/v1/catalog/categories`, `/materials`, `/products`, `/products/{slug}`), quote (`POST /api/v1/quotes/calculate`), S3 upload (`POST /api/v1/files/upload` with `forcePathStyle(true)` and auto-bucket creation), and Admin CRUD endpoints (`/api/v1/admin/catalog/**`, `GET/PUT /api/v1/admin/pricing/rules`)
 - [x] JUnit 5 pricing formula & S3 upload tests passing (`mvn test -pl catalog-pricing-service`: 10/10 passed — 7 `PricingEngineServiceTest`, 3 `S3StorageServiceTest`)
 
-### Phase 3: `order-service` (8083), State Machine & Payments [IN PROGRESS]
-- [ ] Entities & repositories (`Cart`, `CartItem`, `Order`, `OrderItem`, `PaymentTransaction`, `OrderStatusLog`)
-- [ ] Persistent cart & checkout (order code `TNI-YYYYMMDD-XXXX`, catalog snapshot capture)
-- [ ] 7-step order status state machine, sample prototype image upload, 50% deposit verification
-- [ ] VNPAY sandbox callback & Telegram admin alerts
+### Phase 3A: `order-service` (8083) — Cart & Checkout Core [COMPLETED]
+- [x] `pom.xml`, `application.yml` (`order_schema`, `ddl-auto=validate`, `app.services.catalog-url`), and `OrderServiceApplication`
+- [x] JPA entities & repositories (`Cart`, `CartItem`, `Order`, `OrderItem`, `PaymentTransaction`, `OrderStatusLog`) mapped to `order_schema`
+- [x] `CatalogPricingClient` using Spring `RestClient` (`POST /api/v1/quotes/calculate`, `GET /api/v1/catalog/products`, `GET /api/v1/catalog/materials`)
+- [x] Persistent cart service & controller (`GET /api/v1/cart`, `POST /api/v1/cart/items`, `PUT /api/v1/cart/items/{itemId}` with `1,000+` bulk recalculation, `DELETE /api/v1/cart/items/{itemId}`, `DELETE /api/v1/cart`)
+- [x] Checkout & customer order query endpoints (`POST /api/v1/orders/checkout` with snapshot freezing, `TNI-YYYYMMDD-XXXX` order code, VAT validation, 50% vs. 100% deposit logic; `GET /api/v1/orders`, `GET /api/v1/orders/{id}`) and `GlobalExceptionHandler`
+- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 12/12 passed — 5 `CartServiceTest`, 4 `OrderServiceTest`, 3 `OrderControllerTest`)
 
-### Phase 4: Angular 18+ Storefront, 3D Quote Builder & Admin Cockpit [PENDING]
-- [ ] Core layout, JWT auth interceptor, route guards (`authGuard`, `adminGuard`)
-- [ ] Shopee-style storefront (`/`, `/products`, `/products/:slug`)
-- [ ] 3-panel Quote Portal (`/quote-builder`) with Three.js interactive 3D nameplate preview
-- [ ] Streamlined checkout & 7-step customer order tracker (`/checkout`, `/account/orders/:id`)
-- [ ] Single-screen Admin Cockpit (`/admin/dashboard`, `/admin/orders/:id`, `/admin/catalog`)
+### Phase 3B: `order-service` (8083) — State Machine, Payments & Notifications [PENDING]
+- [ ] 7-step order status transitions & audit logging
+- [ ] Sample prototype photo upload & customer approval
+- [ ] 50% deposit proof upload + admin verification
+- [ ] VNPAY sandbox HMAC-SHA512 callback
+- [ ] Telegram admin alerts & admin dashboard summary metrics
+
+### Phase 4A: Angular 18+ — Core App Shell & Auth [PENDING]
+- [ ] Navbar/footer layout, `AuthService` (signals/localStorage)
+- [ ] HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
+- [ ] Login/Register pages and Customer Profile / Saved VAT Profiles
+
+### Phase 4B: Angular 18+ — Storefront & Cart [PENDING]
+- [ ] Landing page hero + category grid
+- [ ] `/products` filterable catalog & `/products/:slug` detail page
+- [ ] Shopping cart view
+
+### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [PENDING]
+- [ ] Standalone `Nameplate3dViewerComponent` (Three.js WebGL canvas, dynamic width/height/thickness scaling, metallic PBR shaders for Inox/Nhôm/Đồng/Mica, logo texture mapping, `.cdr` CAD badge)
+- [ ] Live pricing receipt wired to `/api/v1/quotes/calculate` and Add-to-Cart
+
+### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [PENDING]
+- [ ] Streamlined checkout (`/checkout`) with VAT accordion
+- [ ] Customer 7-step timeline (`/account/orders/:id`) with sample approval & deposit receipt upload
+- [ ] Admin cockpit (`/admin` dashboard, order management screen, catalog/pricing editor)
 
 ### Phase 5: End-to-End Integration & Verification [PENDING]
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)
