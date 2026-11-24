@@ -255,10 +255,9 @@ export class ProductDetailComponent implements OnInit {
     this.adding.set(true);
     this.cartApi
       .addItem({
+        itemType: 'STANDARD_ITEM',
         productId: p.id,
-        productName: p.name,
-        productType: 'STANDARD_ITEM',
-        quantity: Math.max(1, this.quantity),
+        quantity: this.quantity,
       })
       .subscribe({
         next: () => {

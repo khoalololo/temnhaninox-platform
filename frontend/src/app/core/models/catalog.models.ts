@@ -8,18 +8,8 @@ export interface Category {
   imageUrl?: string;
   parentId?: string;
   displayOrder?: number;
-}
-
-export interface Material {
-  id: string;
-  name: string;
-  code: string;
-  densityKgPerM3: number;
-  basePricePerCm2?: number;
-  basePricePerKg?: number;
-  isMetal: boolean;
-  description?: string;
-  active?: boolean;
+  isActive?: boolean;
+  children?: Category[];
 }
 
 export interface ProcessingMethod {
@@ -27,9 +17,23 @@ export interface ProcessingMethod {
   name: string;
   code: string;
   description?: string;
-  surchargePerCm2?: number;
-  setupFee?: number;
-  active?: boolean;
+  baseLeadTimeDays?: number;
+  isActive?: boolean;
+}
+
+export interface Material {
+  id: string;
+  code: string;
+  name: string;
+  isMetal: boolean;
+  densityKgM3?: number;
+  pricePerKg?: number;
+  thinSheetRatePerM2?: number;
+  minThicknessMm: number;
+  maxThicknessMm: number;
+  pbrPreviewConfig?: Record<string, unknown>;
+  isActive?: boolean;
+  allowedProcessingMethods?: ProcessingMethod[];
 }
 
 export interface Product {
@@ -40,9 +44,12 @@ export interface Product {
   productType: ProductType;
   categoryId: string;
   categoryName?: string;
+  categorySlug?: string;
   materialId?: string;
+  materialCode?: string;
   materialName?: string;
   processingMethodId?: string;
+  processingMethodCode?: string;
   processingMethodName?: string;
   defaultWidthMm?: number;
   defaultHeightMm?: number;
@@ -53,7 +60,8 @@ export interface Product {
   shortDescription?: string;
   description?: string;
   imageUrl?: string;
+  images?: string[];
   galleryUrls?: string[];
   featured?: boolean;
-  active?: boolean;
+  isActive?: boolean;
 }

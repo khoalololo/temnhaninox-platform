@@ -196,10 +196,9 @@ export class HomeComponent implements OnInit {
 
     this.cartApi
       .addItem({
+        itemType: 'STANDARD_ITEM',
         productId: product.id,
-        productName: product.name,
-        productType: 'STANDARD_ITEM',
-        quantity: product.minOrderQuantity || 1,
+        quantity: 1,
       })
       .subscribe({
         next: () => {

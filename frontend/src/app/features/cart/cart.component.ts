@@ -54,18 +54,17 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
         </div>
       } @else {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <!-- Cart Items Table -->
           <div class="lg:col-span-8 bg-white border border-slate-300 rounded-md overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-xs text-left">
                 <thead class="bg-slate-100 border-b border-slate-300 text-slate-700 uppercase font-mono">
-                  <tr>
-                    <th class="px-4 py-3">Hạng mục / Thông số</th>
-                    <th class="px-3 py-3 text-right">Đơn giá</th>
-                    <th class="px-3 py-3 text-center">Số lượng</th>
-                    <th class="px-4 py-3 text-right">Thành tiền</th>
-                    <th class="px-3 py-3"></th>
-                  </tr>
+                <tr>
+                  <th class="px-4 py-3">Hạng mục / Thông số</th>
+                  <th class="px-3 py-3 text-right">Đơn giá tạm tính</th>
+                  <th class="px-3 py-3 text-center">Số lượng</th>
+                  <th class="px-4 py-3 text-right">Thành tiền</th>
+                  <th class="px-3 py-3"></th>
+                </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
                   @for (item of cartService.cart()!.items; track item.id) {
@@ -74,37 +73,39 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                         <div class="flex items-center gap-2 mb-1">
                           <span
                             class="px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded border"
-                            [class]="item.productType === 'CUSTOM_TEMPLATE'
+                            [class]="item.itemType === 'CUSTOM_ITEM'
                               ? 'bg-amber-50 text-amber-800 border-amber-300'
                               : 'bg-slate-100 text-slate-700 border-slate-300'"
                           >
-                            {{ item.productType === 'CUSTOM_TEMPLATE' ? 'GIA CÔNG 3D' : 'CÓ SẴN' }}
+                            {{ item.itemType === 'CUSTOM_ITEM' ? 'GIA CÔNG 3D' : 'CÓ SẴN' }}
                           </span>
-                          <span class="font-bold text-slate-900 text-sm">{{ item.productName }}</span>
+                          <span class="font-bold text-slate-900 text-sm">
+                            {{ item.itemType === 'CUSTOM_ITEM' ? 'Tem Nhãn Gia Công Theo Kích Thước' : 'Vật Tư / Sản Phẩm Kho' }}
+                          </span>
                         </div>
 
-                        @if (item.productType === 'CUSTOM_TEMPLATE') {
+                        @if (item.itemType === 'CUSTOM_ITEM') {
                           <div class="text-slate-600 space-y-0.5 font-mono text-[11px]">
-                            <div>
-                              Vật liệu: {{ item.materialNameSnapshot || '—' }} · Gia công: {{ item.processingMethodNameSnapshot || '—' }}
-                            </div>
                             <div class="tabular-nums">
                               Kích thước: {{ item.widthMm }} × {{ item.heightMm }} × {{ item.thicknessMm }} mm
                             </div>
                             @if (item.designFileUrl) {
                               <div>
-                                File thiết kế:
+                                File kỹ thuật:
                                 <a [href]="item.designFileUrl" target="_blank" class="text-amber-700 underline">
-                                  {{ item.designFileName || 'Xem file đính kèm' }}
+                                  Xem bản vẽ đính kèm
                                 </a>
                               </div>
                             }
                           </div>
                         }
+                        @if (item.customerNote) {
+                          <div class="text-[11px] text-slate-500 mt-1">Ghi chú: {{ item.customerNote }}</div>
+                        }
                       </td>
 
                       <td class="px-3 py-3.5 text-right font-mono tabular-nums align-top text-slate-800">
-                        {{ item.unitPrice | vnd }}
+                        {{ item.estimatedUnitPrice | vnd }}
                       </td>
 
                       <td class="px-3 py-3.5 align-top">
@@ -129,8 +130,8 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                             +
                           </button>
                         </div>
-                        @if (item.productType === 'CUSTOM_TEMPLATE' && item.quantity >= 1000) {
-                          <div class="text-[10px] font-mono text-emerald-700 mt-1">Đã giảm 10% SL lớn</div>
+                        @if (item.itemType === 'CUSTOM_ITEM' && item.quantity >= 1000) {
+                          <div class="text-[10px] font-mono text-emerald-700 mt-1">Đã áp dụng chiết khấu SL lớn</div>
                         }
                       </td>
 
@@ -155,7 +156,6 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
             </div>
           </div>
 
-          <!-- Order Summary Card -->
           <div class="lg:col-span-4 bg-white border border-slate-300 rounded-md p-5 h-fit space-y-4">
             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-3">
               Tạm Tính Đơn Hàng
@@ -169,7 +169,7 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
               <div class="flex justify-between text-slate-600">
                 <span>Tạm tính (chưa VAT):</span>
                 <span class="font-mono tabular-nums text-base font-bold text-slate-900">
-                  {{ cartService.cart()!.subtotal | vnd }}
+                  {{ cartService.cart()!.estimatedSubtotal | vnd }}
                 </span>
               </div>
               <p class="text-[11px] text-slate-500 pt-1">

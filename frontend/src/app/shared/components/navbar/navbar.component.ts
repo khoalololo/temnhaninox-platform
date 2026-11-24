@@ -105,6 +105,13 @@ import { CartApiService } from '../../../core/services/cart-api.service';
                   (mouseleave)="menuOpen.set(false)"
                 >
                   <a
+                    routerLink="/account/orders"
+                    (click)="menuOpen.set(false)"
+                    class="block px-3.5 py-2 text-xs font-medium hover:bg-slate-100 border-b border-slate-200"
+                  >
+                    Đơn hàng & Tiến độ xưởng
+                  </a>
+                  <a
                     routerLink="/account/profile"
                     (click)="menuOpen.set(false)"
                     class="block px-3.5 py-2 text-xs font-medium hover:bg-slate-100"

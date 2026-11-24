@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -22,10 +22,28 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'quote-builder',
+    loadComponent: () =>
+      import('./features/quote-builder/quote-builder.component').then(
+        (m) => m.QuoteBuilderComponent
+      ),
+  },
+  {
     path: 'cart',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/cart/cart.component').then((m) => m.CartComponent),
+  },
+  {
+    path: 'checkout',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
+  },
+  {
+    path: 'payment/vnpay-return',
+    loadComponent: () =>
+      import('./features/payment/vnpay-return.component').then((m) => m.VnpayReturnComponent),
   },
   {
     path: 'login',
@@ -42,6 +60,24 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/account/profile/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'account/orders',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/orders/order-list.component').then((m) => m.OrderListComponent),
+  },
+  {
+    path: 'account/orders/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/orders/order-detail.component').then((m) => m.OrderDetailComponent),
+  },
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-cockpit.component').then((m) => m.AdminCockpitComponent),
   },
   { path: '**', redirectTo: '' },
 ];

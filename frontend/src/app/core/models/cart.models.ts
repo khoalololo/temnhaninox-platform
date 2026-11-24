@@ -1,36 +1,34 @@
+export type CartItemType = 'STANDARD_ITEM' | 'CUSTOM_ITEM';
+
 export interface CartItem {
   id: string;
   productId?: string;
-  productName: string;
-  productSku?: string;
-  productType: 'STANDARD_ITEM' | 'CUSTOM_TEMPLATE';
+  itemType: CartItemType;
   materialId?: string;
-  materialNameSnapshot?: string;
   processingMethodId?: string;
-  processingMethodNameSnapshot?: string;
   widthMm?: number;
   heightMm?: number;
   thicknessMm?: number;
   quantity: number;
-  unitPrice: number;
+  estimatedUnitPrice: number;
   lineTotal: number;
   designFileUrl?: string;
-  designFileName?: string;
-  notes?: string;
+  customerNote?: string;
+  createdAt?: string;
 }
 
 export interface Cart {
   id: string;
-  userId: string;
+  customerId: string;
   items: CartItem[];
-  subtotal: number;
+  estimatedSubtotal: number;
   totalItems: number;
+  updatedAt?: string;
 }
 
 export interface AddCartItemRequest {
+  itemType: CartItemType;
   productId?: string;
-  productName: string;
-  productType: 'STANDARD_ITEM' | 'CUSTOM_TEMPLATE';
   materialId?: string;
   processingMethodId?: string;
   widthMm?: number;
@@ -38,10 +36,10 @@ export interface AddCartItemRequest {
   thicknessMm?: number;
   quantity: number;
   designFileUrl?: string;
-  designFileName?: string;
-  notes?: string;
+  customerNote?: string;
 }
 
 export interface UpdateCartItemRequest {
   quantity: number;
+  customerNote?: string;
 }
