@@ -1,6 +1,6 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 2 (`catalog-pricing-service` & S3 File Upload)
+## Current Phase: Phase 3 (`order-service`, State Machine & Payments)
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -16,13 +16,13 @@
 - [x] `api-gateway`: Route definitions (`8081`, `8082`, `8083`), CORS (`http://localhost:4200`), `JwtAuthGlobalFilter` (public route bypass, JWT validation, `ADMIN` role guard on `/api/v1/admin/**`, `X-User-Id` & `X-User-Role` header injection)
 - [x] Unit/slice tests passing via `mvn test -pl auth-service,api-gateway` (16/16 tests passed: 10 in `auth-service`, 6 in `api-gateway`)
 
-### Phase 2: `catalog-pricing-service` (8082) & S3 File Upload [IN PROGRESS]
-- [ ] Entities & repositories (`Category`, `Material`, `ProcessingMethod`, `MaterialProcessingRule`, `Product`, `PricingRule`)
-- [ ] Deterministic `PricingEngineService` (thin sheet `<= 1mm` area formula vs. thick metal `> 1mm` mass formula, `1,000+` bulk discount, `10%` VAT, `50%` deposit)
-- [ ] Public catalog + quote endpoints, Admin CRUD endpoints, and S3 upload (`/api/v1/files/upload`)
-- [ ] JUnit 5 pricing formula edge-case tests passing
+### Phase 2: `catalog-pricing-service` (8082) & S3 File Upload [COMPLETED]
+- [x] Entities & repositories (`Category`, `Material`, `ProcessingMethod`, `MaterialProcessingRule`, `Product`, `PricingRule`) mapped to `catalog_pricing_schema` with `ddl-auto=validate`
+- [x] Deterministic `PricingEngineService` (thin sheet `<= 1mm` / non-metal area formula vs. thick metal `> 1mm` mass x 5 formula, `1,000+` bulk discount, `10%` VAT, `50%` deposit)
+- [x] Public catalog (`GET /api/v1/catalog/categories`, `/materials`, `/products`, `/products/{slug}`), quote (`POST /api/v1/quotes/calculate`), S3 upload (`POST /api/v1/files/upload` with `forcePathStyle(true)` and auto-bucket creation), and Admin CRUD endpoints (`/api/v1/admin/catalog/**`, `GET/PUT /api/v1/admin/pricing/rules`)
+- [x] JUnit 5 pricing formula & S3 upload tests passing (`mvn test -pl catalog-pricing-service`: 10/10 passed — 7 `PricingEngineServiceTest`, 3 `S3StorageServiceTest`)
 
-### Phase 3: `order-service` (8083), State Machine & Payments [PENDING]
+### Phase 3: `order-service` (8083), State Machine & Payments [IN PROGRESS]
 - [ ] Entities & repositories (`Cart`, `CartItem`, `Order`, `OrderItem`, `PaymentTransaction`, `OrderStatusLog`)
 - [ ] Persistent cart & checkout (order code `TNI-YYYYMMDD-XXXX`, catalog snapshot capture)
 - [ ] 7-step order status state machine, sample prototype image upload, 50% deposit verification
