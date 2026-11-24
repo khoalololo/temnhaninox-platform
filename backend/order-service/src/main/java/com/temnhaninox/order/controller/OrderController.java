@@ -3,9 +3,13 @@ package com.temnhaninox.order.controller;
 import com.temnhaninox.common.dto.ApiResponse;
 import com.temnhaninox.common.dto.PageResponse;
 import com.temnhaninox.order.dto.CheckoutRequest;
+import com.temnhaninox.order.dto.OrderActionRequest;
 import com.temnhaninox.order.dto.OrderDetailResponse;
 import com.temnhaninox.order.dto.OrderSummaryResponse;
+import com.temnhaninox.order.dto.PaymentTransactionResponse;
+import com.temnhaninox.order.dto.SubmitPaymentProofRequest;
 import com.temnhaninox.order.service.OrderService;
+import com.temnhaninox.order.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +31,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PaymentService paymentService;
 
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<OrderDetailResponse>> checkout(
@@ -50,5 +55,35 @@ public class OrderController {
             @RequestHeader("X-User-Id") UUID customerId,
             @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(orderService.getCustomerOrderDetail(customerId, id)));
+    }
+
+    @PostMapping("/{id}/approve-prototype")
+    public ResponseEntity<ApiResponse<OrderDetailResponse>> approvePrototype(
+            @RequestHeader("X-User-Id") UUID customerId,
+            @PathVariable UUID id,
+            @RequestBody(required = false) OrderActionRequest request) {
+        String note = request != null ? request.getNote() : null;
+        return ResponseEntity.ok(ApiResponse.ok("Prototype approved successfully",
+                orderService.approvePrototype(customerId, id, note)));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderDetailResponse>> cancelOrder(
+            @RequestHeader("X-User-Id") UUID customerId,
+            @PathVariable UUID id,
+            @RequestBody(required = false) OrderActionRequest request) {
+        String note = request != null ? request.getNote() : null;
+        return ResponseEntity.ok(ApiResponse.ok("Order cancelled successfully",
+                orderService.cancelOrder(customerId, id, note)));
+    }
+
+    @PostMapping("/{id}/payments/proof")
+    public ResponseEntity<ApiResponse<PaymentTransactionResponse>> submitPaymentProof(
+            @RequestHeader("X-User-Id") UUID customerId,
+            @PathVariable UUID id,
+            @Valid @RequestBody SubmitPaymentProofRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Payment proof submitted successfully",
+                        paymentService.submitPaymentProof(customerId, id, request)));
     }
 }

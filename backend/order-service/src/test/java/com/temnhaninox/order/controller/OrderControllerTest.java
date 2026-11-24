@@ -4,6 +4,7 @@ import com.temnhaninox.common.exception.BusinessException;
 import com.temnhaninox.common.exception.ErrorCode;
 import com.temnhaninox.order.exception.GlobalExceptionHandler;
 import com.temnhaninox.order.service.OrderService;
+import com.temnhaninox.order.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,6 +30,9 @@ class OrderControllerTest {
 
     @MockBean
     private OrderService orderService;
+
+    @MockBean
+    private PaymentService paymentService;
 
     @Test
     void getOrders_missingUserHeader_returns401ApiResponse() throws Exception {

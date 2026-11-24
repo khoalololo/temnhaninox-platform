@@ -1,6 +1,6 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 3B (`order-service` — State Machine, Payments & Notifications)
+## Current Phase: Phase 4A (Angular 18+ — Core App Shell & Auth)
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -30,12 +30,13 @@
 - [x] Checkout & customer order query endpoints (`POST /api/v1/orders/checkout` with snapshot freezing, `TNI-YYYYMMDD-XXXX` order code, VAT validation, 50% vs. 100% deposit logic; `GET /api/v1/orders`, `GET /api/v1/orders/{id}`) and `GlobalExceptionHandler`
 - [x] JUnit 5 tests passing (`mvn test -pl order-service`: 12/12 passed — 5 `CartServiceTest`, 4 `OrderServiceTest`, 3 `OrderControllerTest`)
 
-### Phase 3B: `order-service` (8083) — State Machine, Payments & Notifications [PENDING]
-- [ ] 7-step order status transitions & audit logging
-- [ ] Sample prototype photo upload & customer approval
-- [ ] 50% deposit proof upload + admin verification
-- [ ] VNPAY sandbox HMAC-SHA512 callback
-- [ ] Telegram admin alerts & admin dashboard summary metrics
+### Phase 3B: `order-service` (8083) — State Machine, Payments & Notifications [COMPLETED]
+- [x] Customer workflow & payment endpoints (`POST /api/v1/orders/{id}/approve-prototype`, `POST /api/v1/orders/{id}/cancel`, `POST /api/v1/orders/{id}/payments/proof`) with immutable `OrderStatusLog` audit entries
+- [x] Admin order cockpit (`AdminOrderController`, `AdminOrderService`) enforcing `X-User-Role: ADMIN`: `GET /api/v1/admin/orders` (filterable by `status`, `orderType`, `search`), `GET /api/v1/admin/orders/{id}`, `PATCH /api/v1/admin/orders/{id}/quote` (item price override + total/VAT/50% deposit recalculation), `POST /api/v1/admin/orders/{id}/items/{itemId}/prototype`, `PATCH /api/v1/admin/orders/{id}/status` (7-step state machine + deposit gate before `IN_PRODUCTION` + `productionWorkerNote`), `PATCH /api/v1/admin/orders/{id}/vat-invoice`, `PATCH /api/v1/admin/payments/{paymentId}/verify`
+- [x] VNPAY sandbox integration (`POST /api/v1/payments/vnpay/create-url`, `GET /api/v1/payments/vnpay-return` with `HMAC-SHA512` signature verification and auto-advance to `IN_PRODUCTION`)
+- [x] Async `TelegramNotificationService` (`@Async` + `RestClient`, no-ops safely when credentials are blank) for new custom quotes & payment proofs
+- [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
+- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 28/28 passed — `AdminOrderServiceTest`: 8, `OrderServiceTest`: 6, `CartServiceTest`: 5, `PaymentServiceTest`: 4, `OrderControllerTest`: 3, `AdminOrderControllerTest`: 2)
 
 ### Phase 4A: Angular 18+ — Core App Shell & Auth [PENDING]
 - [ ] Navbar/footer layout, `AuthService` (signals/localStorage)

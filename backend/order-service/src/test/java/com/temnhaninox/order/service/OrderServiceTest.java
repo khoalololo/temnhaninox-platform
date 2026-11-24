@@ -53,6 +53,9 @@ class OrderServiceTest {
     @Mock
     private CatalogPricingClient catalogPricingClient;
 
+    @Mock
+    private TelegramNotificationService telegramNotificationService;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -243,5 +246,55 @@ class OrderServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    void approvePrototype_inPrototypingStatus_transitionsToAwaitingDepositAndLogsStatus() {
+        UUID orderId = UUID.randomUUID();
+        Order order = Order.builder()
+                .id(orderId)
+                .orderCode("TNI-20261124-0001")
+                .customerId(customerId)
+                .orderType(OrderType.CUSTOM_QUOTE_ORDER)
+                .status(OrderStatus.PROTOTYPING)
+                .recipientName("Nguyen Van A")
+                .recipientPhone("0901234567")
+                .shippingAddress("123 Le Loi")
+                .subtotalAmount(new BigDecimal("1000000.00"))
+                .totalAmount(new BigDecimal("1000000.00"))
+                .depositRequiredAmount(new BigDecimal("500000.00"))
+                .paidAmount(BigDecimal.ZERO)
+                .items(new ArrayList<>())
+                .paymentTransactions(new ArrayList<>())
+                .statusLogs(new ArrayList<>())
+                .build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderDetailResponse response = orderService.approvePrototype(customerId, orderId, "Looks great!");
+
+        assertThat(response.getStatus()).isEqualTo(OrderStatus.AWAITING_DEPOSIT);
+        assertThat(response.getStatusLogs()).hasSize(1);
+        assertThat(response.getStatusLogs().get(0).getFromStatus()).isEqualTo(OrderStatus.PROTOTYPING);
+        assertThat(response.getStatusLogs().get(0).getToStatus()).isEqualTo(OrderStatus.AWAITING_DEPOSIT);
+        assertThat(response.getStatusLogs().get(0).getNote()).isEqualTo("Looks great!");
+    }
+
+    @Test
+    void cancelOrder_inInProductionStatus_throwsValidationError() {
+        UUID orderId = UUID.randomUUID();
+        Order order = Order.builder()
+                .id(orderId)
+                .customerId(customerId)
+                .status(OrderStatus.IN_PRODUCTION)
+                .build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.cancelOrder(customerId, orderId, "Too late"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 }
