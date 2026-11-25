@@ -2,28 +2,21 @@ import { Component, Directive, HostBinding, Input, computed, input } from '@angu
 import { CommonModule } from '@angular/common';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-/**
- * Spartan-style Tailwind-native button variants aligned with Tem Nhãn Inox Design System Section 1.5:
- * - primary: solid amber fill
- * - secondary: 1px steel-blue outline + transparent fill
- * - ghost: text-only (no border)
- * - danger: destructive outline action
- */
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 rounded-[6px] font-body transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-steel disabled:opacity-45 disabled:pointer-events-none select-none cursor-pointer whitespace-nowrap',
+  'inline-flex items-center justify-center gap-2 rounded-[6px] font-body transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-45 disabled:pointer-events-none select-none cursor-pointer whitespace-nowrap',
   {
     variants: {
       variant: {
-        primary: 'bg-accent text-[#0B0F17] hover:bg-accent-hover border border-transparent font-semibold',
-        secondary: 'bg-transparent text-steel border border-steel hover:bg-steel/10 hover:border-steel-hover hover:text-steel-hover font-medium',
-        ghost: 'bg-transparent text-text-secondary border border-transparent hover:text-text-primary hover:bg-surface-raised font-medium',
+        primary: 'bg-accent text-white hover:bg-accent-hover border border-transparent font-semibold tracking-wide',
+        secondary: 'bg-transparent text-accent border border-accent hover:bg-accent/10 hover:border-accent-hover hover:text-accent-hover font-semibold',
+        ghost: 'bg-transparent text-text-secondary border border-transparent hover:text-accent hover:bg-surface-raised font-medium',
         danger: 'bg-transparent text-danger border border-danger/60 hover:bg-danger/10 font-medium',
       },
       size: {
-        xs: 'px-2.5 py-1 text-[11px]',
-        sm: 'px-3 py-1.5 text-xs',
-        md: 'px-4 py-2 text-xs sm:text-sm',
-        lg: 'px-5 py-2.5 text-sm',
+        xs: 'px-3 py-1.5 text-xs',
+        sm: 'px-3.5 py-2 text-xs sm:text-sm',
+        md: 'px-4 py-2.5 text-sm',
+        lg: 'px-6 py-3 text-sm sm:text-base',
       },
       fullWidth: {
         true: 'w-full',

@@ -1,13 +1,14 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 4A (Angular 18+ — Core App Shell & Auth)
+## Current Phase: Phase 4B/4C (Angular 18+ — Storefront Polish, Product Detail & 3D Quote Builder)
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
-- [x] Native local PostgreSQL `temnhaninox_db` initialized with `infra/postgres/init.sql` (`auth_schema`, `catalog_pricing_schema`, `order_schema` + seed data)
+- [x] Native local PostgreSQL `temnhaninox_db` initialized with idempotent `infra/postgres/init.sql` (`auth_schema`, `catalog_pricing_schema`, `order_schema` + seed data) and `infra/postgres/seed_products.sql` (11 categories, 37 catalog items)
 - [x] S3-compatible SeaweedFS running via `infra/docker-compose.yml` on port `9000`
 - [x] Multi-module Maven parent (`backend/pom.xml`) & `common-dto` built and installed to local `.m2`
 - [x] Angular 18+ standalone workspace scaffolded with Tailwind CSS, Three.js, and `/api` proxy
+- [x] Local static assets (`frontend/public/assets/images/` & `frontend/public/assets/products/`) downloaded and mapped
 
 ### Phase 1: `auth-service` (8081) & `api-gateway` (8080) [COMPLETED]
 - [x] `auth-service`: `User` & `CustomerVatProfile` JPA entities + repositories (`auth_schema.users`, `auth_schema.customer_vat_profiles`)
@@ -38,14 +39,16 @@
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
 - [x] JUnit 5 tests passing (`mvn test -pl order-service`: 28/28 passed — `AdminOrderServiceTest`: 8, `OrderServiceTest`: 6, `CartServiceTest`: 5, `PaymentServiceTest`: 4, `OrderControllerTest`: 3, `AdminOrderControllerTest`: 2)
 
-### Phase 4A: Angular 18+ — Core App Shell & Auth [PENDING]
-- [ ] Navbar/footer layout, `AuthService` (signals/localStorage)
-- [ ] HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
-- [ ] Login/Register pages and Customer Profile / Saved VAT Profiles
+### Phase 4A: Angular 18+ — Core App Shell & Auth [IN PROGRESS]
+- [x] Top header/navbar layout with search bar, category quick-links, cart button, theme toggle, and login trigger
+- [x] `AuthService` (signals/localStorage), HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
+- [x] Login/Register pages and Customer Profile / Saved VAT Profiles
+- [ ] Forgot/Reset password flow & Google OAuth sign-in
 
-### Phase 4B: Angular 18+ — Storefront & Cart [PENDING]
-- [ ] Landing page hero + category grid
-- [ ] `/products` filterable catalog & `/products/:slug` detail page
+### Phase 4B: Angular 18+ — Storefront & Cart [IN PROGRESS]
+- [x] Landing page hero + category grid + workshop gallery
+- [x] `/products` filterable catalog (search by keyword/SKU, filter by `STANDARD_ITEM` vs `CUSTOM_TEMPLATE`, nested category tree sidebar, `CatalogApiService` `images[]` normalization with `(error)` placeholder fallback, `font-sans tabular-nums` readability styling on prices/dimensions)
+- [ ] Pagination controls on `/products`, `/products/:slug` detail gallery page, and mobile drawer nav
 - [ ] Shopping cart view
 
 ### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [PENDING]
@@ -58,4 +61,4 @@
 - [ ] Admin cockpit (`/admin` dashboard, order management screen, catalog/pricing editor)
 
 ### Phase 5: End-to-End Integration & Verification [PENDING]
-- [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)
+- [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]

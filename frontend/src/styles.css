@@ -1,87 +1,103 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  /* Surfaces (dark default) */
-  --color-bg: #0B0F17;
-  --color-bg-elevated: #10151F;
-  --color-surface: #141B2B;
-  --color-surface-raised: #1B2438;
-  --color-border: #26314A;
-
-  /* Text */
-  --color-text-primary: #F3F5F7;
-  --color-text-secondary: #9AA5B8;
-  --color-text-muted: #6B7690;
-
-  /* Brand accents */
-  --color-accent: #F97316;
-  --color-accent-hover: #FB8B3D;
-  --color-steel: #4C7FA8;
-  --color-steel-hover: #639BC4;
-
-  /* Status */
-  --color-success: #22C55E;
-  --color-danger: #EF4444;
-  --color-warning: #FACC15;
-
-  /* Texture & Elevation */
-  --color-hatch: rgba(154, 165, 184, 0.07);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
-
-  /* Motion */
-  --transition-interactive: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+@layer utilities {
+  .font-mono {
+    font-family: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
+:root,
 html[data-theme="light"] {
-  --color-bg: #F7F8FA;
+  /* Light default — Flatsome Forest Green & Crisp White palette (temnhaninox.com) */
+  --color-bg: #FFFFFF;
   --color-bg-elevated: #FFFFFF;
-  --color-surface: #FFFFFF;
-  --color-surface-raised: #F1F3F6;
-  --color-border: #E2E6ED;
+  --color-surface: #F7F9F7;
+  --color-surface-raised: #EEF4EE;
+  --color-border: #DCE5DC;
 
-  --color-text-primary: #10151F;
-  --color-text-secondary: #4B5565;
-  --color-text-muted: #7C879B;
+  /* Text */
+  --color-text-primary: #1A241A;
+  --color-text-secondary: #445244;
+  --color-text-muted: #6E7D6E;
 
-  --color-accent: #F97316;
-  --color-accent-hover: #FB8B3D;
-  --color-steel: #2E6B9E;
-  --color-steel-hover: #1F557F;
+  /* Brand accents — OG temnhaninox.com Forest Green & Lime */
+  --color-accent: #187115;
+  --color-accent-hover: #1E8A1B;
+  --color-steel: #397500;
+  --color-steel-hover: #2B5900;
 
-  --color-hatch: rgba(16, 21, 31, 0.06);
-  --shadow-card-hover: 0 4px 16px rgba(16, 21, 31, 0.08);
+  /* Status */
+  --color-success: #187115;
+  --color-danger: #B20000;
+  --color-warning: #D97706;
+
+  /* Texture & Elevation */
+  --color-hatch: rgba(24, 113, 21, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(24, 113, 21, 0.12);
+
+  /* Motion */
+  --transition-interactive: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 180ms ease;
+}
+
+html[data-theme="dark"] {
+  --color-bg: #0B110D;
+  --color-bg-elevated: #101913;
+  --color-surface: #142018;
+  --color-surface-raised: #1B2B20;
+  --color-border: #263B2D;
+
+  --color-text-primary: #F2F6F3;
+  --color-text-secondary: #A3B5A8;
+  --color-text-muted: #6F8575;
+
+  --color-accent: #2EA02A;
+  --color-accent-hover: #3BB836;
+  --color-steel: #65C20E;
+  --color-steel-hover: #7ED926;
+
+  --color-hatch: rgba(101, 194, 14, 0.08);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.38);
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
   }
 
-  html[data-theme="light"] {
-    color-scheme: light;
+  html[data-theme="dark"] {
+    color-scheme: dark;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-text-primary);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
   }
 
   h1,
   h2,
-  h3 {
-    font-family: 'Space Grotesk', sans-serif;
+  h3,
+  h4,
+  .font-heading {
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
 }
 
 @layer components {
   .industrial-card {
-    background-color: var(--color-surface);
+    background-color: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     border-radius: 10px;
-    box-shadow: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   }
 
   .industrial-input {
@@ -97,7 +113,46 @@ html[data-theme="light"] {
 
   .industrial-input:focus {
     outline: none;
-    border-color: var(--color-steel);
+    border-color: var(--color-accent);
+  }
+
+  /* Flatsome-inspired centered section title with flanking lines */
+  .fs-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    text-align: center;
+    color: var(--color-accent);
+  }
+
+  .fs-section-title::before,
+  .fs-section-title::after {
+    content: '';
+    flex: 1;
+    max-width: 240px;
+    height: 1px;
+    background-color: var(--color-border);
+  }
+
+  /* Flatsome sliding bottom-line hover indicator */
+  .fs-nav-underline {
+    position: relative;
+  }
+
+  .fs-nav-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 4px;
+    background-color: var(--color-accent);
+  }
+
+  .fs-nav-underline:hover::after,
+  .fs-nav-underline.active-nav::after {
+    width: 100%;
   }
 }
 
@@ -109,8 +164,10 @@ html[data-theme="light"] {
   textarea,
   [appButton],
   .industrial-card,
-  .industrial-input {
-    transition: var(--transition-interactive), box-shadow 150ms ease;
+  .industrial-input,
+  .fs-nav-underline::after,
+  .fs-img-zoom {
+    transition: var(--transition-interactive), box-shadow 180ms ease, width 220ms ease;
   }
 
   .industrial-card:hover {
@@ -118,8 +175,9 @@ html[data-theme="light"] {
     box-shadow: var(--shadow-card-hover);
   }
 
-  .industrial-input:focus {
-    box-shadow: var(--shadow-card-hover);
+  .group:hover .fs-img-zoom,
+  .fs-img-zoom-container:hover .fs-img-zoom {
+    transform: scale(1.06);
   }
 
   @keyframes fadeInUp {
@@ -137,4 +195,13 @@ html[data-theme="light"] {
     opacity: 0;
     animation: fadeInUp 300ms ease-out forwards;
   }
+}
+
+/* Hide scrollbar for horizontal gallery carousel while preserving touch/wheel scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

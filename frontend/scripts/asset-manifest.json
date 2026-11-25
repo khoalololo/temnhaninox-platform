@@ -1,0 +1,430 @@
+{
+  "site_assets": [
+    {
+      "local_path": "public/assets/images/logo-nvx.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/cropped-cropped-Them-tieu-de-2.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/cropped-cropped-Them-tieu-de-2-32x32.png"
+    },
+    {
+      "local_path": "public/assets/images/cat-tem-nhan.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-22.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-22-247x247.png"
+    },
+    {
+      "local_path": "public/assets/images/cat-cnc.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z5058656618826_cf4e1f0aa8076a919fb99d36ffa932b6-768x1024.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1011-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/cat-laser.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1030-768x1024.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619646893_6450b3252867af92f2929c0089376e9f-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/cat-may-moc.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/548377470_722560680812948_181294583985169212_n-768x1024.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473590858_534170202985331_4583656421213625474_n-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/cat-luu-niem.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z7031730481907_d7052689e99484334fdafb9755734406.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1632-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/workshop-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_1869-scaled.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_2130-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/workshop-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/01/IMG_2840-rotated.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/01/IMG_0949-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/workshop-3.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_2202-scaled.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2207-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/workshop-4.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619661437_34db444d7aeacf733dc32c834cd6dd32.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1680-247x247.jpg"
+    },
+    {
+      "local_path": "public/assets/images/project-bg.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/texas-nameplate-co-eniromental-compnay.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_1869-scaled.jpg"
+    },
+    {
+      "local_path": "public/assets/videos/hero-workshop.mp4",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/202509180947.mp4",
+      "fallback_url": ""
+    }
+  ],
+  "product_assets": [
+    {
+      "local_path": "public/assets/products/bang-hieu-cong-ty-inox-304-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_2130.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_2130-247x247.jpg",
+      "sku": "NVX-1657",
+      "product_name": "Bảng hiệu công ty inox 304"
+    },
+    {
+      "local_path": "public/assets/products/bang-hieu-cong-ty-inox-304-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_1066.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/09/IMG_1066-247x247.jpg",
+      "sku": "NVX-1657",
+      "product_name": "Bảng hiệu công ty inox 304"
+    },
+    {
+      "local_path": "public/assets/products/lac-inox-thung-xe-tai-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/01/z7212331653728_7813c6137a65157de1a8b6d6e3bfbd9e.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/01/z7212331653728_7813c6137a65157de1a8b6d6e3bfbd9e-247x247.jpg",
+      "sku": "NVX-1628",
+      "product_name": "Lắc inox thùng xe tải"
+    },
+    {
+      "local_path": "public/assets/products/lac-inox-thung-xe-tai-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2026/01/IMG_0949.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2026/01/IMG_0949-247x247.jpg",
+      "sku": "NVX-1628",
+      "product_name": "Lắc inox thùng xe tải"
+    },
+    {
+      "local_path": "public/assets/products/tem-tu-dien-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_3297.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_3297-247x247.jpg",
+      "sku": "NVX-1616",
+      "product_name": "Tem Tủ Điện"
+    },
+    {
+      "local_path": "public/assets/products/tem-tu-dien-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z4616450278937_41506ada51e0fe6444adac657b922fae.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z4616450278937_41506ada51e0fe6444adac657b922fae-247x247.jpg",
+      "sku": "NVX-1616",
+      "product_name": "Tem Tủ Điện"
+    },
+    {
+      "local_path": "public/assets/products/lac-inox-gan-thung-xe-tai-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1111.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1111-247x247.jpg",
+      "sku": "NVX-1614",
+      "product_name": "Lắc inox gắn thùng xe tải"
+    },
+    {
+      "local_path": "public/assets/products/tem-dong-gan-may-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z7210924924084_3bd5d5669aa267101c4dc932b81959c2.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z7210924924084_3bd5d5669aa267101c4dc932b81959c2-247x247.jpg",
+      "sku": "NVX-1610",
+      "product_name": "TEM ĐỒNG GẮN MÁY"
+    },
+    {
+      "local_path": "public/assets/products/nhan-dong-noi-that-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2207.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2207-247x247.jpg",
+      "sku": "NVX-1605",
+      "product_name": "Nhãn đồng nội thất"
+    },
+    {
+      "local_path": "public/assets/products/nhan-dong-noi-that-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_0084.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_0084-247x247.jpg",
+      "sku": "NVX-1605",
+      "product_name": "Nhãn đồng nội thất"
+    },
+    {
+      "local_path": "public/assets/products/tem-decal-may-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2526.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2526-247x247.jpg",
+      "sku": "NVX-1601",
+      "product_name": "Tem decal máy"
+    },
+    {
+      "local_path": "public/assets/products/tem-decal-may-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2527.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/IMG_2527-247x247.jpg",
+      "sku": "NVX-1601",
+      "product_name": "Tem decal máy"
+    },
+    {
+      "local_path": "public/assets/products/tem-nhom-boats-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z7268476203040_95b591d41460c87ae034f9c137e503ce.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/12/z7268476203040_95b591d41460c87ae034f9c137e503ce-247x247.jpg",
+      "sku": "NVX-1582",
+      "product_name": "Tem nhôm Boats"
+    },
+    {
+      "local_path": "public/assets/products/khac-lase-tren-li-inox-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619646893_6450b3252867af92f2929c0089376e9f.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619646893_6450b3252867af92f2929c0089376e9f-247x247.jpg",
+      "sku": "NVX-1558",
+      "product_name": "Khắc laser trên ly inox"
+    },
+    {
+      "local_path": "public/assets/products/khac-lase-tren-li-inox-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619661437_34db444d7aeacf733dc32c834cd6dd32.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619661437_34db444d7aeacf733dc32c834cd6dd32-247x247.jpg",
+      "sku": "NVX-1558",
+      "product_name": "Khắc laser trên ly inox"
+    },
+    {
+      "local_path": "public/assets/products/che-ket-nuoc-xe-bandit-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1011.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1011-247x247.jpg",
+      "sku": "NVX-1410",
+      "product_name": "CHE KÉT NƯỚC XE BANDIT"
+    },
+    {
+      "local_path": "public/assets/products/che-ket-nuoc-xe-bandit-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1009.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1009-247x247.jpg",
+      "sku": "NVX-1410",
+      "product_name": "CHE KÉT NƯỚC XE BANDIT"
+    },
+    {
+      "local_path": "public/assets/products/tem-inox-316-gan-contane-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_0078.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_0078-247x247.jpg",
+      "sku": "NVX-1407",
+      "product_name": "Tem inox 316 gắn Contane"
+    },
+    {
+      "local_path": "public/assets/products/hop-quet-zippo-khac-hinh-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1632.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1632-247x247.jpg",
+      "sku": "NVX-1406",
+      "product_name": "HỘP QUẸT ZIPPO KHẮC HÌNH"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-inox-duc-jesu-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-12.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-12-247x247.png",
+      "sku": "NVX-1405",
+      "product_name": "MÓC KHOÁ INOX ĐỨC JESU"
+    },
+    {
+      "local_path": "public/assets/products/tuong-go-tran-hung-dao-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1680.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1680-247x247.jpg",
+      "sku": "NVX-1403",
+      "product_name": "TƯỢNG GỖ TRẦN HƯNG ĐẠO"
+    },
+    {
+      "local_path": "public/assets/products/tuong-go-tran-hung-dao-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1679.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1679-247x247.jpg",
+      "sku": "NVX-1403",
+      "product_name": "TƯỢNG GỖ TRẦN HƯNG ĐẠO"
+    },
+    {
+      "local_path": "public/assets/products/tranh-theu-thu-cong-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/1af630a3-b3c3-46a8-810f-5ce1b4827de0.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/1af630a3-b3c3-46a8-810f-5ce1b4827de0-247x247.jpg",
+      "sku": "NVX-1402",
+      "product_name": "TRANH THÊU THỦ CÔNG"
+    },
+    {
+      "local_path": "public/assets/products/hop-quet-zippo-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1633.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1633-247x247.jpg",
+      "sku": "NVX-1400",
+      "product_name": "HỘP QUẸT ZIPPO"
+    },
+    {
+      "local_path": "public/assets/products/test-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473590858_534170202985331_4583656421213625474_n.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473590858_534170202985331_4583656421213625474_n-247x247.jpg",
+      "sku": "NVX-1398",
+      "product_name": "MÁY RANG CÀ PHÊ 5KG"
+    },
+    {
+      "local_path": "public/assets/products/cnc-nhom-67-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-4.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-4-247x247.png",
+      "sku": "NVX-1377",
+      "product_name": "CNC NHÔM 67"
+    },
+    {
+      "local_path": "public/assets/products/cnc-nhom-67-2.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-19.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-19-247x247.png",
+      "sku": "NVX-1377",
+      "product_name": "CNC NHÔM 67"
+    },
+    {
+      "local_path": "public/assets/products/mac-cua-cuon-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z5854830309876_1e4b169317a821ffc8efb39c78acc56f.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z5854830309876_1e4b169317a821ffc8efb39c78acc56f-247x247.jpg",
+      "sku": "NVX-1370",
+      "product_name": "Mạc inox vàng Mitadoor"
+    },
+    {
+      "local_path": "public/assets/products/mac-cua-cuon-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/459942443_3827062070883115_7811951178803865811_n.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/459942443_3827062070883115_7811951178803865811_n-247x247.jpg",
+      "sku": "NVX-1370",
+      "product_name": "Mạc inox vàng Mitadoor"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-inox-khac-hinh-vua-quang-trung-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z5981257719970_f08a709a519aeb6f3d36194aaac64477.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z5981257719970_f08a709a519aeb6f3d36194aaac64477-247x247.jpg",
+      "sku": "NVX-1348",
+      "product_name": "Móc khoá inox khắc hình vua Quang Trung"
+    },
+    {
+      "local_path": "public/assets/products/bo-chu-inox-abc-may-bien-ap-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1909.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1909-247x247.jpg",
+      "sku": "NVX-1311",
+      "product_name": "Bộ chữ inox abc maý biến áp"
+    },
+    {
+      "local_path": "public/assets/products/tem-nhan-inox-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-22.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-22-247x247.png",
+      "sku": "NVX-1169",
+      "product_name": "Tem máy inox"
+    },
+    {
+      "local_path": "public/assets/products/tem-nhan-inox-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/08/IMG_0460.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/08/IMG_0460-247x247.jpg",
+      "sku": "NVX-1169",
+      "product_name": "Tem máy inox"
+    },
+    {
+      "local_path": "public/assets/products/logo-khac-inox-vang-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-15.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-15-247x247.png",
+      "sku": "NVX-827",
+      "product_name": "LOGO KHẮC INOX MÀU VÀNG"
+    },
+    {
+      "local_path": "public/assets/products/logo-khac-inox-vang-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473600917_534170349651983_3052947391233421323_n.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473600917_534170349651983_3052947391233421323_n-247x247.jpg",
+      "sku": "NVX-827",
+      "product_name": "LOGO KHẮC INOX MÀU VÀNG"
+    },
+    {
+      "local_path": "public/assets/products/logo-khac-inox-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-2.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-2-247x247.png",
+      "sku": "NVX-719",
+      "product_name": "Logo khắc inox 304 mạ vàng"
+    },
+    {
+      "local_path": "public/assets/products/logo-khac-inox-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473600917_534170349651983_3052947391233421323_n-1.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/473600917_534170349651983_3052947391233421323_n-1-247x247.jpg",
+      "sku": "NVX-719",
+      "product_name": "Logo khắc inox 304 mạ vàng"
+    },
+    {
+      "local_path": "public/assets/products/nap-xe-67-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-4.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-4-247x247.png",
+      "sku": "NVX-717",
+      "product_name": "Nắp xe 67"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-inox-hai-mat-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-6.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-6-247x247.png",
+      "sku": "NVX-607",
+      "product_name": "Móc khoá inox hai mặt"
+    },
+    {
+      "local_path": "public/assets/products/tem-xe-tai-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-7.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-7-247x247.png",
+      "sku": "NVX-606",
+      "product_name": "Tem xe tải"
+    },
+    {
+      "local_path": "public/assets/products/logo-inox-dien-luc-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-8.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-8-247x247.png",
+      "sku": "NVX-605",
+      "product_name": "logo inox điện lực"
+    },
+    {
+      "local_path": "public/assets/products/logo-inox-may-rang-ca-phe-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-9.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-9-247x247.png",
+      "sku": "NVX-604",
+      "product_name": "logo inox máy rang cà phê"
+    },
+    {
+      "local_path": "public/assets/products/logo-khac-inox-2-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-10.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-10-247x247.png",
+      "sku": "NVX-602",
+      "product_name": "logo khắc inox"
+    },
+    {
+      "local_path": "public/assets/products/bang-so-nha-inox-mau-tim-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-11.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-11-247x247.png",
+      "sku": "NVX-601",
+      "product_name": "Bảng thoát hiểm inox"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-12.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-12-247x247.png",
+      "sku": "NVX-600",
+      "product_name": "móc khoá inox hai mặt"
+    },
+    {
+      "local_path": "public/assets/products/tem-inox-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-13.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-13-247x247.png",
+      "sku": "NVX-599",
+      "product_name": "tem inox cảnh báo nóng"
+    },
+    {
+      "local_path": "public/assets/products/bang-inox-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-14.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-14-247x247.png",
+      "sku": "NVX-598",
+      "product_name": "Bảng hiệu công ty bằng inox"
+    },
+    {
+      "local_path": "public/assets/products/bang-inox-2.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/tem-nhan-inox-vang-xuoc-1200x1200-1.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/tem-nhan-inox-vang-xuoc-1200x1200-1-247x247.jpg",
+      "sku": "NVX-598",
+      "product_name": "Bảng hiệu công ty bằng inox"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-2-1.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-5.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-5-247x247.png",
+      "sku": "NVX-595",
+      "product_name": "MÓC KHOÁ INOX – DA"
+    },
+    {
+      "local_path": "public/assets/products/moc-khoa-2-2.png",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-6.png",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/07/1-6-247x247.png",
+      "sku": "NVX-595",
+      "product_name": "MÓC KHOÁ INOX – DA"
+    },
+    {
+      "local_path": "public/assets/products/dung-dich-an-mon-dien-hoa-inox-304-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1030.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/IMG_1030-768x1024.jpg",
+      "sku": "NVX-9001",
+      "product_name": "Dung dịch ăn mòn điện hóa Inox 304 chuyên dụng (1 Lít)"
+    },
+    {
+      "local_path": "public/assets/products/gia-cong-khac-laser-fiber-ma-qr-serial-1.jpg",
+      "primary_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619646893_6450b3252867af92f2929c0089376e9f.jpg",
+      "fallback_url": "https://temnhaninox.com/wp-content/uploads/2025/09/z6539619646893_6450b3252867af92f2929c0089376e9f-247x247.jpg",
+      "sku": "NVX-9002",
+      "product_name": "Gia công khắc Laser Fiber mã QR & Serial nhảy tự động"
+    }
+  ]
+}

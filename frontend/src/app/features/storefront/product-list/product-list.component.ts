@@ -95,10 +95,20 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                     type="button"
                     (click)="selectCategory(cat.id)"
                     class="w-full text-left px-2.5 py-1.5 rounded-[6px] transition-colors border"
-                    [class]="selectedCategoryId === cat.id ? 'bg-surface-raised text-steel border-steel font-medium' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-text-primary'"
+                    [class]="selectedCategoryId === cat.id ? 'bg-surface-raised text-accent border-accent font-semibold' : 'border-transparent text-text-primary font-medium hover:bg-surface-raised hover:text-accent'"
                   >
                     {{ cat.name }}
                   </button>
+                  @for (sub of (cat.children || []); track sub.id) {
+                    <button
+                      type="button"
+                      (click)="selectCategory(sub.id)"
+                      class="w-full text-left pl-6 pr-2.5 py-1 rounded-[6px] transition-colors border text-[11px]"
+                      [class]="selectedCategoryId === sub.id ? 'bg-surface-raised text-accent border-accent font-semibold' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-accent'"
+                    >
+                      ↳ {{ sub.name }}
+                    </button>
+                  }
                 }
               </div>
             </div>

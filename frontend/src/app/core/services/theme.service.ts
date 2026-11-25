@@ -2,7 +2,7 @@ import { Injectable, effect, signal } from '@angular/core';
 
 export type ThemeMode = 'dark' | 'light';
 
-const STORAGE_KEY = 'tni_theme';
+const STORAGE_KEY = 'tni_theme_v2';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -17,13 +17,13 @@ export class ThemeService {
       try {
         localStorage.setItem(STORAGE_KEY, current);
       } catch {
-        // Ignore storage errors (private mode / restricted environments)
+        // Ignore storage errors
       }
     });
   }
 
   toggle(): void {
-    this.theme.update((t) => (t === 'dark' ? 'light' : 'dark'));
+    this.theme.update((t) => (t === 'light' ? 'dark' : 'light'));
   }
 
   setTheme(mode: ThemeMode): void {
@@ -39,6 +39,6 @@ export class ThemeService {
     } catch {
       // Ignore storage errors
     }
-    return 'dark';
+    return 'light';
   }
 }
