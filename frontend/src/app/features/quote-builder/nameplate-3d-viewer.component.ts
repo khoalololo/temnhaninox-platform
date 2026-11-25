@@ -18,41 +18,41 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="relative w-full h-full min-h-[380px] bg-slate-950 rounded-md border border-slate-800 overflow-hidden select-none">
+    <div class="relative w-full h-full min-h-[380px] bg-bg rounded-[10px] border border-border overflow-hidden select-none">
       <div #canvasHost class="w-full h-full min-h-[380px]"></div>
 
       <!-- Technical Dimension Overlay -->
-      <div class="absolute top-3 left-3 bg-slate-900/90 border border-slate-700 rounded px-2.5 py-1.5 text-[11px] font-mono text-slate-200 space-y-0.5 pointer-events-none">
-        <div class="text-amber-400 font-bold uppercase">MÔ PHỎNG VẬT LIỆU 3D (PBR)</div>
+      <div class="absolute top-3 left-3 bg-surface/90 border border-border rounded-[6px] px-2.5 py-1.5 text-[11px] font-mono text-text-primary space-y-0.5 pointer-events-none">
+        <div class="text-accent font-semibold uppercase">MÔ PHỎNG VẬT LIỆU 3D (PBR)</div>
         <div class="tabular-nums">Dài × Rộng: {{ widthMm }} × {{ heightMm }} mm</div>
         <div class="tabular-nums">Độ dày phôi: {{ thicknessMm }} mm</div>
-        <div>Bề mặt: {{ materialName || 'Inox 304' }} · {{ processName || 'Gia công' }}</div>
+        <div class="text-text-secondary">Bề mặt: {{ materialName || 'Inox 304' }} · {{ processName || 'Gia công' }}</div>
       </div>
 
       <!-- Camera Controls -->
       <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
-        <span class="text-[11px] font-mono text-slate-400 bg-slate-900/85 px-2 py-1 rounded border border-slate-800">
+        <span class="text-[11px] font-mono text-text-secondary bg-surface/90 px-2 py-1 rounded-[6px] border border-border">
           Kéo chuột trái: Xoay 360° · Cuộn: Phóng to · Chuột phải: Di chuyển
         </span>
         <div class="flex items-center gap-1.5">
           <button
             type="button"
             (click)="setCameraPreset('front')"
-            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-[11px] font-mono"
+            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
           >
             Mặt trước
           </button>
           <button
             type="button"
             (click)="setCameraPreset('iso')"
-            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-[11px] font-mono"
+            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
           >
             Góc nghiêng 3D
           </button>
           <button
             type="button"
             (click)="setCameraPreset('edge')"
-            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-[11px] font-mono"
+            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
           >
             Soi độ dày
           </button>
@@ -60,7 +60,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
       </div>
 
       @if (webglError()) {
-        <div class="absolute inset-0 flex items-center justify-center bg-slate-950 text-xs text-slate-400 p-4 text-center">
+        <div class="absolute inset-0 flex items-center justify-center bg-bg text-xs text-text-secondary p-4 text-center">
           {{ webglError() }}
         </div>
       }

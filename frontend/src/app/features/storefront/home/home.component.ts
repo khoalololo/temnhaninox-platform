@@ -6,27 +6,28 @@ import { CartApiService } from '../../../core/services/cart-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Category, Product } from '../../../core/models/catalog.models';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
+import { ButtonDirective } from '../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [CommonModule, RouterLink, ProductCardComponent, ButtonDirective],
   template: `
     <!-- Industrial Precision Split Hero -->
-    <section class="bg-slate-900 text-white border-b border-slate-800">
+    <section class="bg-surface text-text-primary border-b border-border">
       <div class="max-w-7xl mx-auto px-4 py-8 lg:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         <div class="lg:col-span-7 space-y-4">
-          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-amber-500/40 bg-amber-500/10 text-amber-400 font-mono text-xs">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-steel/60 bg-bg text-steel font-mono text-xs font-medium">
             <span>INOX 304 · NHÔM · ĐỒNG · MICA</span>
-            <span>|</span>
+            <span class="text-border">|</span>
             <span>SAI SỐ ±0.05 MM</span>
           </div>
 
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-white">
+          <h1 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-text-primary">
             Xưởng Gia Công Tem Nhãn Kim Loại & Bảng Tên Máy Công Nghiệp
           </h1>
 
-          <p class="text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <p class="text-sm text-text-secondary max-w-2xl leading-relaxed">
             Nhận sản xuất trực tiếp tại xưởng: Ăn mòn điện hóa, Khắc Laser Fiber sâu, In UV phẳng độ bền cao.
             Tính báo giá tự động theo kích thước mm, xem trước mô hình 3D và duyệt mẫu thực tế trước khi sản xuất hàng loạt.
           </p>
@@ -34,13 +35,17 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
           <div class="flex flex-wrap items-center gap-3 pt-1">
             <a
               routerLink="/quote-builder"
-              class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm px-5 py-2.5 rounded-md transition-colors"
+              appButton
+              variant="primary"
+              size="lg"
             >
               Mở Công Cụ Báo Giá & Xem Mẫu 3D
             </a>
             <a
               routerLink="/products"
-              class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-sm px-5 py-2.5 rounded-md transition-colors"
+              appButton
+              variant="secondary"
+              size="lg"
             >
               Xem Danh Mục Sản Phẩm
             </a>
@@ -48,27 +53,27 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
         </div>
 
         <!-- Technical Workshop Spec Sheet Box -->
-        <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700 rounded-md p-4">
-          <div class="flex items-center justify-between border-b border-slate-700 pb-2.5 mb-3">
-            <span class="font-mono text-xs font-bold text-amber-400 uppercase">Thông Số Năng Lực Xưởng</span>
-            <span class="font-mono text-[11px] text-slate-400">ISO / B2B VAT</span>
+        <div class="lg:col-span-5 bg-bg border border-border rounded-[10px] p-4 hover:shadow-card-hover transition-shadow">
+          <div class="flex items-center justify-between border-b border-border pb-2.5 mb-3">
+            <span class="font-mono text-xs font-medium text-accent uppercase">Thông Số Năng Lực Xưởng</span>
+            <span class="font-mono text-[11px] text-steel border border-steel/50 px-2 py-0.5 rounded-full">ISO / B2B VAT</span>
           </div>
           <dl class="grid grid-cols-2 gap-3 text-xs">
-            <div class="bg-slate-900/70 border border-slate-700/80 rounded p-2.5">
-              <dt class="text-slate-400 mb-0.5">Độ dày gia công</dt>
-              <dd class="font-mono tabular-nums font-bold text-white">0.3 mm – 5.0 mm</dd>
+            <div class="bg-surface border border-border rounded-[6px] p-2.5">
+              <dt class="text-text-secondary mb-0.5">Độ dày gia công</dt>
+              <dd class="font-mono tabular-nums font-medium text-text-primary">0.3 mm – 5.0 mm</dd>
             </div>
-            <div class="bg-slate-900/70 border border-slate-700/80 rounded p-2.5">
-              <dt class="text-slate-400 mb-0.5">Chiết khấu số lượng</dt>
-              <dd class="font-mono tabular-nums font-bold text-amber-400">-10% từ 1.000 tem</dd>
+            <div class="bg-surface border border-border rounded-[6px] p-2.5">
+              <dt class="text-text-secondary mb-0.5">Chiết khấu số lượng</dt>
+              <dd class="font-mono tabular-nums font-medium text-accent">-10% từ 1.000 tem</dd>
             </div>
-            <div class="bg-slate-900/70 border border-slate-700/80 rounded p-2.5">
-              <dt class="text-slate-400 mb-0.5">File kỹ thuật nhận</dt>
-              <dd class="font-mono font-semibold text-white">.CDR / .AI / .PDF / .SVG</dd>
+            <div class="bg-surface border border-border rounded-[6px] p-2.5">
+              <dt class="text-text-secondary mb-0.5">File kỹ thuật nhận</dt>
+              <dd class="font-mono font-medium text-text-primary">.CDR / .AI / .PDF / .SVG</dd>
             </div>
-            <div class="bg-slate-900/70 border border-slate-700/80 rounded p-2.5">
-              <dt class="text-slate-400 mb-0.5">Quy trình đơn đặt</dt>
-              <dd class="font-mono font-semibold text-white">Duyệt mẫu → Cọc 50%</dd>
+            <div class="bg-surface border border-border rounded-[6px] p-2.5">
+              <dt class="text-text-secondary mb-0.5">Quy trình đơn đặt</dt>
+              <dd class="font-mono font-medium text-text-primary">Duyệt mẫu → Cọc 50%</dd>
             </div>
           </dl>
         </div>
@@ -77,7 +82,7 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
 
     <div class="max-w-7xl mx-auto px-4 py-8 space-y-10">
       @if (toastMessage()) {
-        <div class="fixed bottom-4 right-4 z-50 bg-slate-900 text-white border border-amber-500 px-4 py-2.5 rounded-md text-xs font-medium">
+        <div class="fixed bottom-4 right-4 z-50 bg-surface text-text-primary border border-accent px-4 py-2.5 rounded-[6px] text-xs font-medium shadow-card-hover">
           {{ toastMessage() }}
         </div>
       }
@@ -86,10 +91,10 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
       <section>
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Danh Mục Gia Công & Vật Tư</h2>
-            <p class="text-xs text-slate-500">Chọn nhóm vật liệu hoặc thiết bị xưởng để lọc nhanh</p>
+            <h2 class="font-heading text-lg font-bold text-text-primary">Danh Mục Gia Công & Vật Tư</h2>
+            <p class="text-xs text-text-secondary">Chọn nhóm vật liệu hoặc thiết bị xưởng để lọc nhanh</p>
           </div>
-          <a routerLink="/products" class="text-xs font-semibold text-amber-700 hover:underline">
+          <a routerLink="/products" class="text-xs font-medium text-steel hover:text-steel-hover transition-colors">
             Xem tất cả →
           </a>
         </div>
@@ -100,10 +105,10 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
               <a
                 routerLink="/products"
                 [queryParams]="{ categoryId: cat.id }"
-                class="bg-white border border-slate-300 hover:border-amber-600 rounded-md p-3.5 transition-colors flex flex-col justify-between"
+                class="industrial-card hover:border-steel p-3.5 flex flex-col justify-between"
               >
-                <div class="font-semibold text-sm text-slate-900 mb-1">{{ cat.name }}</div>
-                <div class="text-xs text-slate-500 line-clamp-2">{{ cat.description || 'Gia công chuẩn kích thước & vật tư xưởng' }}</div>
+                <div class="font-heading font-semibold text-sm text-text-primary mb-1">{{ cat.name }}</div>
+                <div class="text-xs text-text-secondary line-clamp-2">{{ cat.description || 'Gia công chuẩn kích thước & vật tư xưởng' }}</div>
               </a>
             }
           </div>
@@ -113,10 +118,10 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
               <a
                 routerLink="/products"
                 [queryParams]="{ search: fallback.search }"
-                class="bg-white border border-slate-300 hover:border-amber-600 rounded-md p-3.5 transition-colors"
+                class="industrial-card hover:border-steel p-3.5"
               >
-                <div class="font-semibold text-sm text-slate-900 mb-1">{{ fallback.label }}</div>
-                <div class="text-xs text-slate-500">{{ fallback.sub }}</div>
+                <div class="font-heading font-semibold text-sm text-text-primary mb-1">{{ fallback.label }}</div>
+                <div class="text-xs text-text-secondary">{{ fallback.sub }}</div>
               </a>
             }
           </div>
@@ -127,10 +132,10 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
       <section>
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Mẫu Tem Gia Công & Sản Phẩm Tiêu Biểu</h2>
-            <p class="text-xs text-slate-500">Hỗ trợ tùy chỉnh kích thước 3D trực tiếp hoặc đặt mua vật tư có sẵn</p>
+            <h2 class="font-heading text-lg font-bold text-text-primary">Mẫu Tem Gia Công & Sản Phẩm Tiêu Biểu</h2>
+            <p class="text-xs text-text-secondary">Hỗ trợ tùy chỉnh kích thước 3D trực tiếp hoặc đặt mua vật tư có sẵn</p>
           </div>
-          <a routerLink="/products" class="text-xs font-semibold text-amber-700 hover:underline">
+          <a routerLink="/products" class="text-xs font-medium text-steel hover:text-steel-hover transition-colors">
             Toàn bộ kho mẫu →
           </a>
         </div>
@@ -138,13 +143,18 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
         @if (loadingProducts()) {
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @for (n of [1, 2, 3, 4]; track n) {
-              <div class="bg-white border border-slate-200 rounded-md h-72 animate-pulse"></div>
+              <div class="bg-surface border border-border rounded-[10px] h-72 animate-pulse"></div>
             }
           </div>
         } @else {
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            @for (product of featuredProducts(); track product.id) {
-              <app-product-card [product]="product" (addToCart)="handleAddToCart($event)" />
+            @for (product of featuredProducts(); track product.id; let idx = $index) {
+              <app-product-card
+                class="product-grid-item block h-full"
+                [style.animation-delay]="(idx < 6 ? idx : 5) * 40 + 'ms'"
+                [product]="product"
+                (addToCart)="handleAddToCart($event)"
+              />
             }
           </div>
         }

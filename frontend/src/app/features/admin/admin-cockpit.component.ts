@@ -12,44 +12,48 @@ import {
 } from '../../core/models/order.models';
 import { Product } from '../../core/models/catalog.models';
 import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
+import { ButtonDirective } from '../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-admin-cockpit',
   standalone: true,
-  imports: [CommonModule, FormsModule, VndCurrencyPipe],
+  imports: [CommonModule, FormsModule, VndCurrencyPipe, ButtonDirective],
   template: `
     <div class="max-w-[1440px] mx-auto px-4 py-6 space-y-6">
       <!-- Header & Tabs -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-300 pb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
-          <div class="text-[11px] font-mono uppercase tracking-wider text-amber-700 font-bold">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-accent font-medium">
             BẢNG ĐIỀU HÀNH XƯỞNG GIA CÔNG
           </div>
-          <h1 class="text-xl font-bold text-slate-900">Quản Lý Đơn Hàng, Duyệt Mẫu, Thu Cọc & Định Mức Giá</h1>
+          <h1 class="font-heading text-xl font-bold text-text-primary">Quản Lý Đơn Hàng, Duyệt Mẫu, Thu Cọc & Định Mức Giá</h1>
         </div>
 
         <div class="flex items-center gap-2">
           <button
             type="button"
             (click)="activeTab.set('orders')"
-            class="px-3.5 py-2 rounded-md text-xs font-semibold border transition-colors"
-            [class]="activeTab() === 'orders' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'"
+            appButton
+            [variant]="activeTab() === 'orders' ? 'primary' : 'secondary'"
+            size="sm"
           >
             Đơn hàng & Sản xuất
           </button>
           <button
             type="button"
             (click)="activeTab.set('pricing')"
-            class="px-3.5 py-2 rounded-md text-xs font-semibold border transition-colors"
-            [class]="activeTab() === 'pricing' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'"
+            appButton
+            [variant]="activeTab() === 'pricing' ? 'primary' : 'secondary'"
+            size="sm"
           >
             Cấu hình đơn giá & Chiết khấu
           </button>
           <button
             type="button"
             (click)="activeTab.set('products')"
-            class="px-3.5 py-2 rounded-md text-xs font-semibold border transition-colors"
-            [class]="activeTab() === 'products' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'"
+            appButton
+            [variant]="activeTab() === 'products' ? 'primary' : 'secondary'"
+            size="sm"
           >
             Kho sản phẩm ({{ adminProducts().length }})
           </button>
@@ -59,33 +63,33 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
       <!-- KPI Cards -->
       @if (summary()) {
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <div class="bg-white border border-slate-300 rounded-md p-3.5">
-            <div class="text-[11px] font-mono text-slate-500 uppercase">Chờ duyệt báo giá</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-amber-700 mt-1">
+          <div class="industrial-card p-3.5">
+            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ duyệt báo giá</div>
+            <div class="text-2xl font-mono tabular-nums font-bold text-accent mt-1">
               {{ summary()!.pendingQuotesCount }}
             </div>
           </div>
-          <div class="bg-white border border-slate-300 rounded-md p-3.5">
-            <div class="text-[11px] font-mono text-slate-500 uppercase">Chờ xác nhận cọc</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-slate-900 mt-1">
+          <div class="industrial-card p-3.5">
+            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ xác nhận cọc</div>
+            <div class="text-2xl font-mono tabular-nums font-bold text-warning mt-1">
               {{ summary()!.awaitingDepositCount }}
             </div>
           </div>
-          <div class="bg-white border border-slate-300 rounded-md p-3.5">
-            <div class="text-[11px] font-mono text-slate-500 uppercase">Đang chạy máy SX</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-sky-700 mt-1">
+          <div class="industrial-card p-3.5">
+            <div class="text-[11px] font-mono text-text-muted uppercase">Đang chạy máy SX</div>
+            <div class="text-2xl font-mono tabular-nums font-bold text-steel mt-1">
               {{ summary()!.inProductionCount }}
             </div>
           </div>
-          <div class="bg-white border border-slate-300 rounded-md p-3.5">
-            <div class="text-[11px] font-mono text-slate-500 uppercase">Chờ xuất HĐ VAT</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-rose-700 mt-1">
+          <div class="industrial-card p-3.5">
+            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ xuất HĐ VAT</div>
+            <div class="text-2xl font-mono tabular-nums font-bold text-danger mt-1">
               {{ summary()!.vatPendingCount }}
             </div>
           </div>
-          <div class="bg-slate-900 text-white border border-slate-800 rounded-md p-3.5 col-span-2 lg:col-span-1">
-            <div class="text-[11px] font-mono text-slate-400 uppercase">Doanh thu tháng</div>
-            <div class="text-xl font-mono tabular-nums font-bold text-amber-400 mt-1">
+          <div class="industrial-card border-accent/60 p-3.5 col-span-2 lg:col-span-1">
+            <div class="text-[11px] font-mono text-text-muted uppercase">Doanh thu tháng</div>
+            <div class="text-xl font-mono tabular-nums font-bold text-accent mt-1">
               {{ summary()!.monthlyRevenue | vnd }}
             </div>
           </div>
@@ -93,7 +97,7 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
       }
 
       @if (toast()) {
-        <div class="p-3 rounded border border-emerald-300 bg-emerald-50 text-xs text-emerald-800 font-semibold">
+        <div class="p-3 rounded-[6px] border border-success/50 bg-success/10 text-xs text-success font-semibold">
           ✓ {{ toast() }}
         </div>
       }
@@ -102,12 +106,12 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
       @if (activeTab() === 'orders') {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <!-- Orders Queue -->
-          <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="bg-white border border-slate-300 rounded-md overflow-hidden">
-            <div class="p-3 bg-slate-100 border-b border-slate-300 flex flex-wrap items-center gap-2">
+          <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="industrial-card overflow-hidden">
+            <div class="p-3 bg-surface-raised border-b border-border flex flex-wrap items-center gap-2">
               <select
                 [(ngModel)]="statusFilter"
                 (ngModelChange)="loadOrders()"
-                class="border border-slate-300 rounded px-2.5 py-1.5 text-xs bg-white"
+                class="industrial-input px-2.5 py-1.5 text-xs"
               >
                 <option value="">Tất cả trạng thái</option>
                 <option value="QUOTE_PENDING">Chờ duyệt giá</option>
@@ -124,12 +128,14 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                 [(ngModel)]="searchFilter"
                 (keyup.enter)="loadOrders()"
                 placeholder="Tìm mã đơn / tên khách..."
-                class="border border-slate-300 rounded px-2.5 py-1.5 text-xs bg-white flex-1 min-w-[180px]"
+                class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[180px]"
               />
               <button
                 type="button"
                 (click)="loadOrders()"
-                class="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded"
+                appButton
+                variant="secondary"
+                size="xs"
               >
                 Lọc
               </button>
@@ -137,7 +143,7 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
             <div class="overflow-x-auto">
               <table class="w-full text-xs text-left">
-                <thead class="bg-slate-50 border-b border-slate-200 font-mono text-slate-600">
+                <thead class="bg-bg border-b border-border font-mono text-text-secondary">
                 <tr>
                   <th class="px-3.5 py-2.5">Mã đơn</th>
                   <th class="px-3 py-2.5">Khách hàng</th>
@@ -146,24 +152,24 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                   <th class="px-3 py-2.5 text-right">Thao tác</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-border">
                   @for (ord of orders(); track ord.id) {
                     <tr
-                      class="hover:bg-amber-50/40 cursor-pointer"
-                      [class]="selectedOrder()?.id === ord.id ? 'bg-amber-50' : ''"
+                      class="hover:bg-surface-raised cursor-pointer transition-colors"
+                      [class]="selectedOrder()?.id === ord.id ? 'bg-surface-raised' : ''"
                       (click)="openOrder(ord.id)"
                     >
-                      <td class="px-3.5 py-3 font-mono font-bold text-slate-900">
+                      <td class="px-3.5 py-3 font-mono font-bold text-text-primary">
                         {{ ord.orderCode }}
                         @if (ord.requiresVatInvoice) {
-                          <span class="ml-1 px-1 py-0.5 text-[9px] bg-rose-100 text-rose-700 rounded">VAT</span>
+                          <span class="ml-1 px-1.5 py-0.5 text-[9px] border border-danger/70 text-danger rounded-full">VAT</span>
                         }
                       </td>
-                      <td class="px-3 py-3">{{ ord.recipientName }}</td>
-                      <td class="px-3 py-3 font-mono text-[11px] font-semibold">{{ ord.status }}</td>
-                      <td class="px-3 py-3 text-right font-mono tabular-nums font-bold">{{ ord.totalAmount | vnd }}</td>
+                      <td class="px-3 py-3 text-text-primary">{{ ord.recipientName }}</td>
+                      <td class="px-3 py-3 font-mono text-[11px] font-medium text-steel">{{ ord.status }}</td>
+                      <td class="px-3 py-3 text-right font-mono tabular-nums font-bold text-text-primary">{{ ord.totalAmount | vnd }}</td>
                       <td class="px-3 py-3 text-right">
-                        <button type="button" class="text-amber-700 font-semibold hover:underline">Xử lý</button>
+                        <button type="button" class="text-steel hover:text-steel-hover font-medium hover:underline">Xử lý</button>
                       </td>
                     </tr>
                   }
@@ -174,50 +180,50 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
           <!-- Right Detail Inspector Drawer -->
           @if (selectedOrder(); as ord) {
-            <div class="lg:col-span-5 bg-white border-2 border-slate-900 rounded-md p-4 space-y-4 text-xs">
-              <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div class="lg:col-span-5 industrial-card border-steel p-4 space-y-4 text-xs">
+              <div class="flex items-center justify-between border-b border-border pb-3">
                 <div>
-                  <span class="font-mono font-bold text-base text-slate-900">{{ ord.orderCode }}</span>
-                  <span class="ml-2 px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-mono text-[11px] font-bold">
+                  <span class="font-mono font-bold text-base text-text-primary">{{ ord.orderCode }}</span>
+                  <span class="ml-2 px-2 py-0.5 rounded-full border border-accent/70 text-accent font-mono text-[11px] font-medium">
                     {{ ord.status }}
                   </span>
                 </div>
-                <button type="button" (click)="selectedOrder.set(null)" class="text-slate-500 hover:text-slate-900 font-bold">
+                <button type="button" (click)="selectedOrder.set(null)" appButton variant="ghost" size="xs">
                   ✕ Đóng
                 </button>
               </div>
 
               <!-- Customer & Shipping Info -->
-              <div class="bg-slate-50 border border-slate-200 rounded p-3 space-y-1">
-                <div><strong>Khách nhận:</strong> {{ ord.recipientName }} · <span class="font-mono">{{ ord.recipientPhone }}</span></div>
-                <div><strong>Địa chỉ:</strong> {{ ord.shippingAddress }}</div>
+              <div class="bg-bg border border-border rounded-[6px] p-3 space-y-1 text-text-secondary">
+                <div><strong class="text-text-primary">Khách nhận:</strong> {{ ord.recipientName }} · <span class="font-mono text-text-primary">{{ ord.recipientPhone }}</span></div>
+                <div><strong class="text-text-primary">Địa chỉ:</strong> {{ ord.shippingAddress }}</div>
                 @if (ord.customerNote) {
-                  <div class="text-amber-800"><strong>Ghi chú khách:</strong> {{ ord.customerNote }}</div>
+                  <div class="text-accent"><strong>Ghi chú khách:</strong> {{ ord.customerNote }}</div>
                 }
               </div>
 
               <!-- Items + Quote Price Override + Prototype Upload -->
               <div class="space-y-3">
-                <div class="font-bold uppercase text-slate-800">Hạng mục & Ảnh mẫu thực tế</div>
+                <div class="font-heading font-bold uppercase text-text-primary">Hạng mục & Ảnh mẫu thực tế</div>
                 @for (item of ord.items; track item.id) {
-                  <div class="border border-slate-300 rounded p-3 space-y-2">
-                    <div class="flex justify-between font-bold">
+                  <div class="border border-border rounded-[6px] p-3 space-y-2 bg-bg">
+                    <div class="flex justify-between font-semibold text-text-primary">
                       <span>{{ item.itemName }} (×{{ item.quantity }})</span>
                       <span class="font-mono">{{ item.lineTotal | vnd }}</span>
                     </div>
                     @if (item.widthMm) {
-                      <div class="font-mono text-[11px] text-slate-600">
+                      <div class="font-mono text-[11px] text-text-secondary">
                         {{ item.materialNameSnapshot }} · {{ item.processingNameSnapshot }} · {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
                       </div>
                     }
                     <div class="flex flex-wrap items-center gap-3">
                       @if (item.designFileUrl) {
-                        <a [href]="item.designFileUrl" target="_blank" class="text-amber-700 underline font-mono">
+                        <a [href]="item.designFileUrl" target="_blank" class="text-steel hover:text-steel-hover underline font-mono">
                           Tải bản vẽ khách ↗
                         </a>
                       }
                       @if (item.prototypeImageUrl) {
-                        <a [href]="item.prototypeImageUrl" target="_blank" class="text-emerald-700 underline font-mono">
+                        <a [href]="item.prototypeImageUrl" target="_blank" class="text-success underline font-mono">
                           Ảnh mẫu đã gửi ✓
                         </a>
                       }
@@ -225,7 +231,7 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
                     <!-- Upload physical prototype photo -->
                     <div class="pt-1 flex items-center gap-2">
-                      <label class="cursor-pointer px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded font-semibold">
+                      <label class="cursor-pointer px-2.5 py-1 bg-surface hover:bg-surface-raised border border-steel text-steel rounded-[6px] font-medium transition-colors">
                         + Tải ảnh tem mẫu thực tế
                         <input
                           type="file"
@@ -241,18 +247,21 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
               <!-- Approve Quote Action -->
               @if (ord.status === 'QUOTE_PENDING') {
-                <div class="border-t border-slate-200 pt-3 space-y-2">
-                  <div class="font-bold text-slate-900">Duyệt báo giá đơn hàng</div>
+                <div class="border-t border-border pt-3 space-y-2">
+                  <div class="font-semibold text-text-primary">Duyệt báo giá đơn hàng</div>
                   <div class="flex gap-2">
                     <input
                       type="date"
                       [(ngModel)]="estimatedCompletionDate"
-                      class="border border-slate-300 rounded px-2.5 py-1.5 text-xs font-mono"
+                      class="industrial-input px-2.5 py-1.5 text-xs font-mono"
                     />
                     <button
                       type="button"
                       (click)="approveQuote(ord.id)"
-                      class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-1.5 px-3 rounded"
+                      appButton
+                      variant="primary"
+                      size="xs"
+                      class="flex-1"
                     >
                       Duyệt Báo Giá
                     </button>
@@ -262,15 +271,15 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
               <!-- Verify Pending Payments -->
               @if (ord.paymentTransactions.length > 0) {
-                <div class="border-t border-slate-200 pt-3 space-y-2">
-                  <div class="font-bold text-slate-900">Giao dịch thanh toán ({{ ord.paymentTransactions.length }})</div>
+                <div class="border-t border-border pt-3 space-y-2">
+                  <div class="font-semibold text-text-primary">Giao dịch thanh toán ({{ ord.paymentTransactions.length }})</div>
                   @for (tx of ord.paymentTransactions; track tx.id) {
-                    <div class="border border-slate-300 rounded p-2.5 flex items-center justify-between gap-2 bg-slate-50">
+                    <div class="border border-border rounded-[6px] p-2.5 flex items-center justify-between gap-2 bg-bg">
                       <div>
-                        <div class="font-mono font-bold">{{ tx.paymentPhase }} · {{ tx.amount | vnd }}</div>
-                        <div class="text-[11px] text-slate-600">{{ tx.paymentMethod }} · Ref: {{ tx.transactionRef || '—' }}</div>
+                        <div class="font-mono font-bold text-text-primary">{{ tx.paymentPhase }} · {{ tx.amount | vnd }}</div>
+                        <div class="text-[11px] text-text-secondary">{{ tx.paymentMethod }} · Ref: {{ tx.transactionRef || '—' }}</div>
                         @if (tx.proofImageUrl) {
-                          <a [href]="tx.proofImageUrl" target="_blank" class="text-sky-700 underline text-[11px]">Xem biên lai ↗</a>
+                          <a [href]="tx.proofImageUrl" target="_blank" class="text-steel hover:text-steel-hover underline text-[11px]">Xem biên lai ↗</a>
                         }
                       </div>
                       @if (tx.status === 'PENDING') {
@@ -278,20 +287,24 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                           <button
                             type="button"
                             (click)="verifyTx(tx.id, 'VERIFIED')"
-                            class="px-2.5 py-1 bg-emerald-600 text-white font-semibold rounded"
+                            appButton
+                            variant="primary"
+                            size="xs"
                           >
                             Duyệt tiền
                           </button>
                           <button
                             type="button"
                             (click)="verifyTx(tx.id, 'FAILED')"
-                            class="px-2 py-1 bg-red-600 text-white font-semibold rounded"
+                            appButton
+                            variant="danger"
+                            size="xs"
                           >
                             Từ chối
                           </button>
                         </div>
                       } @else {
-                        <span class="font-mono font-bold" [class]="tx.status === 'VERIFIED' ? 'text-emerald-700' : 'text-red-600'">
+                        <span class="font-mono font-bold" [class]="tx.status === 'VERIFIED' ? 'text-success' : 'text-danger'">
                           {{ tx.status }}
                         </span>
                       }
@@ -301,16 +314,16 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
               }
 
               <!-- State Transition Controls -->
-              <div class="border-t border-slate-200 pt-3 space-y-2">
-                <div class="font-bold text-slate-900">Chuyển trạng thái sản xuất</div>
+              <div class="border-t border-border pt-3 space-y-2">
+                <div class="font-semibold text-text-primary">Chuyển trạng thái sản xuất</div>
                 <input
                   type="text"
                   [(ngModel)]="workerNote"
                   placeholder="Ghi chú thợ đứng máy (VD: Khắc sâu 0.15mm, đổ sơn đen)..."
-                  class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs"
+                  class="industrial-input w-full px-2.5 py-1.5 text-xs"
                 />
                 <div class="flex gap-2">
-                  <select [(ngModel)]="nextStatus" class="border border-slate-300 rounded px-2.5 py-1.5 text-xs flex-1">
+                  <select [(ngModel)]="nextStatus" class="industrial-input px-2.5 py-1.5 text-xs flex-1">
                     <option value="PROTOTYPING">PROTOTYPING (Làm mẫu)</option>
                     <option value="AWAITING_DEPOSIT">AWAITING_DEPOSIT (Chờ cọc)</option>
                     <option value="IN_PRODUCTION">IN_PRODUCTION (Đang sản xuất)</option>
@@ -321,7 +334,9 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
                   <button
                     type="button"
                     (click)="changeOrderStatus(ord.id)"
-                    class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3.5 py-1.5 rounded"
+                    appButton
+                    variant="secondary"
+                    size="xs"
                   >
                     Cập nhật
                   </button>
@@ -330,19 +345,21 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
               <!-- Red VAT Invoice Number Input -->
               @if (ord.requiresVatInvoice) {
-                <div class="border-t border-slate-200 pt-3 space-y-2">
-                  <div class="font-bold text-rose-800">Số hóa đơn VAT đỏ ({{ ord.vatTaxCode }} - {{ ord.vatCompanyName }})</div>
+                <div class="border-t border-border pt-3 space-y-2">
+                  <div class="font-semibold text-danger">Số hóa đơn VAT đỏ ({{ ord.vatTaxCode }} - {{ ord.vatCompanyName }})</div>
                   <div class="flex gap-2">
                     <input
                       type="text"
                       [(ngModel)]="vatInvoiceNumberInput"
                       placeholder="Nhập số HĐĐT (VD: 0000142)"
-                      class="border border-slate-300 rounded px-2.5 py-1.5 text-xs font-mono flex-1"
+                      class="industrial-input px-2.5 py-1.5 text-xs font-mono flex-1"
                     />
                     <button
                       type="button"
                       (click)="saveVatNumber(ord.id)"
-                      class="bg-rose-700 hover:bg-rose-800 text-white font-semibold px-3 py-1.5 rounded"
+                      appButton
+                      variant="primary"
+                      size="xs"
                     >
                       Lưu số HĐ
                     </button>
@@ -356,28 +373,30 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
       <!-- TAB 2: PRICING RULES -->
       @if (activeTab() === 'pricing') {
-        <div class="bg-white border border-slate-300 rounded-md p-5 max-w-3xl space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <h2 class="text-sm font-bold text-slate-900">Tham Số Công Thức Báo Giá Xưởng</h2>
+        <div class="industrial-card p-5 max-w-3xl space-y-4">
+          <div class="flex items-center justify-between border-b border-border pb-3">
+            <h2 class="font-heading text-sm font-bold text-text-primary">Tham Số Công Thức Báo Giá Xưởng</h2>
             <button
               type="button"
               (click)="savePricingRules()"
-              class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded"
+              appButton
+              variant="primary"
+              size="sm"
             >
               Lưu cấu hình giá
             </button>
           </div>
           <div class="space-y-3">
             @for (rule of pricingRules(); track rule.ruleKey) {
-              <div class="grid grid-cols-12 gap-3 items-center text-xs border-b border-slate-100 pb-2.5">
-                <div class="col-span-5 font-mono font-bold text-slate-800">{{ rule.ruleKey }}</div>
-                <div class="col-span-4 text-slate-500">{{ rule.description }}</div>
+              <div class="grid grid-cols-12 gap-3 items-center text-xs border-b border-border pb-2.5">
+                <div class="col-span-5 font-mono font-bold text-text-primary">{{ rule.ruleKey }}</div>
+                <div class="col-span-4 text-text-secondary">{{ rule.description }}</div>
                 <div class="col-span-3">
                   <input
                     type="number"
                     [(ngModel)]="rule.ruleValue"
                     step="0.01"
-                    class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-right"
+                    class="industrial-input w-full px-2.5 py-1.5 font-mono text-right"
                   />
                 </div>
               </div>
@@ -388,9 +407,9 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
       <!-- TAB 3: CATALOG PRODUCTS -->
       @if (activeTab() === 'products') {
-        <div class="bg-white border border-slate-300 rounded-md overflow-hidden">
+        <div class="industrial-card overflow-hidden">
           <table class="w-full text-xs text-left">
-            <thead class="bg-slate-100 border-b border-slate-300 font-mono text-slate-700">
+            <thead class="bg-bg border-b border-border font-mono text-text-secondary">
             <tr>
               <th class="px-4 py-3">SKU</th>
               <th class="px-3 py-3">Tên sản phẩm</th>
@@ -399,17 +418,17 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
               <th class="px-4 py-3 text-right">Xóa</th>
             </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200">
+            <tbody class="divide-y divide-border">
               @for (p of adminProducts(); track p.id) {
-                <tr>
-                  <td class="px-4 py-3 font-mono font-bold">{{ p.sku }}</td>
-                  <td class="px-3 py-3 font-medium text-slate-900">{{ p.name }}</td>
-                  <td class="px-3 py-3 font-mono text-[11px]">{{ p.productType }}</td>
-                  <td class="px-3 py-3 text-right font-mono tabular-nums">
+                <tr class="hover:bg-surface-raised transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-text-primary">{{ p.sku }}</td>
+                  <td class="px-3 py-3 font-medium text-text-primary">{{ p.name }}</td>
+                  <td class="px-3 py-3 font-mono text-[11px] text-steel">{{ p.productType }}</td>
+                  <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">
                     {{ p.productType === 'STANDARD_ITEM' ? (p.basePrice | vnd) + ' · Kho: ' + (p.stockQuantity ?? 0) : 'Báo giá 3D' }}
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <button type="button" (click)="removeProduct(p.id)" class="text-red-600 hover:underline">Xóa</button>
+                    <button type="button" (click)="removeProduct(p.id)" class="text-danger hover:underline">Xóa</button>
                   </td>
                 </tr>
               }

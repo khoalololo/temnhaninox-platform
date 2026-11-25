@@ -7,22 +7,23 @@ import { CartApiService } from '../../core/services/cart-api.service';
 import { OrderApiService } from '../../core/services/order-api.service';
 import { VatProfile } from '../../core/models/auth.models';
 import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
+import { ButtonDirective } from '../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective],
   template: `
     <div class="max-w-5xl mx-auto px-4 py-8">
-      <div class="border-b border-slate-300 pb-4 mb-6">
-        <h1 class="text-xl font-bold text-slate-900">Xác Nhận Thông Tin Giao Hàng & Hóa Đơn VAT</h1>
-        <p class="text-xs text-slate-500">
+      <div class="border-b border-border pb-4 mb-6">
+        <h1 class="font-heading text-xl font-bold text-text-primary">Xác Nhận Thông Tin Giao Hàng & Hóa Đơn VAT</h1>
+        <p class="text-xs text-text-secondary">
           Sau khi gửi đơn, xưởng sẽ kiểm tra bản vẽ kỹ thuật và liên hệ duyệt mẫu thực tế
         </p>
       </div>
 
       @if (errorMessage()) {
-        <div class="mb-4 p-3 rounded border border-red-300 bg-red-50 text-xs text-red-700">
+        <div class="mb-4 p-3 rounded-[6px] border border-danger/50 bg-danger/10 text-xs text-danger">
           {{ errorMessage() }}
         </div>
       }
@@ -30,83 +31,83 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
       <form (ngSubmit)="submitOrder()" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 space-y-5">
           <!-- Shipping Details -->
-          <div class="bg-white border border-slate-300 rounded-md p-5 space-y-3.5">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-2.5">
+          <div class="industrial-card p-5 space-y-3.5">
+            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5">
               1. Địa chỉ nhận hàng / Giao chành xe
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Người nhận hàng *</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">Người nhận hàng *</label>
                 <input
                   type="text"
                   [(ngModel)]="recipientName"
                   name="recipientName"
                   required
-                  class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-amber-600"
+                  class="industrial-input w-full px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại / Zalo *</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">Số điện thoại / Zalo *</label>
                 <input
                   type="text"
                   [(ngModel)]="recipientPhone"
                   name="recipientPhone"
                   required
-                  class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-600"
+                  class="industrial-input w-full px-3 py-2 text-sm font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Địa chỉ giao hàng chi tiết *</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Địa chỉ giao hàng chi tiết *</label>
               <textarea
                 rows="2"
                 [(ngModel)]="shippingAddress"
                 name="shippingAddress"
                 required
                 placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
-                class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-amber-600"
+                class="industrial-input w-full px-3 py-2 text-sm"
               ></textarea>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Ghi chú đơn hàng</label>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Ghi chú đơn hàng</label>
               <input
                 type="text"
                 [(ngModel)]="customerNote"
                 name="customerNote"
                 placeholder="VD: Giao giờ hành chính, xuất phiếu giao hàng kèm theo..."
-                class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:border-amber-600"
+                class="industrial-input w-full px-3 py-2 text-xs"
               />
             </div>
           </div>
 
           <!-- Red VAT Invoice Section -->
-          <div class="bg-white border border-slate-300 rounded-md p-5 space-y-3.5">
+          <div class="industrial-card p-5 space-y-3.5">
             <label class="flex items-center justify-between cursor-pointer">
               <div>
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-900">
+                <div class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary">
                   2. Xuất Hóa Đơn Giá Trị Gia Tăng (VAT Đỏ 10%)
                 </div>
-                <div class="text-[11px] text-slate-500">Hóa đơn điện tử gửi qua email sau khi tất toán</div>
+                <div class="text-[11px] text-text-secondary">Hóa đơn điện tử gửi qua email sau khi tất toán</div>
               </div>
               <input
                 type="checkbox"
                 [(ngModel)]="requiresVatInvoice"
                 name="requiresVatInvoice"
-                class="w-4 h-4 rounded border-slate-300"
+                class="w-4 h-4 rounded border-border accent-accent"
               />
             </label>
 
             @if (requiresVatInvoice) {
-              <div class="pt-3 border-t border-slate-200 space-y-3">
+              <div class="pt-3 border-t border-border space-y-3">
                 @if (vatProfiles().length > 0) {
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Chọn nhanh MST đã lưu</label>
+                    <label class="block text-[11px] font-medium text-text-secondary mb-1">Chọn nhanh MST đã lưu</label>
                     <select
                       (change)="onSelectSavedVat($event)"
-                      class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs bg-slate-50"
+                      class="industrial-input w-full px-2.5 py-1.5 text-xs"
                     >
                       <option value="">-- Nhập thủ công hoặc chọn hồ sơ --</option>
                       @for (vp of vatProfiles(); track vp.id) {
@@ -118,35 +119,35 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tên công ty *</label>
+                    <label class="block text-[11px] font-medium text-text-secondary mb-1">Tên công ty *</label>
                     <input
                       type="text"
                       [(ngModel)]="vatCompanyName"
                       name="vatCompanyName"
                       required
-                      class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:border-amber-600"
+                      class="industrial-input w-full px-3 py-2 text-xs"
                     />
                   </div>
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Mã số thuế (MST) *</label>
+                    <label class="block text-[11px] font-medium text-text-secondary mb-1">Mã số thuế (MST) *</label>
                     <input
                       type="text"
                       [(ngModel)]="vatTaxCode"
                       name="vatTaxCode"
                       required
-                      class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs font-mono focus:outline-none focus:border-amber-600"
+                      class="industrial-input w-full px-3 py-2 text-xs font-mono"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label class="block text-[11px] font-semibold text-slate-700 mb-1">Địa chỉ đăng ký kinh doanh *</label>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Địa chỉ đăng ký kinh doanh *</label>
                   <input
                     type="text"
                     [(ngModel)]="vatCompanyAddress"
                     name="vatCompanyAddress"
                     required
-                    class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:border-amber-600"
+                    class="industrial-input w-full px-3 py-2 text-xs"
                   />
                 </div>
               </div>
@@ -155,38 +156,38 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
         </div>
 
         <!-- Order Summary -->
-        <div class="lg:col-span-5 bg-white border border-slate-300 rounded-md p-5 h-fit space-y-4">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-2.5">
+        <div class="lg:col-span-5 industrial-card p-5 h-fit space-y-4">
+          <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5">
             Tóm Tắt Đơn Đặt Hàng
           </h2>
 
           @if (cartService.cart()) {
             <div class="space-y-2 text-xs">
-              <div class="flex justify-between text-slate-600">
+              <div class="flex justify-between text-text-secondary">
                 <span>Số lượng hạng mục:</span>
-                <span class="font-mono font-semibold text-slate-900">{{ cartService.cart()!.items.length }}</span>
+                <span class="font-mono font-medium text-text-primary">{{ cartService.cart()!.items.length }}</span>
               </div>
-              <div class="flex justify-between text-slate-600">
+              <div class="flex justify-between text-text-secondary">
                 <span>Tổng số lượng sản phẩm:</span>
-                <span class="font-mono tabular-nums font-semibold text-slate-900">{{ cartService.cartCount() }}</span>
+                <span class="font-mono tabular-nums font-medium text-text-primary">{{ cartService.cartCount() }}</span>
               </div>
-              <div class="flex justify-between text-slate-600">
+              <div class="flex justify-between text-text-secondary">
                 <span>Tạm tính:</span>
-                <span class="font-mono tabular-nums font-semibold text-slate-900">
+                <span class="font-mono tabular-nums font-medium text-text-primary">
                   {{ cartService.cart()!.estimatedSubtotal | vnd }}
                 </span>
               </div>
               @if (requiresVatInvoice) {
-                <div class="flex justify-between text-slate-600">
+                <div class="flex justify-between text-text-secondary">
                   <span>Thuế VAT (10%):</span>
-                  <span class="font-mono tabular-nums text-slate-900">
+                  <span class="font-mono tabular-nums text-text-primary">
                     {{ cartService.cart()!.estimatedSubtotal * 0.1 | vnd }}
                   </span>
                 </div>
               }
-              <div class="border-t-2 border-slate-900 pt-3 flex justify-between items-baseline">
-                <span class="font-bold text-slate-900">Tổng thanh toán dự kiến:</span>
-                <span class="font-mono tabular-nums text-lg font-bold text-amber-700">
+              <div class="border-t border-border pt-3 flex justify-between items-baseline">
+                <span class="font-semibold text-text-primary">Tổng thanh toán dự kiến:</span>
+                <span class="font-mono tabular-nums text-lg font-bold text-accent">
                   {{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1)) | vnd }}
                 </span>
               </div>
@@ -196,12 +197,15 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
           <button
             type="submit"
             [disabled]="submitting() || (cartService.cart()?.items?.length || 0) === 0"
-            class="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-semibold text-sm py-3 rounded-md transition-colors"
+            appButton
+            variant="primary"
+            size="lg"
+            [fullWidth]="true"
           >
             {{ submitting() ? 'Đang khởi tạo đơn hàng...' : 'Xác Nhận Gửi Đơn Hàng' }}
           </button>
 
-          <a routerLink="/cart" class="block text-center text-xs text-slate-500 hover:text-slate-800">
+          <a routerLink="/cart" class="block text-center text-xs text-steel hover:text-steel-hover transition-colors">
             ← Quay lại chỉnh sửa giỏ hàng
           </a>
         </div>

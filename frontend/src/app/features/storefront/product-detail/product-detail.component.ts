@@ -7,44 +7,43 @@ import { CartApiService } from '../../../core/services/cart-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/catalog.models';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
+import { ButtonDirective } from '../../../shared/components/button/button.component';
+import { ImagePlaceholderComponent } from '../../../shared/components/image-placeholder/image-placeholder.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, ImagePlaceholderComponent],
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
-      <div class="mb-4 text-xs text-slate-500 flex items-center gap-2">
-        <a routerLink="/" class="hover:text-slate-900">Trang chủ</a>
+      <div class="mb-4 text-xs text-text-muted flex items-center gap-2">
+        <a routerLink="/" class="hover:text-steel-hover transition-colors">Trang chủ</a>
         <span>/</span>
-        <a routerLink="/products" class="hover:text-slate-900">Danh mục sản phẩm</a>
+        <a routerLink="/products" class="hover:text-steel-hover transition-colors">Danh mục sản phẩm</a>
         @if (product()) {
           <span>/</span>
-          <span class="font-mono text-slate-800">{{ product()!.sku }}</span>
+          <span class="font-mono text-text-secondary">{{ product()!.sku }}</span>
         }
       </div>
 
       @if (loading()) {
-        <div class="bg-white border border-slate-300 rounded-md h-96 animate-pulse"></div>
+        <div class="bg-surface border border-border rounded-[10px] h-96 animate-pulse"></div>
       } @else if (!product()) {
-        <div class="bg-white border border-slate-300 rounded-md p-8 text-center">
-          <p class="text-sm font-bold text-slate-900 mb-2">Không tìm thấy sản phẩm</p>
-          <a routerLink="/products" class="text-xs font-semibold text-amber-700 hover:underline">
+        <div class="industrial-card p-8 text-center">
+          <p class="font-heading text-sm font-bold text-text-primary mb-2">Không tìm thấy sản phẩm</p>
+          <a routerLink="/products" class="text-xs font-medium text-steel hover:text-steel-hover hover:underline">
             ← Quay lại danh mục
           </a>
         </div>
       } @else {
-        <div class="bg-white border border-slate-300 rounded-md p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="industrial-card p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
           <!-- Gallery -->
           <div class="lg:col-span-5 space-y-3">
-            <div class="aspect-square bg-slate-100 border border-slate-200 rounded-md overflow-hidden flex items-center justify-center">
+            <div class="aspect-square bg-bg border border-border rounded-[10px] overflow-hidden flex items-center justify-center">
               @if (activeImage()) {
                 <img [src]="activeImage()!" [alt]="product()!.name" class="w-full h-full object-cover" />
               } @else {
-                <div class="text-center text-slate-400">
-                  <div class="font-mono text-sm font-bold">{{ product()!.sku }}</div>
-                  <div class="text-xs mt-1">Chưa có ảnh mẫu</div>
-                </div>
+                <app-image-placeholder [sku]="product()!.sku" />
               }
             </div>
 
@@ -54,8 +53,8 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                   <button
                     type="button"
                     (click)="activeImage.set(product()!.imageUrl!)"
-                    class="w-16 h-16 border rounded overflow-hidden shrink-0"
-                    [class]="activeImage() === product()!.imageUrl ? 'border-amber-600 border-2' : 'border-slate-300'"
+                    class="w-16 h-16 border rounded-[6px] overflow-hidden shrink-0 bg-bg"
+                    [class]="activeImage() === product()!.imageUrl ? 'border-accent border-2' : 'border-border'"
                   >
                     <img [src]="product()!.imageUrl!" class="w-full h-full object-cover" />
                   </button>
@@ -64,8 +63,8 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                   <button
                     type="button"
                     (click)="activeImage.set(img)"
-                    class="w-16 h-16 border rounded overflow-hidden shrink-0"
-                    [class]="activeImage() === img ? 'border-amber-600 border-2' : 'border-slate-300'"
+                    class="w-16 h-16 border rounded-[6px] overflow-hidden shrink-0 bg-bg"
+                    [class]="activeImage() === img ? 'border-accent border-2' : 'border-border'"
                   >
                     <img [src]="img" class="w-full h-full object-cover" />
                   </button>
@@ -77,56 +76,56 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
           <!-- Technical Specs & Order Actions -->
           <div class="lg:col-span-7 flex flex-col">
             <div class="flex items-center gap-2 mb-2">
-              <span class="font-mono text-xs px-2 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-700">
+              <span class="font-mono text-xs px-2.5 py-0.5 bg-bg border border-border rounded-full text-text-secondary">
                 SKU: {{ product()!.sku }}
               </span>
               <span
-                class="font-mono text-xs px-2 py-0.5 rounded border font-semibold"
+                class="font-mono text-xs px-2.5 py-0.5 rounded-full border font-medium"
                 [class]="product()!.productType === 'CUSTOM_TEMPLATE'
-                  ? 'bg-amber-50 text-amber-800 border-amber-300'
-                  : 'bg-emerald-50 text-emerald-800 border-emerald-300'"
+                  ? 'border-accent/70 text-accent bg-bg'
+                  : 'border-steel/70 text-steel bg-bg'"
               >
                 {{ product()!.productType === 'CUSTOM_TEMPLATE' ? 'Gia công theo kích thước' : 'Hàng có sẵn' }}
               </span>
             </div>
 
-            <h1 class="text-2xl font-bold text-slate-900 mb-3">{{ product()!.name }}</h1>
+            <h1 class="font-heading text-2xl font-bold text-text-primary mb-3">{{ product()!.name }}</h1>
 
             @if (product()!.shortDescription) {
-              <p class="text-sm text-slate-600 mb-4 leading-relaxed">{{ product()!.shortDescription }}</p>
+              <p class="text-sm text-text-secondary mb-4 leading-relaxed">{{ product()!.shortDescription }}</p>
             }
 
             <!-- Technical Specification Table -->
-            <div class="border border-slate-300 rounded-md overflow-hidden mb-5">
-              <div class="bg-slate-100 px-3.5 py-2 border-b border-slate-300 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <div class="border border-border rounded-[10px] overflow-hidden mb-5 bg-bg">
+              <div class="bg-surface-raised px-3.5 py-2 border-b border-border font-heading text-xs font-semibold uppercase tracking-wider text-text-primary">
                 Thông Số Kỹ Thuật Tiêu Chuẩn
               </div>
               <table class="w-full text-xs">
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-border">
                   <tr>
-                    <td class="px-3.5 py-2.5 text-slate-500 w-44">Vật liệu nền</td>
-                    <td class="px-3.5 py-2.5 font-semibold text-slate-900">{{ product()!.materialName || 'Theo tùy chọn' }}</td>
+                    <td class="px-3.5 py-2.5 text-text-secondary w-44">Vật liệu nền</td>
+                    <td class="px-3.5 py-2.5 font-medium text-text-primary">{{ product()!.materialName || 'Theo tùy chọn' }}</td>
                   </tr>
                   <tr>
-                    <td class="px-3.5 py-2.5 text-slate-500">Công nghệ gia công</td>
-                    <td class="px-3.5 py-2.5 font-semibold text-slate-900">{{ product()!.processingMethodName || 'Theo tùy chọn' }}</td>
+                    <td class="px-3.5 py-2.5 text-text-secondary">Công nghệ gia công</td>
+                    <td class="px-3.5 py-2.5 font-medium text-text-primary">{{ product()!.processingMethodName || 'Theo tùy chọn' }}</td>
                   </tr>
                   <tr>
-                    <td class="px-3.5 py-2.5 text-slate-500">Kích thước chuẩn (D × R × Dày)</td>
-                    <td class="px-3.5 py-2.5 font-mono tabular-nums font-semibold text-slate-900">
+                    <td class="px-3.5 py-2.5 text-text-secondary">Kích thước chuẩn (D × R × Dày)</td>
+                    <td class="px-3.5 py-2.5 font-mono tabular-nums font-medium text-text-primary">
                       {{ product()!.defaultWidthMm || 80 }} × {{ product()!.defaultHeightMm || 40 }} × {{ product()!.defaultThicknessMm || 0.8 }} mm
                     </td>
                   </tr>
                   @if (product()!.productType === 'STANDARD_ITEM') {
                     <tr>
-                      <td class="px-3.5 py-2.5 text-slate-500">Đơn giá niêm yết</td>
-                      <td class="px-3.5 py-2.5 font-mono tabular-nums text-base font-bold text-amber-700">
+                      <td class="px-3.5 py-2.5 text-text-secondary">Đơn giá niêm yết</td>
+                      <td class="px-3.5 py-2.5 font-mono tabular-nums text-base font-bold text-accent">
                         {{ product()!.basePrice | vnd }}
                       </td>
                     </tr>
                     <tr>
-                      <td class="px-3.5 py-2.5 text-slate-500">Tồn kho sẵn sàng</td>
-                      <td class="px-3.5 py-2.5 font-mono tabular-nums text-slate-900">
+                      <td class="px-3.5 py-2.5 text-text-secondary">Tồn kho sẵn sàng</td>
+                      <td class="px-3.5 py-2.5 font-mono tabular-nums text-text-primary">
                         {{ product()!.stockQuantity ?? 0 }} đơn vị
                       </td>
                     </tr>
@@ -136,7 +135,7 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
             </div>
 
             <!-- Action Box -->
-            <div class="mt-auto pt-4 border-t border-slate-200">
+            <div class="mt-auto pt-4 border-t border-border">
               @if (product()!.productType === 'CUSTOM_TEMPLATE') {
                 <a
                   routerLink="/quote-builder"
@@ -148,17 +147,19 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                     h: product()!.defaultHeightMm || 40,
                     t: product()!.defaultThicknessMm || 0.8
                   }"
-                  class="inline-flex items-center justify-center w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm px-6 py-3 rounded-md transition-colors"
+                  appButton
+                  variant="primary"
+                  size="lg"
                 >
                   Tùy chỉnh kích thước & Xem trước 3D →
                 </a>
               } @else {
                 <div class="flex flex-wrap items-center gap-3">
-                  <div class="flex items-center border border-slate-300 rounded-md">
+                  <div class="flex items-center border border-border rounded-[6px] bg-bg">
                     <button
                       type="button"
                       (click)="quantity = quantity > 1 ? quantity - 1 : 1"
-                      class="px-3 py-2 text-sm font-mono hover:bg-slate-100"
+                      class="px-3 py-2 text-sm font-mono text-text-primary hover:bg-surface-raised"
                     >
                       -
                     </button>
@@ -166,12 +167,12 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                       type="number"
                       [(ngModel)]="quantity"
                       min="1"
-                      class="w-16 text-center font-mono tabular-nums text-sm border-x border-slate-300 py-2 focus:outline-none"
+                      class="w-16 text-center font-mono tabular-nums text-sm bg-bg text-text-primary border-x border-border py-2 focus:outline-none"
                     />
                     <button
                       type="button"
                       (click)="quantity = quantity + 1"
-                      class="px-3 py-2 text-sm font-mono hover:bg-slate-100"
+                      class="px-3 py-2 text-sm font-mono text-text-primary hover:bg-surface-raised"
                     >
                       +
                     </button>
@@ -181,15 +182,17 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                     type="button"
                     (click)="addToCart()"
                     [disabled]="adding() || (product()!.stockQuantity ?? 0) <= 0"
-                    class="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-semibold text-sm px-6 py-2.5 rounded-md transition-colors"
+                    appButton
+                    variant="primary"
+                    size="lg"
                   >
                     {{ adding() ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
                   </button>
                 </div>
 
                 @if (addedNotice()) {
-                  <div class="mt-3 text-xs text-emerald-700 font-medium">
-                    ✓ Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-bold">Xem giỏ hàng</a>
+                  <div class="mt-3 text-xs text-success font-medium">
+                    ✓ Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Xem giỏ hàng</a>
                   </div>
                 }
               }
@@ -198,11 +201,11 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
         </div>
 
         @if (product()!.description) {
-          <div class="mt-6 bg-white border border-slate-300 rounded-md p-6">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-2.5 mb-3">
+          <div class="mt-6 industrial-card p-6">
+            <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5 mb-3">
               Mô Tả Chi Tiết & Ứng Dụng
             </h2>
-            <div class="text-sm text-slate-700 whitespace-pre-line leading-relaxed">
+            <div class="text-sm text-text-secondary whitespace-pre-line leading-relaxed">
               {{ product()!.description }}
             </div>
           </div>

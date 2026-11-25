@@ -10,43 +10,44 @@ import { Material, ProcessingMethod } from '../../core/models/catalog.models';
 import { FileUploadResponse, QuoteCalculationResponse } from '../../core/models/quote.models';
 import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
+import { ButtonDirective } from '../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-quote-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, Nameplate3dViewerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, Nameplate3dViewerComponent, ButtonDirective],
   template: `
     <div class="max-w-[1440px] mx-auto px-4 py-6">
       <!-- Top Workstation Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-slate-300">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-border">
         <div>
-          <div class="text-[11px] font-mono uppercase tracking-wider text-amber-700 font-bold">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-accent font-medium">
             Xưởng Gia Công Chính Xác · Báo Giá Tự Động
           </div>
-          <h1 class="text-xl font-bold text-slate-900">Công Cụ Thiết Lập Kích Thước & Xem Mẫu 3D</h1>
+          <h1 class="font-heading text-xl font-bold text-text-primary">Công Cụ Thiết Lập Kích Thước & Xem Mẫu 3D</h1>
         </div>
-        <div class="text-xs font-mono text-slate-500">
-          Công thức xưởng: Tấm mỏng (&lt;2.0mm) theo m² · Phôi dày (≥2.0mm) theo khối lượng kg
+        <div class="text-xs font-mono text-text-secondary">
+          Công thức xưởng: Tấm mỏng (≤1.0mm) theo m² · Phôi dày (&gt;1.0mm) theo khối lượng kg
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <!-- LEFT PANEL: Technical Specification Controls (4 cols) -->
-        <div class="lg:col-span-4 bg-white border border-slate-300 rounded-md p-4 space-y-4">
-          <div class="border-b border-slate-200 pb-2.5 flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">
+        <div class="lg:col-span-4 industrial-card p-4 space-y-4">
+          <div class="border-b border-border pb-2.5 flex items-center justify-between">
+            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary">
               1. Thông Số Phôi & Công Nghệ
             </h2>
-            <span class="text-[11px] font-mono text-slate-500">Đơn vị: mm</span>
+            <span class="text-[11px] font-mono text-text-muted">Đơn vị: mm</span>
           </div>
 
           <!-- Material Selector -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Vật liệu kim loại / nhựa *</label>
+            <label class="block text-xs font-medium text-text-secondary mb-1">Vật liệu kim loại / nhựa *</label>
             <select
               [(ngModel)]="selectedMaterialId"
               (ngModelChange)="onMaterialChange()"
-              class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs font-medium bg-white focus:outline-none focus:border-amber-600"
+              class="industrial-input w-full px-3 py-2 text-xs font-medium"
             >
               @for (mat of materials(); track mat.id) {
                 <option [value]="mat.id">
@@ -58,11 +59,11 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
 
           <!-- Processing Method Selector -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Công nghệ gia công bề mặt *</label>
+            <label class="block text-xs font-medium text-text-secondary mb-1">Công nghệ gia công bề mặt *</label>
             <select
               [(ngModel)]="selectedMethodId"
               (ngModelChange)="recalculate()"
-              class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs font-medium bg-white focus:outline-none focus:border-amber-600"
+              class="industrial-input w-full px-3 py-2 text-xs font-medium"
             >
               @for (pm of availableMethods(); track pm.id) {
                 <option [value]="pm.id">
@@ -75,7 +76,7 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
           <!-- Dimensions Grid -->
           <div class="grid grid-cols-3 gap-2.5">
             <div>
-              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Chiều dài (mm)</label>
+              <label class="block text-[11px] font-medium text-text-secondary mb-1">Chiều dài (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="widthMm"
@@ -83,11 +84,11 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
                 min="5"
                 max="2000"
                 step="1"
-                class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs font-mono tabular-nums focus:outline-none focus:border-amber-600"
+                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
               />
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Chiều rộng (mm)</label>
+              <label class="block text-[11px] font-medium text-text-secondary mb-1">Chiều rộng (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="heightMm"
@@ -95,11 +96,11 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
                 min="5"
                 max="2000"
                 step="1"
-                class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs font-mono tabular-nums focus:outline-none focus:border-amber-600"
+                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
               />
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Độ dày (mm)</label>
+              <label class="block text-[11px] font-medium text-text-secondary mb-1">Độ dày (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="thicknessMm"
@@ -107,7 +108,7 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
                 [min]="selectedMaterial()?.minThicknessMm || 0.2"
                 [max]="selectedMaterial()?.maxThicknessMm || 10"
                 step="0.1"
-                class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs font-mono tabular-nums focus:outline-none focus:border-amber-600"
+                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
               />
             </div>
           </div>
@@ -115,14 +116,14 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
           <!-- Quantity & Volume Tiers -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-semibold text-slate-700">Số lượng đặt sản xuất (tem)</label>
+              <label class="text-xs font-medium text-text-secondary">Số lượng đặt sản xuất (tem)</label>
               <div class="flex gap-1 font-mono text-[10px]">
                 @for (presetQty of [50, 200, 500, 1000]; track presetQty) {
                   <button
                     type="button"
                     (click)="quantity = presetQty; recalculate()"
-                    class="px-1.5 py-0.5 rounded border"
-                    [class]="quantity === presetQty ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-100 text-slate-700 border-slate-300'"
+                    class="px-1.5 py-0.5 rounded-[6px] border transition-colors"
+                    [class]="quantity === presetQty ? 'bg-accent text-bg border-accent font-semibold' : 'bg-bg text-text-secondary border-border hover:border-steel hover:text-steel'"
                   >
                     {{ presetQty }}
                   </button>
@@ -135,56 +136,56 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
               (ngModelChange)="recalculate()"
               min="1"
               step="1"
-              class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono tabular-nums font-bold focus:outline-none focus:border-amber-600"
+              class="industrial-input w-full px-3 py-2 text-sm font-mono tabular-nums font-bold"
             />
           </div>
 
           <!-- 3D Engraving Text & Rivets -->
-          <div class="border-t border-slate-200 pt-3 space-y-2.5">
+          <div class="border-t border-border pt-3 space-y-2.5">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-semibold text-slate-700">Nội dung mô phỏng trên mặt tem 3D</label>
-              <label class="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
-                <input type="checkbox" [(ngModel)]="cornerRivets" />
+              <label class="text-xs font-medium text-text-secondary">Nội dung mô phỏng trên mặt tem 3D</label>
+              <label class="flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer">
+                <input type="checkbox" [(ngModel)]="cornerRivets" class="accent-accent" />
                 <span>4 lỗ đinh tán góc</span>
               </label>
             </div>
             <textarea
               rows="3"
               [(ngModel)]="previewText"
-              class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-amber-600"
+              class="industrial-input w-full px-2.5 py-1.5 text-xs font-mono"
             ></textarea>
           </div>
 
           <!-- Technical Artwork File Upload (SeaweedFS S3) -->
-          <div class="border-t border-slate-200 pt-3">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">
+          <div class="border-t border-border pt-3">
+            <label class="block text-xs font-medium text-text-secondary mb-1">
               Tải lên bản vẽ thiết kế (.CDR, .AI, .PDF, .DXF, .PNG)
             </label>
             <input
               type="file"
               (change)="onFileSelected($event)"
               accept=".cdr,.ai,.pdf,.dxf,.svg,.png,.jpg,.jpeg,.zip"
-              class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
+              class="block w-full text-xs text-text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-[6px] file:border file:border-steel file:text-xs file:font-medium file:bg-transparent file:text-steel hover:file:bg-steel/10"
             />
             @if (uploading()) {
-              <div class="text-[11px] font-mono text-amber-700 mt-1">Đang tải file lên máy chủ xưởng...</div>
+              <div class="text-[11px] font-mono text-accent mt-1">Đang tải file lên máy chủ xưởng...</div>
             }
             @if (uploadedFile()) {
-              <div class="mt-1.5 p-2 rounded bg-emerald-50 border border-emerald-300 text-[11px] text-emerald-800 flex items-center justify-between">
+              <div class="mt-1.5 p-2 rounded-[6px] bg-success/10 border border-success/50 text-[11px] text-success flex items-center justify-between">
                 <span class="truncate font-mono">✓ {{ uploadedFile()!.fileName }}</span>
-                <button type="button" (click)="uploadedFile.set(null)" class="text-red-600 font-bold ml-2">✕</button>
+                <button type="button" (click)="uploadedFile.set(null)" class="text-danger font-bold ml-2">✕</button>
               </div>
             }
           </div>
 
           <!-- Customer Note -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Ghi chú kỹ thuật cho xưởng</label>
+            <label class="block text-xs font-medium text-text-secondary mb-1">Ghi chú kỹ thuật cho xưởng</label>
             <input
               type="text"
               [(ngModel)]="customerNote"
               placeholder="VD: Bo góc R3, đổ sơn đen nền, dán sẵn keo 3M mặt sau..."
-              class="w-full border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:border-amber-600"
+              class="industrial-input w-full px-3 py-2 text-xs"
             />
           </div>
         </div>
@@ -203,99 +204,99 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
             [cornerRivets]="cornerRivets"
           />
 
-          <div class="bg-white border border-slate-300 rounded-md p-3 text-xs text-slate-600 flex items-center justify-between">
+          <div class="industrial-card p-3 text-xs text-text-secondary flex flex-wrap items-center justify-between gap-2">
             <span>Quy trình đảm bảo chất lượng:</span>
-            <span class="font-mono font-semibold text-slate-900">
+            <span class="font-mono font-medium text-text-primary">
               1. Gửi đơn → 2. Xưởng làm 1 tem mẫu chụp ảnh duyệt → 3. Cọc 50% sản xuất
             </span>
           </div>
         </div>
 
         <!-- RIGHT PANEL: Live Deterministic Pricing Receipt (3 cols) -->
-        <div class="lg:col-span-3 bg-white border border-slate-300 rounded-md p-4 space-y-4">
-          <div class="border-b border-slate-200 pb-2.5 flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">
+        <div class="lg:col-span-3 industrial-card p-4 space-y-4">
+          <div class="border-b border-border pb-2.5 flex items-center justify-between">
+            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary">
               2. Bảng Tính Báo Giá
             </h2>
             @if (calculating()) {
-              <span class="text-[11px] font-mono text-amber-600">Đang tính...</span>
+              <span class="text-[11px] font-mono text-accent">Đang tính...</span>
             }
           </div>
 
           @if (quoteError()) {
-            <div class="p-2.5 rounded border border-red-300 bg-red-50 text-xs text-red-700">
+            <div class="p-2.5 rounded-[6px] border border-danger/50 bg-danger/10 text-xs text-danger">
               {{ quoteError() }}
             </div>
           }
 
           @if (quote()) {
             <div class="space-y-2.5 text-xs">
-              <div class="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-1 font-mono text-[11px]">
+              <div class="bg-bg border border-border rounded-[6px] p-2.5 space-y-1 font-mono text-[11px]">
                 <div class="flex justify-between">
-                  <span class="text-slate-500">Chế độ tính:</span>
-                  <span class="font-semibold text-slate-800">{{ quote()!.pricingFormulaMode }}</span>
+                  <span class="text-text-muted">Chế độ tính:</span>
+                  <span class="font-medium text-steel">{{ quote()!.pricingFormulaMode }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-500">Diện tích 1 tem:</span>
-                  <span class="tabular-nums text-slate-800">{{ quote()!.areaM2 }} m²</span>
+                  <span class="text-text-muted">Diện tích 1 tem:</span>
+                  <span class="tabular-nums text-text-primary">{{ quote()!.areaM2 }} m²</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-500">Khối lượng 1 tem:</span>
-                  <span class="tabular-nums text-slate-800">{{ quote()!.calculatedWeightKg }} kg</span>
+                  <span class="text-text-muted">Khối lượng 1 tem:</span>
+                  <span class="tabular-nums text-text-primary">{{ quote()!.calculatedWeightKg }} kg</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-500">Thời gian dự kiến:</span>
-                  <span class="tabular-nums font-semibold text-slate-900">~{{ quote()!.estimatedLeadTimeDays }} ngày làm việc</span>
+                  <span class="text-text-muted">Thời gian dự kiến:</span>
+                  <span class="tabular-nums font-medium text-text-primary">~{{ quote()!.estimatedLeadTimeDays }} ngày làm việc</span>
                 </div>
               </div>
 
               <div class="flex justify-between items-baseline pt-1">
-                <span class="text-slate-600">Đơn giá / 1 tem:</span>
-                <span class="font-mono tabular-nums font-bold text-sm text-slate-900">
+                <span class="text-text-secondary">Đơn giá / 1 tem:</span>
+                <span class="font-mono tabular-nums font-bold text-sm text-text-primary">
                   {{ quote()!.unitPrice | vnd }}
                 </span>
               </div>
 
               <div class="flex justify-between">
-                <span class="text-slate-600">Tạm tính ({{ quote()!.quantity }} tem):</span>
-                <span class="font-mono tabular-nums text-slate-900">{{ quote()!.subtotalAmount | vnd }}</span>
+                <span class="text-text-secondary">Tạm tính ({{ quote()!.quantity }} tem):</span>
+                <span class="font-mono tabular-nums text-text-primary">{{ quote()!.subtotalAmount | vnd }}</span>
               </div>
 
               @if ((quote()!.discountAmount || 0) > 0) {
-                <div class="flex justify-between text-emerald-700 font-medium">
+                <div class="flex justify-between text-success font-medium">
                   <span>Chiết khấu số lượng:</span>
                   <span class="font-mono tabular-nums">-{{ quote()!.discountAmount | vnd }}</span>
                 </div>
               }
 
-              <div class="pt-1 border-t border-slate-200">
+              <div class="pt-1 border-t border-border">
                 <label class="flex items-center justify-between cursor-pointer">
-                  <span class="text-slate-700 font-medium">Xuất hóa đơn VAT đỏ (10%)</span>
+                  <span class="text-text-secondary font-medium">Xuất hóa đơn VAT đỏ (10%)</span>
                   <input
                     type="checkbox"
                     [(ngModel)]="requiresVatInvoice"
                     (ngModelChange)="recalculate()"
-                    class="rounded border-slate-300"
+                    class="rounded border-border accent-accent"
                   />
                 </label>
                 @if (requiresVatInvoice) {
-                  <div class="flex justify-between text-slate-600 mt-1.5">
+                  <div class="flex justify-between text-text-secondary mt-1.5">
                     <span>Thuế GTGT (VAT):</span>
-                    <span class="font-mono tabular-nums">{{ quote()!.vatAmount | vnd }}</span>
+                    <span class="font-mono tabular-nums text-text-primary">{{ quote()!.vatAmount | vnd }}</span>
                   </div>
                 }
               </div>
 
-              <div class="border-t-2 border-slate-900 pt-3 flex justify-between items-baseline">
-                <span class="font-bold text-slate-900">TỔNG CỘNG:</span>
-                <span class="font-mono tabular-nums text-lg font-bold text-amber-700">
+              <div class="border-t border-border pt-3 flex justify-between items-baseline">
+                <span class="font-bold text-text-primary">TỔNG CỘNG:</span>
+                <span class="font-mono tabular-nums text-lg font-bold text-accent">
                   {{ quote()!.totalAmount | vnd }}
                 </span>
               </div>
 
-              <div class="bg-amber-50 border border-amber-300 rounded p-2.5 flex justify-between items-center">
-                <span class="text-amber-900 font-semibold">Cọc sản xuất (50%):</span>
-                <span class="font-mono tabular-nums font-bold text-amber-900">
+              <div class="bg-bg border border-accent/60 rounded-[6px] p-2.5 flex justify-between items-center">
+                <span class="text-accent font-medium">Cọc sản xuất (50%):</span>
+                <span class="font-mono tabular-nums font-bold text-accent">
                   {{ quote()!.depositRequiredAmount | vnd }}
                 </span>
               </div>
@@ -306,14 +307,17 @@ import { Nameplate3dViewerComponent } from './nameplate-3d-viewer.component';
             type="button"
             (click)="addCustomItemToCart()"
             [disabled]="addingToCart() || !quote() || !!quoteError()"
-            class="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-semibold text-sm py-3 rounded-md transition-colors"
+            appButton
+            variant="primary"
+            size="lg"
+            [fullWidth]="true"
           >
             {{ addingToCart() ? 'Đang thêm vào giỏ...' : '+ Thêm Cấu Hình Này Vào Giỏ' }}
           </button>
 
           @if (addedSuccess()) {
-            <div class="p-2.5 rounded bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 text-center">
-              ✓ Đã lưu cấu hình vào giỏ! <a routerLink="/cart" class="underline font-bold">Mở giỏ hàng →</a>
+            <div class="p-2.5 rounded-[6px] bg-success/10 border border-success/50 text-xs text-success text-center">
+              ✓ Đã lưu cấu hình vào giỏ! <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Mở giỏ hàng →</a>
             </div>
           }
         </div>

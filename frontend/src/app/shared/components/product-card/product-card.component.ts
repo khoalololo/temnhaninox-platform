@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/catalog.models';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
+import { ButtonDirective } from '../button/button.component';
+import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholder.component';
 
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, VndCurrencyPipe],
+  imports: [CommonModule, RouterLink, VndCurrencyPipe, ButtonDirective, ImagePlaceholderComponent],
   template: `
-    <div class="bg-white border border-slate-300 rounded-md overflow-hidden flex flex-col h-full hover:border-slate-400 transition-colors">
+    <div class="industrial-card overflow-hidden flex flex-col h-full hover:border-steel">
       <!-- Image -->
-      <a [routerLink]="['/products', product.slug]" class="relative block aspect-[4/3] bg-slate-100 border-b border-slate-200 overflow-hidden">
+      <a [routerLink]="['/products', product.slug]" class="relative block aspect-[4/3] bg-bg border-b border-border overflow-hidden">
         @if (product.imageUrl) {
           <img
             [src]="product.imageUrl"
@@ -20,25 +22,22 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
             loading="lazy"
           />
         } @else {
-          <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">
-            <span class="font-mono text-xs font-semibold tracking-wider uppercase">{{ product.sku }}</span>
-            <span class="text-[11px] mt-1">{{ product.materialName || 'Kim loại' }}</span>
-          </div>
+          <app-image-placeholder [sku]="product.sku" />
         }
 
         <span
-          class="absolute top-2 left-2 text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded border"
+          class="absolute top-2 left-2 text-[10px] font-mono font-medium uppercase px-2 py-0.5 rounded-full border bg-bg/90"
           [class]="product.productType === 'CUSTOM_TEMPLATE'
-            ? 'bg-amber-50 text-amber-800 border-amber-300'
-            : 'bg-slate-900 text-white border-slate-700'"
+            ? 'text-accent border-accent/70'
+            : 'text-steel border-steel/70'"
         >
           {{ product.productType === 'CUSTOM_TEMPLATE' ? 'Gia công 3D' : 'Có sẵn' }}
         </span>
       </a>
 
       <!-- Body -->
-      <div class="p-3 flex flex-col flex-1">
-        <div class="text-[11px] font-mono text-slate-500 mb-1 truncate">
+      <div class="p-3.5 flex flex-col flex-1">
+        <div class="text-[11px] font-mono text-text-muted mb-1 truncate">
           {{ product.sku }}
           @if (product.materialName) {
             <span> · {{ product.materialName }}</span>
@@ -47,16 +46,16 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 
         <a
           [routerLink]="['/products', product.slug]"
-          class="text-sm font-semibold text-slate-900 hover:text-amber-700 line-clamp-2 mb-2 leading-snug"
+          class="text-sm font-semibold text-text-primary hover:text-steel-hover line-clamp-2 mb-2 leading-snug transition-colors"
         >
           {{ product.name }}
         </a>
 
-        <div class="mt-auto pt-2 border-t border-slate-100">
+        <div class="mt-auto pt-2.5 border-t border-border">
           @if (product.productType === 'CUSTOM_TEMPLATE') {
-            <div class="text-xs text-slate-600 mb-2 flex items-center justify-between">
+            <div class="text-xs text-text-secondary mb-2.5 flex items-center justify-between gap-2">
               <span>Kích thước mẫu:</span>
-              <span class="font-mono tabular-nums font-medium text-slate-900">
+              <span class="font-mono tabular-nums font-medium text-text-primary">
                 {{ product.defaultWidthMm || 80 }} × {{ product.defaultHeightMm || 40 }} × {{ product.defaultThicknessMm || 0.8 }} mm
               </span>
             </div>
@@ -70,16 +69,19 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
                 h: product.defaultHeightMm || 40,
                 t: product.defaultThicknessMm || 0.8
               }"
-              class="block w-full text-center bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-2 px-3 rounded-md transition-colors"
+              appButton
+              variant="primary"
+              size="sm"
+              [fullWidth]="true"
             >
               Tùy chỉnh kích thước 3D
             </a>
           } @else {
-            <div class="flex items-baseline justify-between mb-2">
-              <span class="font-mono tabular-nums text-sm font-bold text-slate-900">
+            <div class="flex items-baseline justify-between mb-2.5">
+              <span class="font-mono tabular-nums text-sm font-semibold text-text-primary">
                 {{ product.basePrice | vnd }}
               </span>
-              <span class="text-[11px] font-mono tabular-nums text-slate-500">
+              <span class="text-[11px] font-mono tabular-nums text-text-muted">
                 Kho: {{ product.stockQuantity ?? 0 }}
               </span>
             </div>
@@ -87,7 +89,10 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
               type="button"
               (click)="addToCart.emit(product)"
               [disabled]="(product.stockQuantity ?? 0) <= 0"
-              class="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 text-white text-xs font-semibold py-2 px-3 rounded-md transition-colors"
+              appButton
+              variant="secondary"
+              size="sm"
+              [fullWidth]="true"
             >
               {{ (product.stockQuantity ?? 0) > 0 ? 'Thêm vào giỏ' : 'Hết hàng' }}
             </button>

@@ -7,22 +7,23 @@ import { CartApiService } from '../../../core/services/cart-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Category, Product, ProductType } from '../../../core/models/catalog.models';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
+import { ButtonDirective } from '../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductCardComponent],
+  imports: [CommonModule, FormsModule, ProductCardComponent, ButtonDirective],
   template: `
     <div class="max-w-7xl mx-auto px-4 py-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-300">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-border">
         <div>
-          <h1 class="text-xl font-bold text-slate-900">Danh Mục Tem Nhãn & Vật Tư Xưởng</h1>
-          <p class="text-xs text-slate-500 font-mono tabular-nums">
+          <h1 class="font-heading text-xl font-bold text-text-primary">Danh Mục Tem Nhãn & Vật Tư Xưởng</h1>
+          <p class="text-xs text-text-secondary font-mono tabular-nums">
             Hiển thị {{ products().length }} / {{ totalElements() }} mã sản phẩm
           </p>
         </div>
         @if (toastMessage()) {
-          <div class="px-3 py-1.5 rounded bg-slate-900 text-amber-400 text-xs font-medium">
+          <div class="px-3 py-1.5 rounded-[6px] bg-surface border border-accent text-accent text-xs font-medium">
             {{ toastMessage() }}
           </div>
         }
@@ -31,9 +32,9 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- Left Filter Sidebar -->
         <aside class="lg:col-span-3 space-y-5">
-          <div class="bg-white border border-slate-300 rounded-md p-4 space-y-4">
+          <div class="industrial-card p-4 space-y-4">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
                 Tìm theo từ khóa / SKU
               </label>
               <div class="flex gap-1.5">
@@ -42,48 +43,50 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
                   [(ngModel)]="search"
                   (keyup.enter)="applyFilters()"
                   placeholder="VD: Inox 304, Laser..."
-                  class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-amber-600"
+                  class="industrial-input w-full px-2.5 py-1.5 text-xs"
                 />
                 <button
                   type="button"
                   (click)="applyFilters()"
-                  class="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded"
+                  appButton
+                  variant="secondary"
+                  size="sm"
                 >
                   Lọc
                 </button>
               </div>
             </div>
 
-            <div class="border-t border-slate-200 pt-3">
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+            <div class="border-t border-border pt-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
                 Hình thức đặt hàng
               </div>
-              <div class="space-y-1.5 text-xs">
+              <div class="space-y-1.5 text-xs text-text-primary">
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="ptype" [value]="''" [(ngModel)]="selectedType" (change)="applyFilters()" />
+                  <input type="radio" name="ptype" [value]="''" [(ngModel)]="selectedType" (change)="applyFilters()" class="accent-accent" />
                   <span>Tất cả sản phẩm</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="ptype" value="CUSTOM_TEMPLATE" [(ngModel)]="selectedType" (change)="applyFilters()" />
+                  <input type="radio" name="ptype" value="CUSTOM_TEMPLATE" [(ngModel)]="selectedType" (change)="applyFilters()" class="accent-accent" />
                   <span>Gia công theo kích thước (3D)</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="ptype" value="STANDARD_ITEM" [(ngModel)]="selectedType" (change)="applyFilters()" />
+                  <input type="radio" name="ptype" value="STANDARD_ITEM" [(ngModel)]="selectedType" (change)="applyFilters()" class="accent-accent" />
                   <span>Hàng có sẵn giao ngay</span>
                 </label>
               </div>
             </div>
 
-            <div class="border-t border-slate-200 pt-3">
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+            <div class="border-t border-border pt-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
                 Danh mục vật liệu
               </div>
               <div class="space-y-1 text-xs">
                 <button
                   type="button"
                   (click)="selectCategory('')"
-                  class="w-full text-left px-2 py-1.5 rounded transition-colors"
-                  [class]="selectedCategoryId === '' ? 'bg-amber-50 text-amber-800 font-semibold border border-amber-300' : 'text-slate-700 hover:bg-slate-100'"
+                  class="w-full text-left px-2.5 py-1.5 rounded-[6px] transition-colors border"
+                  [class]="selectedCategoryId === '' ? 'bg-surface-raised text-steel border-steel font-medium' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-text-primary'"
                 >
                   Tất cả danh mục
                 </button>
@@ -91,8 +94,8 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
                   <button
                     type="button"
                     (click)="selectCategory(cat.id)"
-                    class="w-full text-left px-2 py-1.5 rounded transition-colors"
-                    [class]="selectedCategoryId === cat.id ? 'bg-amber-50 text-amber-800 font-semibold border border-amber-300' : 'text-slate-700 hover:bg-slate-100'"
+                    class="w-full text-left px-2.5 py-1.5 rounded-[6px] transition-colors border"
+                    [class]="selectedCategoryId === cat.id ? 'bg-surface-raised text-steel border-steel font-medium' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-text-primary'"
                   >
                     {{ cat.name }}
                   </button>
@@ -103,7 +106,10 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
             <button
               type="button"
               (click)="resetFilters()"
-              class="w-full border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-medium py-1.5 rounded"
+              appButton
+              variant="ghost"
+              size="sm"
+              [fullWidth]="true"
             >
               Đặt lại bộ lọc
             </button>
@@ -115,18 +121,23 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
           @if (loading()) {
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               @for (n of [1, 2, 3, 4, 5, 6]; track n) {
-                <div class="bg-white border border-slate-200 rounded-md h-72 animate-pulse"></div>
+                <div class="bg-surface border border-border rounded-[10px] h-72 animate-pulse"></div>
               }
             </div>
           } @else if (products().length === 0) {
-            <div class="bg-white border border-slate-300 rounded-md p-10 text-center space-y-2">
-              <div class="text-sm font-bold text-slate-900">Không tìm thấy sản phẩm phù hợp</div>
-              <p class="text-xs text-slate-500">Thử đổi từ khóa hoặc mở công cụ báo giá 3D để nhập kích thước tùy ý.</p>
+            <div class="industrial-card p-10 text-center space-y-2">
+              <div class="font-heading text-sm font-bold text-text-primary">Không tìm thấy sản phẩm phù hợp</div>
+              <p class="text-xs text-text-secondary">Thử đổi từ khóa hoặc mở công cụ báo giá 3D để nhập kích thước tùy ý.</p>
             </div>
           } @else {
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              @for (product of products(); track product.id) {
-                <app-product-card [product]="product" (addToCart)="handleAddToCart($event)" />
+              @for (product of products(); track product.id; let idx = $index) {
+                <app-product-card
+                  class="product-grid-item block h-full"
+                  [style.animation-delay]="(idx < 6 ? idx : 5) * 40 + 'ms'"
+                  [product]="product"
+                  (addToCart)="handleAddToCart($event)"
+                />
               }
             </div>
 
@@ -137,18 +148,22 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
                   type="button"
                   [disabled]="page() === 0"
                   (click)="goToPage(page() - 1)"
-                  class="px-3 py-1.5 bg-white border border-slate-300 rounded disabled:opacity-40"
+                  appButton
+                  variant="secondary"
+                  size="sm"
                 >
                   ← Trước
                 </button>
-                <span class="px-3 py-1.5 text-slate-700">
+                <span class="px-3 py-1.5 text-text-secondary">
                   Trang {{ page() + 1 }} / {{ totalPages() }}
                 </span>
                 <button
                   type="button"
                   [disabled]="page() + 1 >= totalPages()"
                   (click)="goToPage(page() + 1)"
-                  class="px-3 py-1.5 bg-white border border-slate-300 rounded disabled:opacity-40"
+                  appButton
+                  variant="secondary"
+                  size="sm"
                 >
                   Sau →
                 </button>
