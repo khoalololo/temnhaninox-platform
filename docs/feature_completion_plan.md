@@ -68,7 +68,7 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 ### Tier 1 — Verify or resolve before production/demo sign-off
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
-| 1 | Full cross-service order lifecycle is not verified end-to-end | Unit tests cover individual services and transitions; no cross-service integration test or recorded manual run covers custom quote → admin review → prototype → deposit → production → completion. | Add an integration test or execute and record the full workflow against running services, including payment and audit/status history. |
+| 1 | Full cross-service order lifecycle is not verified end-to-end | Unit tests cover individual services and transitions; no cross-service integration test or recorded manual run covers custom quote → admin review → prototype → deposit → production → completion. | **Automated now:** `node scripts/e2e-smoke.mjs` (see Phase F) drives the whole lifecycle through the gateway and asserts every state, guard and price. Run it, then still do the visual UC walkthrough by hand. |
 | 2 | Storefront/admin acceptance checks are still pending | Pagination, product detail, admin catalog/pricing, order tracking, dashboard, loading/error states, and mobile navigation are implemented in code. The tracker explicitly says UC-03–UC-12 and 375px checks are pending. | Run and record UC-03–UC-12 on desktop and a 375px viewport. UC-01/UC-02 remain excluded, not outstanding work. |
 | 3 | Production RBAC depends on trusted network boundaries | The gateway validates JWTs, strips spoofed identity headers, and has tests for 401/403 behavior. Downstream services accept `X-User-Id`/`X-User-Role`; no repository deployment config currently restricts direct access to their ports. JWT config also has a development fallback secret. | Before deployment, make services reachable only through the gateway (private network/bind/firewall) and require a strong shared `JWT_SECRET` with no production fallback. Verify gateway-mediated and direct-service denial. |
 
@@ -83,7 +83,7 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 ### Tier 3 — Evidence and quality gates
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
-| 8 | “100%” pricing test coverage is not demonstrated | Pricing formula tests cover representative thin/thick, bulk, VAT, and deposit cases, but no coverage report was found to substantiate 100% coverage. | Generate a coverage report and report actual coverage; add tests for uncovered pricing boundaries rather than claiming a percentage without evidence. |
+| 8 | “100%” pricing test coverage is not demonstrated | Pricing formula tests cover representative thin/thick, bulk, VAT, and deposit cases, but no coverage report was found to substantiate 100% coverage. | **Done:** JaCoCo added to the parent pom; run `mvn test` and open `catalog-pricing-service/target/site/jacoco/index.html`. Added 999/1000-unit and 1.00/1.01 mm boundary tests. Quote the real number from the report; do not claim 100% unless it says so. |
 | 9 | Runtime infrastructure claims are not verified by repository state | The tracker records earlier local PostgreSQL/SeaweedFS setup, but there is no checked-in deployment definition to reproduce the claimed running services, schemas, or buckets. | Re-run the setup from documented commands and record schema/bucket/health checks after Tier 2 deployment decisions are resolved. |
 
 ### Tier 4 — Deferred or awaiting owner decision
@@ -238,6 +238,20 @@ Done on branch `hardening/phase5-prep` (review the diff, then run `cd backend &&
 - Existing admin keeps its old password; change it manually (no password-change UI yet — add with Phase B).
 - Phase B Part 1 must now be a Flyway migration `auth-service/.../V2__google_and_password_reset.sql`, not an edit to `init.sql`.
 - Pricing unit/rate questions in Section 5 still block trusting any quote.
+
+---
+
+### Phase F — Automated verification & guard fixes [WRITTEN, NOT YET RUN]
+
+Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
+- **Bug fixed:** admin could move an order to `COMPLETED` without the full balance being verified (the `BALANCE_NOT_SETTLED` error code existed but was never used). `AdminOrderService.updateOrderStatus` now enforces `paidAmount >= totalAmount`; 2 new tests.
+- **`scripts/e2e-smoke.mjs`** (Node 18+, no dependencies): auth and role checks (401/403, admin cannot use the cart), password-reset enumeration safety, pricing vector (INOX_304 100×50×2 mm ×10 = 33,702.50/unit, +10% VAT), custom order `QUOTE_PENDING → QUOTE_APPROVED → PROTOTYPING → AWAITING_DEPOSIT → IN_PRODUCTION → READY_FOR_DELIVERY → COMPLETED` including the guards (no production before deposit, no completion before balance), status history, cross-customer isolation, standard-item order, and VNPAY IPN (wrong amount 04, bad signature 97, success 00, replay 02). Creates throw-away users/orders: dev DB only. `CHECK_DIRECT=1` also reports whether service ports are reachable directly.
+- Run: start Postgres + object storage + the 4 services (or compose), then `node scripts/e2e-smoke.mjs`. Exit code 1 on any failure.
+
+**Decisions recorded for the remaining Tier 2 items**
+- Admin layout (#6, Kanban + single-screen cockpit): the tabbed inspector already supports the full workflow; build a board only if the uncle asks to see orders by status at a glance.
+- `OrderStateMachineService` (#7): transitions live in `AdminOrderService`/`OrderService` and are unit-tested; extract only if you want it as a showcase of design, not for correctness.
+- Storage (#5): decide MinIO vs SeaweedFS (compose uses SeaweedFS) and whether a third bucket (e.g. `payment-proofs`) is wanted; payment proofs currently go through `design-files`.
 
 ---
 

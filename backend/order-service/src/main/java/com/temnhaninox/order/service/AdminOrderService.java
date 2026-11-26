@@ -216,6 +216,13 @@ public class AdminOrderService {
                             + order.getPaidAmount());
         }
 
+        if (target == OrderStatus.COMPLETED
+                && order.getPaidAmount().compareTo(order.getTotalAmount()) < 0) {
+            throw new BusinessException(ErrorCode.BALANCE_NOT_SETTLED,
+                    "Cannot complete order before the full balance (" + order.getTotalAmount()
+                            + ") is verified; current paidAmount=" + order.getPaidAmount());
+        }
+
         if (request.getProductionWorkerNote() != null) {
             order.setProductionWorkerNote(request.getProductionWorkerNote().trim());
         }

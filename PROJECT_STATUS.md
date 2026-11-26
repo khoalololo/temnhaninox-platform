@@ -86,3 +86,8 @@
 - [x] Dockerfiles for api-gateway/auth/catalog/order/frontend; gateway route URLs from env; compose S3_* names fixed
 - [ ] `mvn test`, then `docker compose -f infra/docker-compose.yml up --build` and verify through http://localhost:4200 only
 - [ ] UC-01 (Mailpit) and UC-02 (needs your Google client ID)
+
+### Phase F: Automated verification (branch `feature/e2e-smoke-and-coverage`) [WRITTEN — not run]
+- [x] Fix: COMPLETED now requires the full balance verified (+2 tests); JaCoCo + pricing boundary tests (+2)
+- [x] `scripts/e2e-smoke.mjs` end-to-end lifecycle + guards + IPN
+- [ ] Run `mvn test`, start the stack, run `node scripts/e2e-smoke.mjs`, fix whatever it reports
