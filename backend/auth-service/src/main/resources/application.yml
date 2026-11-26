@@ -11,6 +11,11 @@ spring:
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
   flyway:
     enabled: true
     schemas: auth_schema
@@ -29,6 +34,11 @@ spring:
         format_sql: true
 
 app:
+  frontend-url: ${FRONTEND_URL}
+  mail:
+    from: ${MAIL_FROM:no-reply@temnhaninox.com}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
   admin:
     email: ${ADMIN_EMAIL}
     password: ${ADMIN_PASSWORD}
@@ -37,6 +47,9 @@ app:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 management:
+  health:
+    mail:
+      enabled: false   # do not report the service DOWN just because SMTP is unreachable
   endpoints:
     web:
       exposure:

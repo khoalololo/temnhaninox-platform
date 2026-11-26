@@ -75,7 +75,7 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 ### Tier 2 — Align implementation with the Phase 0/3/5 architecture checklist
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
-| 4 | Repeatable Docker/Nginx deployment setup | `docker-compose.yml` and `nginx/default.conf` were deleted by the UI overhaul commit and restored by the owner in `65ed853` (check they are pushed). `infra/.env.example` is new. In compose, publish ONLY the gateway/nginx port; keep 8081–8083, Postgres and S3 on the internal network. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
+| 4 | Repeatable Docker/Nginx deployment setup (Dockerfiles for 4 services + frontend added, gateway routes parametrized via `*_SERVICE_URL`, compose env names fixed (S3_*), Mailpit added — **docker build not run yet**) | `docker-compose.yml` and `nginx/default.conf` were deleted by the UI overhaul commit and restored by the owner in `65ed853` (check they are pushed). `infra/.env.example` is new. In compose, publish ONLY the gateway/nginx port; keep 8081–8083, Postgres and S3 on the internal network. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
 | 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and allows `design-files` and `product-images` (two bucket names). The screenshot checklist refers to MinIO and three verified buckets, while the repository has no Compose setup to provision/verify them. | Confirm SeaweedFS vs. MinIO and define the intended third bucket/use before changing storage; then provision and verify the agreed buckets reproducibly. |
 | 6 | Admin order UI differs from the requested Phase 5 layout | `/admin` provides an orders tab/list and inspector in a tabbed cockpit. It does not provide the screenshot’s Kanban-plus-table `OrdersBoardComponent` / single-screen board layout. Core order operations exist. | Decide whether that exact layout is still required; if yes, build the board/table view and verify processing an order through completion without direct database access. |
 | 7 | Order-state logic is not factored into the named state-machine service | Transition validation and deposit gates exist in `AdminOrderService`/`OrderService`; there is no separate `OrderStateMachineService` as named in the Phase 3 checklist. | Extract a dedicated service only if the architecture requirement is retained; preserve and test the existing transition and deposit rules. |
@@ -100,8 +100,8 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 
 | ID | Actor | Scenario | Steps | Expected result |
 |---|---|---|---|---|
-| UC-01 | Customer (deferred) | Forgot password | Excluded from current acceptance scope per owner request. | Do not implement or verify unless the owner reopens this scope. |
-| UC-02 | Customer (deferred) | Google sign-in | Excluded from current acceptance scope per owner request. | Do not implement or verify unless the owner reopens this scope. |
+| UC-01 | Customer | Forgot password | `/login` → "Quên mật khẩu?" → enter email → open Mailpit (http://localhost:8025) → click link → set new password → log in with it | Same success message for unknown emails; link works once and expires after 1 h; reusing it fails |
+| UC-02 | Customer | Google sign-in | Set `GOOGLE_CLIENT_ID` (backend) and `app-config.ts` (frontend), click the Google button | New CUSTOMER account created, JWT issued; an existing ADMIN email is refused; button hidden when no client ID |
 | UC-03 | Visitor | Browse paginated catalog | Open `/products` with 37 seeded items | Shows page size (e.g., 12) + pagination bar; page 2 loads next set |
 | UC-04 | Visitor | Use category mega-menu | Hover/click "Sản phẩm" in top nav | Dropdown shows nested categories (`Tem Nhãn` → `Inox`, `Nhôm`, `Đồng`, `Mica`, `Decal`, `CNC`, `Laser`, `Máy Móc`, `Hoá Chất`, `Vật Phẩm Lưu Niệm`) |
 | UC-05 | Visitor | View product detail | Click a product card | Image gallery with thumbnail swap, full spec table, "Thêm vào giỏ" (`STANDARD_ITEM`) or "Tuỳ chỉnh kích thước 3D" (`CUSTOM_TEMPLATE`) |
@@ -142,10 +142,10 @@ Apply the remaining design system updates from docs/PHASE_UI_IMPLEMENTATION_PLAN
 
 ---
 
-### Phase B — Auth Completeness (Google Sign-In + Forgot/Reset Password) [DEFERRED]
+### Phase B — Auth Completeness (Google Sign-In + Forgot/Reset Password) [IMPLEMENTED on branch feature/phase-b-auth; NOT RUN — verify UC-01/UC-02]
 
 ```
-Do not execute this prompt unless the owner explicitly reopens the deferred auth scope.
+Already implemented (see summary below). Do not re-run this prompt; use it only as the spec to verify against.
 
 Implement Google sign-in and forgot/reset password for backend/auth-service (8081) and the Angular frontend, building on the existing JWT auth from Phase 1.
 
@@ -169,6 +169,13 @@ Add a `mailpit` service (`axllent/mailpit`) exposing SMTP on `1025` and Web UI o
 ### Verification
 - Verify UC-01 and UC-02 manually using Mailpit at `http://localhost:8025` and run JUnit tests for `auth-service`.
 ```
+
+**Phase B implementation summary (branch `feature/phase-b-auth`, uncompiled backend — run `mvn test`):**
+- Flyway `V2__google_signin_and_password_reset.sql` (validated on Postgres 16): `auth_provider`, `google_id` (unique), nullable `password_hash` and `phone`, `password_reset_tokens` (stores SHA-256 hash only).
+- `POST /api/v1/auth/forgot-password` (always generic 200), `POST /api/v1/auth/reset-password` (1 h, single use, invalidates all of the user's tokens), `POST /api/v1/auth/google` (verifies via Google tokeninfo, checks audience + `email_verified`, never links to an ADMIN account).
+- Spring Mail + Mailpit in compose; frontend `/forgot-password`, `/reset-password`, Google button on `/login`.
+- Manual prerequisite: create the Google OAuth Client ID and set it in two places (backend env + `app-config.ts`).
+- Known limits: tokeninfo adds one HTTP call per Google login (fine at this scale; switch to `GoogleIdTokenVerifier` if volume grows); no rate limit on forgot-password yet; no "change password" screen for logged-in users yet.
 
 ---
 

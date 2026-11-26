@@ -80,3 +80,9 @@
 - [ ] Run `mvn test` (all modules) and start every service on the existing DB and on an empty DB
 - [ ] Gateway-only network exposure in `infra/docker-compose.yml`
 - [ ] Manual UC-03..UC-12 and the full quote → deposit → production → completion run (Phase 5)
+
+### Phase B + Docker wiring (branch `feature/phase-b-auth`) [WRITTEN — backend not compiled, nothing run]
+- [x] Forgot/reset password + Google sign-in (backend, Flyway V2, frontend pages, Mailpit)
+- [x] Dockerfiles for api-gateway/auth/catalog/order/frontend; gateway route URLs from env; compose S3_* names fixed
+- [ ] `mvn test`, then `docker compose -f infra/docker-compose.yml up --build` and verify through http://localhost:4200 only
+- [ ] UC-01 (Mailpit) and UC-02 (needs your Google client ID)

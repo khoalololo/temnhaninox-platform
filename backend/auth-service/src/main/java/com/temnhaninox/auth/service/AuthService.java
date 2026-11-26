@@ -50,7 +50,8 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null
+                || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "Invalid email or password");
         }
 
@@ -61,7 +62,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    private AuthResponse buildAuthResponse(User user) {
+    public AuthResponse buildAuthResponse(User user) {
         String token = jwtTokenProvider.generateToken(user);
         return AuthResponse.builder()
                 .accessToken(token)

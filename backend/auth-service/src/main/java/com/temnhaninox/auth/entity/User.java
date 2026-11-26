@@ -40,14 +40,22 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String phone;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column(name = "google_id", length = 100)
+    private String googleId;
 
     @Column(name = "default_address", columnDefinition = "TEXT")
     private String defaultAddress;

@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartApiService } from '../../../core/services/cart-api.service';
+import { APP_CONFIG } from '../../../core/config/app-config';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
 
 @Component({
@@ -40,7 +41,10 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-text-secondary mb-1">Mật khẩu</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium text-text-secondary">Mật khẩu</label>
+              <a routerLink="/forgot-password" class="text-xs font-medium text-steel hover:text-steel-hover hover:underline">Quên mật khẩu?</a>
+            </div>
             <input
               type="password"
               [(ngModel)]="password"
@@ -63,6 +67,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
           </button>
         </form>
 
+        @if (googleEnabled) {
+          <div class="flex items-center gap-3 my-4">
+            <div class="flex-1 h-px bg-border"></div>
+            <span class="text-[11px] uppercase tracking-wider text-text-muted">hoặc</span>
+            <div class="flex-1 h-px bg-border"></div>
+          </div>
+          <div #googleButton class="flex justify-center min-h-[44px]"></div>
+        }
+
         <div class="mt-5 pt-4 border-t border-border text-xs text-text-secondary flex items-center justify-between">
           <span>Chưa có tài khoản doanh nghiệp / cá nhân?</span>
           <a routerLink="/register" class="font-semibold text-steel hover:text-steel-hover hover:underline">Đăng ký ngay</a>
@@ -71,11 +84,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
     </div>
   `,
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   private readonly authService = inject(AuthService);
   private readonly cartService = inject(CartApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly zone = inject(NgZone);
+
+  readonly googleEnabled = !!APP_CONFIG.googleClientId;
+  @ViewChild('googleButton') googleButton?: ElementRef<HTMLElement>;
 
   email = '';
   password = '';
@@ -85,6 +102,57 @@ export class LoginComponent {
       ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
       : ''
   );
+
+  ngAfterViewInit(): void {
+    if (!this.googleEnabled) return;
+    this.loadGoogleScript().then(() => {
+      const google = (window as any).google;
+      if (!google || !this.googleButton) return;
+      google.accounts.id.initialize({
+        client_id: APP_CONFIG.googleClientId,
+        callback: (resp: { credential: string }) => this.zone.run(() => this.onGoogleCredential(resp.credential)),
+      });
+      google.accounts.id.renderButton(this.googleButton.nativeElement, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        width: 320,
+      });
+    }).catch(() => this.errorMessage.set('Không tải được đăng nhập Google. Vui lòng dùng email và mật khẩu.'));
+  }
+
+  private loadGoogleScript(): Promise<void> {
+    if ((window as any).google?.accounts?.id) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject();
+      document.head.appendChild(script);
+    });
+  }
+
+  private onGoogleCredential(idToken: string): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.authService.googleLogin(idToken).subscribe({
+      next: (res) => {
+        this.loading.set(false);
+        if (res.success) {
+          this.cartService.loadCart().subscribe({ error: () => {} });
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          this.router.navigateByUrl(returnUrl || '/');
+        } else {
+          this.errorMessage.set(res.message || 'Đăng nhập Google thất bại.');
+        }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.errorMessage.set(err?.error?.message || 'Đăng nhập Google thất bại.');
+      },
+    });
+  }
 
   onSubmit(): void {
     if (!this.email.trim() || !this.password) {

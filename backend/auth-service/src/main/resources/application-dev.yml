@@ -1,9 +1,12 @@
 # Local-development defaults ONLY. Active automatically unless SPRING_PROFILES_ACTIVE is set (use "prod" in production,
 # where every secret must come from the environment and the service refuses to start without it).
 spring:
+  mail:
+    host: ${MAIL_HOST:localhost}   # Mailpit: SMTP 1025, web UI http://localhost:8025
   datasource:
     password: ${POSTGRES_PASSWORD:1789}
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-TemNhanInox-change-me-0123456789-0123456789-0123456789}
   admin:
