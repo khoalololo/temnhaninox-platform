@@ -195,4 +195,95 @@ class PaymentServiceTest {
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
+
+    // ---- IPN (server-to-server) ----
+
+    private PaymentTransaction pendingTx(Order order, String txnRef) {
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .id(UUID.randomUUID())
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .paymentMethod(PaymentMethod.VNPAY_SANDBOX)
+                .amount(new BigDecimal("500000.00"))
+                .status(PaymentStatus.PENDING)
+                .transactionRef(txnRef)
+                .build();
+        order.addPaymentTransaction(tx);
+        return tx;
+    }
+
+    private Order awaitingDepositOrder() {
+        return Order.builder()
+                .id(orderId)
+                .orderCode("TNI-20261124-0003")
+                .customerId(customerId)
+                .status(OrderStatus.AWAITING_DEPOSIT)
+                .depositRequiredAmount(new BigDecimal("500000.00"))
+                .paidAmount(BigDecimal.ZERO)
+                .paymentTransactions(new ArrayList<>())
+                .statusLogs(new ArrayList<>())
+                .build();
+    }
+
+    private Map<String, String> signed(String txnRef, String amount, String code) {
+        Map<String, String> params = new TreeMap<>();
+        params.put("vnp_Amount", amount);
+        params.put("vnp_ResponseCode", code);
+        params.put("vnp_TmnCode", TMN_CODE);
+        params.put("vnp_TxnRef", txnRef);
+        params.put("vnp_SecureHash", PaymentService.hmacSha512(HASH_SECRET, PaymentService.buildQueryString(params)));
+        return params;
+    }
+
+    @Test
+    void ipn_validPayment_confirmsAndIsIdempotentOnReplay() {
+        Order order = awaitingDepositOrder();
+        PaymentTransaction tx = pendingTx(order, "REF-IPN-1");
+        when(paymentTransactionRepository.findByTransactionRef("REF-IPN-1")).thenReturn(Optional.of(tx));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Map<String, String> params = signed("REF-IPN-1", "50000000", "00");
+        assertThat(paymentService.handleVnpayIpn(params)).containsEntry("RspCode", "00");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.IN_PRODUCTION);
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("500000.00");
+
+        // VNPAY retries / browser return afterwards must not double-count
+        assertThat(paymentService.handleVnpayIpn(params)).containsEntry("RspCode", "02");
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("500000.00");
+        paymentService.handleVnpayReturn(params);
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("500000.00");
+    }
+
+    @Test
+    void ipn_amountMismatch_isRejectedAndOrderUntouched() {
+        Order order = awaitingDepositOrder();
+        PaymentTransaction tx = pendingTx(order, "REF-IPN-2");
+        when(paymentTransactionRepository.findByTransactionRef("REF-IPN-2")).thenReturn(Optional.of(tx));
+
+        Map<String, String> result = paymentService.handleVnpayIpn(signed("REF-IPN-2", "100", "00"));
+
+        assertThat(result).containsEntry("RspCode", "04");
+        assertThat(tx.getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.AWAITING_DEPOSIT);
+    }
+
+    @Test
+    void ipn_badSignatureAndUnknownRef() {
+        assertThat(paymentService.handleVnpayIpn(Map.of("vnp_TxnRef", "X", "vnp_SecureHash", "bad")))
+                .containsEntry("RspCode", "97");
+        when(paymentTransactionRepository.findByTransactionRef("NOPE")).thenReturn(Optional.empty());
+        assertThat(paymentService.handleVnpayIpn(signed("NOPE", "100", "00"))).containsEntry("RspCode", "01");
+    }
+
+    @Test
+    void return_successCodeWithWrongAmount_doesNotVerify() {
+        Order order = awaitingDepositOrder();
+        PaymentTransaction tx = pendingTx(order, "REF-RET-1");
+        when(paymentTransactionRepository.findByTransactionRef("REF-RET-1")).thenReturn(Optional.of(tx));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        VnpayReturnResponse r = paymentService.handleVnpayReturn(signed("REF-RET-1", "100", "00"));
+
+        assertThat(r.isVerified()).isFalse();
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("0");
+    }
 }

@@ -110,7 +110,7 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
         if (method == HttpMethod.POST && path.startsWith("/api/v1/auth/")) {
             return true;
         }
-        if (method == HttpMethod.GET && path.equals("/api/v1/payments/vnpay-return")) {
+        if (method == HttpMethod.GET && (path.equals("/api/v1/payments/vnpay-return") || path.equals("/api/v1/payments/vnpay-ipn"))) {
             return true;
         }
         return false;

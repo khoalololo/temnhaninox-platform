@@ -43,6 +43,12 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.ok(paymentService.handleVnpayReturn(params)));
     }
 
+    /** Server-to-server callback from VNPAY (register this URL in the VNPAY merchant portal). */
+    @GetMapping("/vnpay-ipn")
+    public ResponseEntity<Map<String, String>> handleVnpayIpn(@RequestParam Map<String, String> params) {
+        return ResponseEntity.ok(paymentService.handleVnpayIpn(params));
+    }
+
     private String extractClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {

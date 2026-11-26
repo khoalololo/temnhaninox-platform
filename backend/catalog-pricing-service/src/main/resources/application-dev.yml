@@ -1,0 +1,8 @@
+# Local-development defaults ONLY (see auth-service/application-dev.yml).
+spring:
+  datasource:
+    password: ${POSTGRES_PASSWORD:1789}
+app:
+  s3:
+    access-key: ${S3_ACCESS_KEY:minioadmin}
+    secret-key: ${S3_SECRET_KEY:minioadmin123}

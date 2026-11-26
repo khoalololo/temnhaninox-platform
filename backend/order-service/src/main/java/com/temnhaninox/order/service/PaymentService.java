@@ -54,8 +54,8 @@ public class PaymentService {
             OrderRepository orderRepository,
             PaymentTransactionRepository paymentTransactionRepository,
             TelegramNotificationService telegramNotificationService,
-            @Value("${app.vnpay.tmn-code:DEMO_TMN_CODE}") String vnpTmnCode,
-            @Value("${app.vnpay.hash-secret:DEMO_HASH_SECRET_KEY_1234567890}") String vnpHashSecret,
+            @Value("${app.vnpay.tmn-code}") String vnpTmnCode,
+            @Value("${app.vnpay.hash-secret}") String vnpHashSecret,
             @Value("${app.vnpay.return-url:http://localhost:4200/payment/vnpay-return}") String vnpReturnUrl,
             @Value("${app.vnpay.pay-url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}") String vnpPayUrl) {
         this.orderRepository = orderRepository;
@@ -179,17 +179,72 @@ public class PaymentService {
                 .build();
     }
 
+    /** Browser redirect callback. Same verification as the IPN; safe to run in either order. */
     @Transactional
     public VnpayReturnResponse handleVnpayReturn(Map<String, String> params) {
         if (params == null || params.isEmpty()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Missing VNPAY callback parameters");
         }
+        verifySignature(params);
+        PaymentTransaction tx = findTransaction(params);
+        applyVnpayResult(tx, params);
+        Order order = tx.getOrder();
+        return VnpayReturnResponse.builder()
+                .verified(tx.getStatus() == PaymentStatus.VERIFIED)
+                .orderId(order.getId())
+                .orderCode(order.getOrderCode())
+                .transactionRef(tx.getTransactionRef())
+                .responseCode(params.getOrDefault("vnp_ResponseCode", ""))
+                .paymentStatus(tx.getStatus())
+                .orderStatus(order.getStatus())
+                .amount(tx.getAmount())
+                .message(tx.getStatus() == PaymentStatus.VERIFIED
+                        ? "VNPAY payment verified successfully"
+                        : "VNPAY payment failed or cancelled")
+                .build();
+    }
 
+    /**
+     * Server-to-server IPN from VNPAY. Works even if the customer closes the browser after paying.
+     * Returns the {RspCode, Message} contract VNPAY expects (HTTP 200 always).
+     */
+    @Transactional
+    public Map<String, String> handleVnpayIpn(Map<String, String> params) {
+        try {
+            if (params == null || params.get("vnp_SecureHash") == null) {
+                return ipn("97", "Invalid signature");
+            }
+            verifySignature(params);
+        } catch (BusinessException ex) {
+            return ipn("97", "Invalid signature");
+        }
+        PaymentTransaction tx = paymentTransactionRepository.findByTransactionRef(params.get("vnp_TxnRef"))
+                .orElse(null);
+        if (tx == null) {
+            return ipn("01", "Order not found");
+        }
+        if (!amountMatches(tx, params)) {
+            return ipn("04", "Invalid amount");
+        }
+        if (tx.getStatus() != PaymentStatus.PENDING) {
+            return ipn("02", "Order already confirmed");
+        }
+        applyVnpayResult(tx, params);
+        return ipn("00", "Confirm Success");
+    }
+
+    private static Map<String, String> ipn(String code, String message) {
+        Map<String, String> m = new java.util.LinkedHashMap<>();
+        m.put("RspCode", code);
+        m.put("Message", message);
+        return m;
+    }
+
+    private void verifySignature(Map<String, String> params) {
         String receivedHash = params.get("vnp_SecureHash");
         if (receivedHash == null || receivedHash.isBlank()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Missing vnp_SecureHash");
         }
-
         Map<String, String> sortedParams = new TreeMap<>();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             String key = entry.getKey();
@@ -199,64 +254,63 @@ public class PaymentService {
                 sortedParams.put(key, value);
             }
         }
-
-        String hashData = buildQueryString(sortedParams);
-        String expectedHash = hmacSha512(vnpHashSecret, hashData);
-
+        String expectedHash = hmacSha512(vnpHashSecret, buildQueryString(sortedParams));
         if (!MessageDigest.isEqual(
                 expectedHash.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8),
                 receivedHash.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8))) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid VNPAY signature");
         }
+    }
 
+    private PaymentTransaction findTransaction(Map<String, String> params) {
         String txnRef = params.get("vnp_TxnRef");
         if (txnRef == null || txnRef.isBlank()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Missing vnp_TxnRef");
         }
-
-        PaymentTransaction tx = paymentTransactionRepository.findByTransactionRef(txnRef)
+        return paymentTransactionRepository.findByTransactionRef(txnRef)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                         "Payment transaction not found for ref: " + txnRef));
+    }
 
-        Order order = tx.getOrder();
-        String responseCode = params.getOrDefault("vnp_ResponseCode", "");
-        boolean isSuccess = "00".equals(responseCode);
-
-        if (tx.getStatus() == PaymentStatus.PENDING) {
-            if (isSuccess) {
-                tx.setStatus(PaymentStatus.VERIFIED);
-                tx.setVerifiedAt(Instant.now());
-                order.setPaidAmount(order.getPaidAmount().add(tx.getAmount()).setScale(2, RoundingMode.HALF_UP));
-
-                if (order.getStatus() == OrderStatus.AWAITING_DEPOSIT
-                        && order.getPaidAmount().compareTo(order.getDepositRequiredAmount()) >= 0) {
-                    order.setStatus(OrderStatus.IN_PRODUCTION);
-                    order.addStatusLog(OrderStatusLog.builder()
-                            .fromStatus(OrderStatus.AWAITING_DEPOSIT)
-                            .toStatus(OrderStatus.IN_PRODUCTION)
-                            .changedByUserId(order.getCustomerId())
-                            .note("Auto-advanced to IN_PRODUCTION after VNPAY payment verification")
-                            .build());
-                }
-            } else {
-                tx.setStatus(PaymentStatus.FAILED);
-            }
-            orderRepository.save(order);
+    private static boolean amountMatches(PaymentTransaction tx, Map<String, String> params) {
+        String raw = params.get("vnp_Amount");
+        if (raw == null) {
+            return false;
         }
+        try {
+            BigDecimal expected = tx.getAmount().multiply(BigDecimal.valueOf(100));
+            return new BigDecimal(raw).compareTo(expected) == 0;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+    }
 
-        return VnpayReturnResponse.builder()
-                .verified(tx.getStatus() == PaymentStatus.VERIFIED)
-                .orderId(order.getId())
-                .orderCode(order.getOrderCode())
-                .transactionRef(txnRef)
-                .responseCode(responseCode)
-                .paymentStatus(tx.getStatus())
-                .orderStatus(order.getStatus())
-                .amount(tx.getAmount())
-                .message(tx.getStatus() == PaymentStatus.VERIFIED
-                        ? "VNPAY payment verified successfully"
-                        : "VNPAY payment failed or cancelled")
-                .build();
+    /** Idempotent: only a PENDING transaction can change state; the amount must match what we asked for. */
+    private void applyVnpayResult(PaymentTransaction tx, Map<String, String> params) {
+        if (tx.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+        Order order = tx.getOrder();
+        boolean isSuccess = "00".equals(params.getOrDefault("vnp_ResponseCode", ""))
+                && amountMatches(tx, params);
+        if (isSuccess) {
+            tx.setStatus(PaymentStatus.VERIFIED);
+            tx.setVerifiedAt(Instant.now());
+            order.setPaidAmount(order.getPaidAmount().add(tx.getAmount()).setScale(2, RoundingMode.HALF_UP));
+            if (order.getStatus() == OrderStatus.AWAITING_DEPOSIT
+                    && order.getPaidAmount().compareTo(order.getDepositRequiredAmount()) >= 0) {
+                order.setStatus(OrderStatus.IN_PRODUCTION);
+                order.addStatusLog(OrderStatusLog.builder()
+                        .fromStatus(OrderStatus.AWAITING_DEPOSIT)
+                        .toStatus(OrderStatus.IN_PRODUCTION)
+                        .changedByUserId(order.getCustomerId())
+                        .note("Auto-advanced to IN_PRODUCTION after VNPAY payment verification")
+                        .build());
+            }
+        } else {
+            tx.setStatus(PaymentStatus.FAILED);
+        }
+        orderRepository.save(order);
     }
 
     public static String buildQueryString(Map<String, String> sortedParams) {
