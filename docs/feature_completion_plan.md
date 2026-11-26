@@ -1,6 +1,6 @@
 # TEM NHÃN INOX — UI/UX Overhaul & Feature Completion Plan
 **Document type:** Agent execution plan (phases A–D, follows completed Phase 1–3 backend and initial Phase 4 storefront work)
-**Status (2026-11-26):** Phase C and D implementations are complete; Google sign-in and forgot/reset-password flows remain intentionally excluded per owner request. Production frontend build and modified backend module tests pass. Manual Use-Case Checklist verification remains pending.
+**Status (2026-11-26, updated after review):** Phase C and D implementations exist in code; Phase E (hardening, below) was written on branch `hardening/phase5-prep` and is **uncompiled/untested until you run `mvn test` locally** (the authoring sandbox could not reach Maven Central); Google sign-in and forgot/reset-password flows remain intentionally excluded per owner request. Production frontend build and modified backend module tests pass. Manual Use-Case Checklist verification remains pending.
 
 > **How to use this document:** Execute ONE phase at a time. After each phase, stop and manually verify against the Use-Case Checklist (Section 3) before telling the agent to proceed to the next phase. Do not trust a "done" report from the agent without clicking through the actual running app yourself — this is the same rule as the Master Implementation Plan review: an agent's report of completion and the feature actually working are two different facts.
 
@@ -75,7 +75,7 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 ### Tier 2 — Align implementation with the Phase 0/3/5 architecture checklist
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
-| 4 | Repeatable Docker/Nginx deployment setup is missing | `infra/` currently has PostgreSQL SQL seeds and `.env`, but no Docker Compose or `nginx/default.conf`; local frontend proxy targets the gateway directly. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
+| 4 | Repeatable Docker/Nginx deployment setup | `docker-compose.yml` and `nginx/default.conf` were deleted by the UI overhaul commit and restored by the owner in `65ed853` (check they are pushed). `infra/.env.example` is new. In compose, publish ONLY the gateway/nginx port; keep 8081–8083, Postgres and S3 on the internal network. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
 | 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and allows `design-files` and `product-images` (two bucket names). The screenshot checklist refers to MinIO and three verified buckets, while the repository has no Compose setup to provision/verify them. | Confirm SeaweedFS vs. MinIO and define the intended third bucket/use before changing storage; then provision and verify the agreed buckets reproducibly. |
 | 6 | Admin order UI differs from the requested Phase 5 layout | `/admin` provides an orders tab/list and inspector in a tabbed cockpit. It does not provide the screenshot’s Kanban-plus-table `OrdersBoardComponent` / single-screen board layout. Core order operations exist. | Decide whether that exact layout is still required; if yes, build the board/table view and verify processing an order through completion without direct database access. |
 | 7 | Order-state logic is not factored into the named state-machine service | Transition validation and deposit gates exist in `AdminOrderService`/`OrderService`; there is no separate `OrderStateMachineService` as named in the Phase 3 checklist. | Extract a dedicated service only if the architecture requirement is retained; preserve and test the existing transition and deposit rules. |
@@ -149,7 +149,7 @@ Do not execute this prompt unless the owner explicitly reopens the deferred auth
 
 Implement Google sign-in and forgot/reset password for backend/auth-service (8081) and the Angular frontend, building on the existing JWT auth from Phase 1.
 
-### Part 1: Database (infra/postgres/init.sql)
+### Part 1: Database (new Flyway migration `backend/auth-service/src/main/resources/db/migration/V2__google_and_password_reset.sql`; do NOT edit init.sql or V1)
 1. Alter `auth_schema.users`: add `auth_provider` (VARCHAR, 'LOCAL' | 'GOOGLE', default 'LOCAL'), add `google_id` (VARCHAR, nullable, unique), and make `password_hash` nullable.
 2. New table `auth_schema.password_reset_tokens`: `id` (UUID PK), `user_id` (FK to users), `token` (VARCHAR, unique, indexed), `expires_at` (TIMESTAMP WITH TIME ZONE), `used_at` (TIMESTAMP WITH TIME ZONE, nullable).
 
@@ -213,6 +213,24 @@ Build the admin UI for product and pricing-rule management wired to the existing
 ### Verification
 - Confirm UC-06 and UC-07 pass manually end-to-end.
 ```
+
+---
+
+### Phase E — Hardening Before Phase 5 [WRITTEN, NOT YET RUN — verify locally]
+
+Done on branch `hardening/phase5-prep` (review the diff, then run `cd backend && mvn test` and start all services):
+
+| # | Change | How to verify |
+|---|---|---|
+| E1 | VNPAY **IPN** endpoint `GET /api/v1/payments/vnpay-ipn` (public in gateway) returning VNPAY's `{RspCode, Message}`; shared signature check; **amount must match** `vnp_Amount = amount×100`; processing is idempotent (only `PENDING` changes), so IPN + browser return in any order never double-count. | 4 new tests in `PaymentServiceTest`. Manually: pay in sandbox, close the tab before returning, confirm order still reaches `IN_PRODUCTION`. IPN needs a public URL (e.g. ngrok) registered in the VNPAY merchant portal. |
+| E2 | **Secrets**: no more hardcoded fallbacks in `application.yml`. Local dev uses `application-dev.yml` (active by default). Production sets `SPRING_PROFILES_ACTIVE=prod` and must supply `JWT_SECRET`, `POSTGRES_PASSWORD`, `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `S3_*`, `VNPAY_*` or the service fails to start. See `infra/.env.example`. | Start with `SPRING_PROFILES_ACTIVE=prod` and no env → startup error. Start normally → works as before. |
+| E3 | **Flyway** per service (`db/migration/V1__baseline_*.sql`, history table in each service's own schema, `baseline-on-migrate` so your existing DB is adopted, not rebuilt). `init.sql` no longer drops anything; `infra/postgres/dev-reset.sql` is the explicit dev wipe. Baseline SQL was checked to produce a schema identical to the old `init.sql` (pg_dump diff) with 5 materials, 7 pricing rules, 12 compatibility rows. | Start each service on your existing DB: Flyway should log "Successfully baselined". On an empty DB: it should create everything and Hibernate `validate` must pass. All future schema changes = new `V2__...sql`, never edit V1. |
+
+**Still open after Phase E**
+- Downstream services still trust `X-User-*` headers: fix by network isolation (compose) now; consider a gateway-signed internal token later.
+- Existing admin keeps its old password; change it manually (no password-change UI yet — add with Phase B).
+- Phase B Part 1 must now be a Flyway migration `auth-service/.../V2__google_and_password_reset.sql`, not an edit to `init.sql`.
+- Pricing unit/rate questions in Section 5 still block trusting any quote.
 
 ---
 

@@ -71,3 +71,11 @@
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]
 - [ ] Manually verify UC-03 through UC-12 at desktop and 375px mobile; no live-browser verification was performed in this task
 - [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`
+
+### Phase E: Hardening (branch `hardening/phase5-prep`) [WRITTEN — NOT COMPILED OR RUN]
+- [x] VNPAY IPN endpoint + amount verification + idempotent processing (+4 unit tests)
+- [x] Secret fallbacks removed from main config; dev defaults moved to `application-dev.yml`; admin seed from `ADMIN_EMAIL`/`ADMIN_PASSWORD`
+- [x] Flyway baselines per service; `init.sql` made non-destructive; `infra/postgres/dev-reset.sql` added; `infra/.env.example` added
+- [ ] Run `mvn test` (all modules) and start every service on the existing DB and on an empty DB
+- [ ] Gateway-only network exposure in `infra/docker-compose.yml`
+- [ ] Manual UC-03..UC-12 and the full quote → deposit → production → completion run (Phase 5)

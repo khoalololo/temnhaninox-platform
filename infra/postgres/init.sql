@@ -1,7 +1,7 @@
--- Clean reset of existing schemas
-DROP SCHEMA IF EXISTS order_schema CASCADE;
-DROP SCHEMA IF EXISTS catalog_pricing_schema CASCADE;
-DROP SCHEMA IF EXISTS auth_schema CASCADE;
+-- DEPRECATED: schema is now owned by Flyway migrations in
+--   backend/<service>/src/main/resources/db/migration/V*.sql
+-- This file is kept only as a one-shot bootstrap for a brand-new empty database
+-- (it fails on an existing schema instead of wiping it). To wipe a DEV database, run dev-reset.sql explicitly.
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
