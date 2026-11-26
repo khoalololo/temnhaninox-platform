@@ -52,6 +52,25 @@ export class AuthService {
     );
   }
 
+  googleLogin(idToken: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthApiResponse>>('/api/v1/auth/google', { idToken }).pipe(
+      map((res) => this.normalizeAuthResponse(res)),
+      tap((res) => {
+        if (res.success && res.data) {
+          this.persistAuth(res.data);
+        }
+      })
+    );
+  }
+
+  forgotPassword(email: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>('/api/v1/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>('/api/v1/auth/reset-password', { token, newPassword });
+  }
+
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
