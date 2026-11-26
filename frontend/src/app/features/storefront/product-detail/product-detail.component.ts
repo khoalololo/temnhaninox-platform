@@ -40,8 +40,13 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
           <!-- Gallery -->
           <div class="lg:col-span-5 space-y-3">
             <div class="aspect-square bg-bg border border-border rounded-[10px] overflow-hidden flex items-center justify-center">
-              @if (activeImage()) {
-                <img [src]="activeImage()!" [alt]="product()!.name" class="w-full h-full object-cover" />
+              @if (activeImage() && !mainImageBroken()) {
+                <img
+                  [src]="activeImage()!"
+                  [alt]="product()!.name"
+                  (error)="mainImageBroken.set(true)"
+                  class="w-full h-full object-cover"
+                />
               } @else {
                 <app-image-placeholder [sku]="product()!.sku" />
               }
@@ -112,8 +117,14 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
                   </tr>
                   <tr>
                     <td class="px-3.5 py-2.5 text-text-secondary">Kích thước chuẩn (D × R × Dày)</td>
-                    <td class="px-3.5 py-2.5 font-mono tabular-nums font-medium text-text-primary">
+                    <td class="px-3.5 py-2.5 font-sans tabular-nums font-medium text-text-primary">
                       {{ product()!.defaultWidthMm || 80 }} × {{ product()!.defaultHeightMm || 40 }} × {{ product()!.defaultThicknessMm || 0.8 }} mm
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-3.5 py-2.5 text-text-secondary">Thời gian gia công dự kiến</td>
+                    <td class="px-3.5 py-2.5 font-sans tabular-nums font-medium text-text-primary">
+                      {{ product()!.productType === 'CUSTOM_TEMPLATE' ? '3–5 ngày làm việc (duyệt mẫu thực tế trước)' : 'Giao ngay trong 24–48h' }}
                     </td>
                   </tr>
                   @if (product()!.productType === 'STANDARD_ITEM') {

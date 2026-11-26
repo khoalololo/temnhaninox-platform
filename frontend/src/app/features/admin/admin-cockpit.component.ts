@@ -10,7 +10,7 @@ import {
   OrderSummary,
   PricingRule,
 } from '../../core/models/order.models';
-import { Product } from '../../core/models/catalog.models';
+import { Category, Material, Product } from '../../core/models/catalog.models';
 import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../shared/components/button/button.component';
 
@@ -99,6 +99,11 @@ import { ButtonDirective } from '../../shared/components/button/button.component
       @if (toast()) {
         <div class="p-3 rounded-[6px] border border-success/50 bg-success/10 text-xs text-success font-semibold">
           ✓ {{ toast() }}
+        </div>
+      }
+      @if (errorMsg()) {
+        <div class="p-3 rounded-[6px] border border-danger/50 bg-danger/10 text-xs text-danger font-semibold">
+          ✕ {{ errorMsg() }}
         </div>
       }
 
@@ -245,10 +250,25 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                 }
               </div>
 
-              <!-- Approve Quote Action -->
+              <!-- Approve Quote Action + Per-Item Unit Price Override -->
               @if (ord.status === 'QUOTE_PENDING') {
-                <div class="border-t border-border pt-3 space-y-2">
-                  <div class="font-semibold text-text-primary">Duyệt báo giá đơn hàng</div>
+                <div class="border-t border-border pt-3 space-y-2.5">
+                  <div class="font-semibold text-text-primary">Điều chỉnh đơn giá & Duyệt báo giá</div>
+                  <div class="space-y-1.5">
+                    @for (item of ord.items; track item.id) {
+                      <div class="flex items-center justify-between gap-2 bg-bg border border-border rounded-[6px] px-2.5 py-1.5">
+                        <span class="truncate text-[11px] text-text-secondary flex-1">{{ item.itemName }}</span>
+                        <input
+                          type="number"
+                          [(ngModel)]="itemPriceOverrides[item.id]"
+                          min="0"
+                          step="1000"
+                          class="industrial-input w-28 px-2 py-1 text-xs font-mono text-right"
+                        />
+                        <span class="text-[10px] font-mono text-text-muted">đ/cái</span>
+                      </div>
+                    }
+                  </div>
                   <div class="flex gap-2">
                     <input
                       type="date"
@@ -407,33 +427,111 @@ import { ButtonDirective } from '../../shared/components/button/button.component
 
       <!-- TAB 3: CATALOG PRODUCTS -->
       @if (activeTab() === 'products') {
-        <div class="industrial-card overflow-hidden">
-          <table class="w-full text-xs text-left">
-            <thead class="bg-bg border-b border-border font-mono text-text-secondary">
-            <tr>
-              <th class="px-4 py-3">SKU</th>
-              <th class="px-3 py-3">Tên sản phẩm</th>
-              <th class="px-3 py-3">Loại</th>
-              <th class="px-3 py-3 text-right">Đơn giá / Tồn kho</th>
-              <th class="px-4 py-3 text-right">Xóa</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              @for (p of adminProducts(); track p.id) {
-                <tr class="hover:bg-surface-raised transition-colors">
-                  <td class="px-4 py-3 font-mono font-bold text-text-primary">{{ p.sku }}</td>
-                  <td class="px-3 py-3 font-medium text-text-primary">{{ p.name }}</td>
-                  <td class="px-3 py-3 font-mono text-[11px] text-steel">{{ p.productType }}</td>
-                  <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">
-                    {{ p.productType === 'STANDARD_ITEM' ? (p.basePrice | vnd) + ' · Kho: ' + (p.stockQuantity ?? 0) : 'Báo giá 3D' }}
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <button type="button" (click)="removeProduct(p.id)" class="text-danger hover:underline">Xóa</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-heading text-sm font-bold text-text-primary">
+              Danh Sách Sản Phẩm & Phôi Xưởng ({{ adminProducts().length }})
+            </h2>
+            <button
+              type="button"
+              (click)="showCreateProduct.set(!showCreateProduct())"
+              appButton
+              variant="primary"
+              size="sm"
+            >
+              {{ showCreateProduct() ? 'Đóng biểu mẫu' : '+ Thêm sản phẩm mới' }}
+            </button>
+          </div>
+
+          @if (showCreateProduct()) {
+            <form (ngSubmit)="createProduct()" class="industrial-card p-5 space-y-4 text-xs">
+              <div class="font-heading font-bold uppercase text-text-primary border-b border-border pb-2">
+                Tạo Sản Phẩm / Mẫu Tem Mới
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Mã SKU *</label>
+                  <input type="text" [(ngModel)]="newProd.sku" name="sku" required placeholder="VD: NVX-2001" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Tên sản phẩm *</label>
+                  <input type="text" [(ngModel)]="newProd.name" name="name" required placeholder="VD: Tem inox 304 khắc laser" class="industrial-input w-full px-2.5 py-1.5" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Slug URL *</label>
+                  <input type="text" [(ngModel)]="newProd.slug" name="slug" required placeholder="VD: tem-inox-304-khac-laser" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Danh mục *</label>
+                  <select [(ngModel)]="newProd.categoryId" name="categoryId" required class="industrial-input w-full px-2.5 py-1.5">
+                    @for (c of adminCategories(); track c.id) {
+                      <option [value]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Vật liệu *</label>
+                  <select [(ngModel)]="newProd.materialId" name="materialId" required class="industrial-input w-full px-2.5 py-1.5">
+                    @for (m of adminMaterials(); track m.id) {
+                      <option [value]="m.id">{{ m.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Loại sản phẩm *</label>
+                  <select [(ngModel)]="newProd.productType" name="productType" class="industrial-input w-full px-2.5 py-1.5">
+                    <option value="STANDARD_ITEM">STANDARD_ITEM (Bán sẵn)</option>
+                    <option value="CUSTOM_TEMPLATE">CUSTOM_TEMPLATE (Báo giá 3D)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Đơn giá (VNĐ)</label>
+                  <input type="number" [(ngModel)]="newProd.basePrice" name="basePrice" min="0" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Tồn kho</label>
+                  <input type="number" [(ngModel)]="newProd.stockQuantity" name="stockQuantity" min="0" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Ảnh sản phẩm (URL)</label>
+                  <input type="text" [(ngModel)]="newProd.imageUrl" name="imageUrl" placeholder="/assets/products/..." class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+                </div>
+              </div>
+              <div class="flex justify-end gap-2">
+                <button type="button" (click)="showCreateProduct.set(false)" appButton variant="secondary" size="xs">Hủy</button>
+                <button type="submit" appButton variant="primary" size="xs">Lưu sản phẩm</button>
+              </div>
+            </form>
+          }
+
+          <div class="industrial-card overflow-hidden">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-bg border-b border-border font-mono text-text-secondary">
+              <tr>
+                <th class="px-4 py-3">SKU</th>
+                <th class="px-3 py-3">Tên sản phẩm</th>
+                <th class="px-3 py-3">Loại</th>
+                <th class="px-3 py-3 text-right">Đơn giá / Tồn kho</th>
+                <th class="px-4 py-3 text-right">Xóa</th>
+              </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (p of adminProducts(); track p.id) {
+                  <tr class="hover:bg-surface-raised transition-colors">
+                    <td class="px-4 py-3 font-mono font-bold text-text-primary">{{ p.sku }}</td>
+                    <td class="px-3 py-3 font-medium text-text-primary">{{ p.name }}</td>
+                    <td class="px-3 py-3 font-mono text-[11px] text-steel">{{ p.productType }}</td>
+                    <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">
+                      {{ p.productType === 'STANDARD_ITEM' ? (p.basePrice | vnd) + ' · Kho: ' + (p.stockQuantity ?? 0) : 'Báo giá 3D' }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <button type="button" (click)="removeProduct(p.id)" class="text-danger hover:underline">Xóa</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       }
     </div>
@@ -449,7 +547,11 @@ export class AdminCockpitComponent implements OnInit {
   readonly selectedOrder = signal<OrderDetail | null>(null);
   readonly pricingRules = signal<PricingRule[]>([]);
   readonly adminProducts = signal<Product[]>([]);
+  readonly adminCategories = signal<Category[]>([]);
+  readonly adminMaterials = signal<Material[]>([]);
+  readonly showCreateProduct = signal(false);
   readonly toast = signal('');
+  readonly errorMsg = signal('');
 
   statusFilter: OrderStatus | '' = '';
   searchFilter = '';
@@ -457,6 +559,19 @@ export class AdminCockpitComponent implements OnInit {
   workerNote = '';
   nextStatus: OrderStatus = 'IN_PRODUCTION';
   vatInvoiceNumberInput = '';
+  itemPriceOverrides: Record<string, number> = {};
+
+  newProd = {
+    sku: '',
+    name: '',
+    slug: '',
+    categoryId: '',
+    materialId: '',
+    productType: 'STANDARD_ITEM' as 'STANDARD_ITEM' | 'CUSTOM_TEMPLATE',
+    basePrice: 50000,
+    stockQuantity: 50,
+    imageUrl: '',
+  };
 
   ngOnInit(): void {
     this.refreshDashboard();
@@ -469,6 +584,22 @@ export class AdminCockpitComponent implements OnInit {
     this.adminApi.getAdminProducts().subscribe({
       next: (res) => {
         if (res.success && res.data) this.adminProducts.set(res.data.content || []);
+      },
+    });
+    this.adminApi.getAdminCategories().subscribe({
+      next: (res) => {
+        if (res.success && res.data?.length) {
+          this.adminCategories.set(res.data);
+          this.newProd.categoryId = res.data[0].id;
+        }
+      },
+    });
+    this.adminApi.getAdminMaterials().subscribe({
+      next: (res) => {
+        if (res.success && res.data?.length) {
+          this.adminMaterials.set(res.data);
+          this.newProd.materialId = res.data[0].id;
+        }
       },
     });
   }
@@ -504,14 +635,25 @@ export class AdminCockpitComponent implements OnInit {
           this.nextStatus = res.data.status;
           this.workerNote = res.data.productionWorkerNote || '';
           this.vatInvoiceNumberInput = res.data.vatInvoiceNumber || '';
+          this.itemPriceOverrides = {};
+          for (const item of res.data.items) {
+            this.itemPriceOverrides[item.id] = item.finalUnitPrice;
+          }
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể tải chi tiết đơn hàng.'),
     });
   }
 
   approveQuote(orderId: string): void {
+    const items = Object.entries(this.itemPriceOverrides).map(([orderItemId, finalUnitPrice]) => ({
+      orderItemId,
+      finalUnitPrice: Number(finalUnitPrice),
+    }));
+
     this.adminApi
       .reviewQuote(orderId, {
+        items,
         estimatedCompletionDate: this.estimatedCompletionDate || undefined,
         note: 'Xưởng đã duyệt đơn giá và tiến độ',
       })
@@ -524,6 +666,7 @@ export class AdminCockpitComponent implements OnInit {
             this.refreshDashboard();
           }
         },
+        error: (err) => this.notifyError(err?.error?.message || 'Duyệt báo giá thất bại.'),
       });
   }
 
@@ -581,6 +724,7 @@ export class AdminCockpitComponent implements OnInit {
             this.refreshDashboard();
           }
         },
+        error: (err) => this.notifyError(err?.error?.message || 'Không thể chuyển trạng thái (kiểm tra điều kiện đặt cọc 50%).'),
       });
   }
 
@@ -613,17 +757,59 @@ export class AdminCockpitComponent implements OnInit {
     });
   }
 
+  createProduct(): void {
+    if (!this.newProd.sku.trim() || !this.newProd.name.trim() || !this.newProd.slug.trim()) {
+      this.notifyError('Vui lòng nhập đầy đủ SKU, Tên sản phẩm và Slug.');
+      return;
+    }
+    this.adminApi
+      .createProduct({
+        sku: this.newProd.sku.trim(),
+        name: this.newProd.name.trim(),
+        slug: this.newProd.slug.trim(),
+        categoryId: this.newProd.categoryId,
+        materialId: this.newProd.materialId,
+        productType: this.newProd.productType,
+        basePrice: Number(this.newProd.basePrice),
+        stockQuantity: Number(this.newProd.stockQuantity),
+        images: this.newProd.imageUrl.trim() ? [this.newProd.imageUrl.trim()] : [],
+        isActive: true,
+      })
+      .subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            this.adminProducts.set([res.data, ...this.adminProducts()]);
+            this.showCreateProduct.set(false);
+            this.newProd.sku = '';
+            this.newProd.name = '';
+            this.newProd.slug = '';
+            this.newProd.imageUrl = '';
+            this.notify('Đã tạo sản phẩm mới.');
+          }
+        },
+        error: (err) => this.notifyError(err?.error?.message || 'Tạo sản phẩm thất bại.'),
+      });
+  }
+
   removeProduct(id: string): void {
     this.adminApi.deleteProduct(id).subscribe({
       next: () => {
         this.adminProducts.set(this.adminProducts().filter((p) => p.id !== id));
         this.notify('Đã xóa sản phẩm.');
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Xóa sản phẩm thất bại.'),
     });
   }
 
   private notify(msg: string): void {
+    this.errorMsg.set('');
     this.toast.set(msg);
     setTimeout(() => this.toast.set(''), 3000);
+  }
+
+  private notifyError(msg: string): void {
+    this.toast.set('');
+    this.errorMsg.set(msg);
+    setTimeout(() => this.errorMsg.set(''), 4500);
   }
 }

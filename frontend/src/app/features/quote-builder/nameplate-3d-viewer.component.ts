@@ -27,6 +27,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
         <div class="tabular-nums">Dài × Rộng: {{ widthMm }} × {{ heightMm }} mm</div>
         <div class="tabular-nums">Độ dày phôi: {{ thicknessMm }} mm</div>
         <div class="text-text-secondary">Bề mặt: {{ materialName || 'Inox 304' }} · {{ processName || 'Gia công' }}</div>
+        @if (cadFileName) {
+          <div class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/50 text-accent font-bold text-[10px]">
+            CAD / ARTWORK: {{ cadFileName }}
+          </div>
+        }
       </div>
 
       <!-- Camera Controls -->
@@ -80,6 +85,7 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
   @Input() previewText = 'MÁY BƠM CÔNG NGHIỆP\nMODEL: TNI-304-PRO\nS/N: 2026-00849';
   @Input() cornerRivets = true;
   @Input() artworkDataUrl: string | null = null;
+  @Input() cadFileName: string | null = null;
 
   readonly webglError = signal('');
 
@@ -385,6 +391,28 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
+
+    if (this.artworkDataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const areaTop = pad + headerH + 16;
+        const areaW = canvas.width - pad * 4;
+        const areaH = canvas.height - areaTop - pad - 16;
+        if (areaW > 0 && areaH > 0) {
+          const ratio = Math.min(areaW / img.width, areaH / img.height, 1);
+          const drawW = img.width * ratio;
+          const drawH = img.height * ratio;
+          const dx = (canvas.width - drawW) / 2;
+          const dy = areaTop + (areaH - drawH) / 2;
+          ctx.fillStyle = palette.baseHex;
+          ctx.fillRect(pad + 8, areaTop, canvas.width - pad * 2 - 16, canvas.height - areaTop - pad - 8);
+          ctx.drawImage(img, dx, dy, drawW, drawH);
+          tex.needsUpdate = true;
+        }
+      };
+      img.src = this.artworkDataUrl;
+    }
+
     return tex;
   }
 

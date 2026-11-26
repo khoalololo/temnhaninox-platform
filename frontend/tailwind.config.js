@@ -21,10 +21,10 @@ module.exports = {
         warning: 'var(--color-warning)',
       },
       fontFamily: {
-        heading: ['"Space Grotesk"', 'sans-serif'],
-        body: ['"IBM Plex Sans"', 'sans-serif'],
-        sans: ['"IBM Plex Sans"', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'monospace'],
+        heading: ['"Be Vietnam Pro"', 'sans-serif'],
+        body: ['"Be Vietnam Pro"', 'sans-serif'],
+        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       borderRadius: {
         none: '0px',

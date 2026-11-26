@@ -58,21 +58,27 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
             </div>
           </div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-center">
-            @for (step of steps; track step.key; let idx = $index) {
-              <div
-                class="p-2.5 rounded-[6px] border text-xs"
-                [class]="isStepActive(step.key)
-                  ? 'bg-accent text-bg border-accent font-bold'
-                  : isStepCompleted(idx)
-                    ? 'bg-bg text-success border-success/60 font-medium'
-                    : 'bg-bg text-text-muted border-border'"
-              >
-                <div class="font-mono text-[10px] mb-0.5">BƯỚC {{ idx + 1 }}</div>
-                <div class="leading-tight">{{ step.label }}</div>
-              </div>
-            }
-          </div>
+          @if (order()!.status === 'CANCELLED') {
+            <div class="p-3 rounded-[6px] border border-danger/60 bg-danger/10 text-xs text-danger font-semibold text-center">
+              Đơn hàng này đã bị hủy.
+            </div>
+          } @else {
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-center">
+              @for (step of steps; track step.key; let idx = $index) {
+                <div
+                  class="p-2.5 rounded-[6px] border text-xs"
+                  [class]="isStepActive(step.key)
+                    ? 'bg-accent text-bg border-accent font-bold'
+                    : isStepCompleted(idx)
+                      ? 'bg-bg text-success border-success/60 font-medium'
+                      : 'bg-bg text-text-muted border-border'"
+                >
+                  <div class="font-mono text-[10px] mb-0.5">BƯỚC {{ idx + 1 }}</div>
+                  <div class="leading-tight">{{ step.label }}</div>
+                </div>
+              }
+            </div>
+          }
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -258,6 +264,22 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                 <span>Còn lại:</span>
                 <span class="font-mono tabular-nums">{{ remainingAmount() | vnd }}</span>
               </div>
+
+              @if (order()!.estimatedCompletionDate || order()!.productionWorkerNote) {
+                <div class="mt-3 pt-3 border-t border-border space-y-1 bg-bg border rounded-[6px] p-2.5">
+                  @if (order()!.estimatedCompletionDate) {
+                    <div class="flex justify-between">
+                      <span class="text-text-secondary">Dự kiến hoàn thành:</span>
+                      <span class="font-mono font-semibold text-text-primary">{{ order()!.estimatedCompletionDate | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  }
+                  @if (order()!.productionWorkerNote) {
+                    <div class="text-text-secondary">
+                      <strong class="text-text-primary">Ghi chú kỹ thuật xưởng:</strong> {{ order()!.productionWorkerNote }}
+                    </div>
+                  }
+                </div>
+              }
 
               @if (order()!.requiresVatInvoice) {
                 <div class="mt-3 pt-3 border-t border-border space-y-1 bg-bg border rounded-[6px] p-2.5">

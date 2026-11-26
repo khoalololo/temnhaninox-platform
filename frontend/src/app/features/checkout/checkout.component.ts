@@ -163,7 +163,27 @@ import { ButtonDirective } from '../../shared/components/button/button.component
 
           @if (cartService.cart()) {
             <div class="space-y-2 text-xs">
-              <div class="flex justify-between text-text-secondary">
+              <div class="max-h-44 overflow-y-auto divide-y divide-border border border-border rounded-[6px] bg-bg">
+                @for (item of cartService.cart()!.items; track item.id) {
+                  <div class="p-2.5 flex justify-between gap-2">
+                    <div class="min-w-0">
+                      <div class="font-medium text-text-primary truncate">
+                        {{ item.itemType === 'CUSTOM_ITEM' ? 'Tem gia công 3D' : 'Sản phẩm kho' }} (×{{ item.quantity }})
+                      </div>
+                      @if (item.itemType === 'CUSTOM_ITEM') {
+                        <div class="text-[11px] font-mono text-text-muted">
+                          {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
+                        </div>
+                      }
+                    </div>
+                    <div class="font-mono tabular-nums font-semibold text-text-primary shrink-0">
+                      {{ item.lineTotal | vnd }}
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="flex justify-between text-text-secondary pt-1">
                 <span>Số lượng hạng mục:</span>
                 <span class="font-mono font-medium text-text-primary">{{ cartService.cart()!.items.length }}</span>
               </div>
@@ -190,6 +210,14 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                 <span class="font-mono tabular-nums text-lg font-bold text-accent">
                   {{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1)) | vnd }}
                 </span>
+              </div>
+
+              <div class="p-2.5 rounded-[6px] bg-surface-raised border border-border text-[11px] text-text-secondary">
+                @if (hasCustomItems()) {
+                  Đơn có hạng mục gia công 3D: Cần <strong class="text-accent">cọc 50%</strong> ({{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1) * 0.5) | vnd }}) sau khi duyệt mẫu thực tế.
+                } @else {
+                  Đơn hàng kho có sẵn: Thanh toán <strong class="text-accent">100%</strong> trước khi giao hàng.
+                }
               </div>
             </div>
           }
@@ -231,6 +259,10 @@ export class CheckoutComponent implements OnInit {
   vatCompanyName = '';
   vatTaxCode = '';
   vatCompanyAddress = '';
+
+  hasCustomItems(): boolean {
+    return (this.cartService.cart()?.items || []).some((i) => i.itemType === 'CUSTOM_ITEM');
+  }
 
   ngOnInit(): void {
     this.cartService.loadCart().subscribe();

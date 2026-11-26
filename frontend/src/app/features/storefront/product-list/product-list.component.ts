@@ -8,11 +8,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Category, Product, ProductType } from '../../../core/models/catalog.models';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductCardComponent, ButtonDirective],
+  imports: [CommonModule, FormsModule, ProductCardComponent, ButtonDirective, PaginatorComponent],
   template: `
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-border">
@@ -134,6 +135,14 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                 <div class="bg-surface border border-border rounded-[10px] h-72 animate-pulse"></div>
               }
             </div>
+          } @else if (loadError()) {
+            <div class="industrial-card p-10 text-center space-y-3 border-danger/40">
+              <div class="font-heading text-sm font-bold text-danger">Không thể tải danh sách sản phẩm</div>
+              <p class="text-xs text-text-secondary">{{ loadError() }}</p>
+              <button type="button" (click)="fetchProducts()" appButton variant="primary" size="sm">
+                Thử lại
+              </button>
+            </div>
           } @else if (products().length === 0) {
             <div class="industrial-card p-10 text-center space-y-2">
               <div class="font-heading text-sm font-bold text-text-primary">Không tìm thấy sản phẩm phù hợp</div>
@@ -151,34 +160,11 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               }
             </div>
 
-            <!-- Pagination -->
-            @if (totalPages() > 1) {
-              <div class="mt-6 flex items-center justify-center gap-2 text-xs font-mono">
-                <button
-                  type="button"
-                  [disabled]="page() === 0"
-                  (click)="goToPage(page() - 1)"
-                  appButton
-                  variant="secondary"
-                  size="sm"
-                >
-                  ← Trước
-                </button>
-                <span class="px-3 py-1.5 text-text-secondary">
-                  Trang {{ page() + 1 }} / {{ totalPages() }}
-                </span>
-                <button
-                  type="button"
-                  [disabled]="page() + 1 >= totalPages()"
-                  (click)="goToPage(page() + 1)"
-                  appButton
-                  variant="secondary"
-                  size="sm"
-                >
-                  Sau →
-                </button>
-              </div>
-            }
+            <app-paginator
+              [page]="page()"
+              [totalPages]="totalPages()"
+              (pageChange)="goToPage($event)"
+            />
           }
         </div>
       </div>
@@ -195,6 +181,7 @@ export class ProductListComponent implements OnInit {
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
   readonly loading = signal(true);
+  readonly loadError = signal('');
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
@@ -222,6 +209,7 @@ export class ProductListComponent implements OnInit {
 
   fetchProducts(): void {
     this.loading.set(true);
+    this.loadError.set('');
     this.catalogApi
       .getProducts({
         categoryId: this.selectedCategoryId || undefined,
@@ -239,7 +227,10 @@ export class ProductListComponent implements OnInit {
             this.totalElements.set(res.data.totalElements || 0);
           }
         },
-        error: () => this.loading.set(false),
+        error: () => {
+          this.loading.set(false);
+          this.loadError.set('Không kết nối được tới máy chủ danh mục. Vui lòng thử lại.');
+        },
       });
   }
 

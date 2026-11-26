@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, CheckCircle2, ArrowRight, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-angular';
@@ -9,6 +9,7 @@ import { Product } from '../../../core/models/catalog.models';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { ImagePlaceholderComponent } from '../../../shared/components/image-placeholder/image-placeholder.component';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
+import { ScrollRevealDirective } from '../../../shared/directives/scroll-reveal.directive';
 
 interface VisualCategoryCard {
   title: string;
@@ -29,6 +30,7 @@ interface VisualCategoryCard {
     ProductCardComponent,
     ImagePlaceholderComponent,
     ButtonDirective,
+    ScrollRevealDirective,
   ],
   template: `
     <!-- SECTION 1: Full-Width Video Hero Banner (matches temnhaninox.com hero + 3D quote CTA) -->
@@ -58,34 +60,34 @@ interface VisualCategoryCard {
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 py-14 lg:py-20 w-full">
         <div class="max-w-2xl space-y-5">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#187115]/90 text-white text-xs sm:text-sm font-semibold">
+          <div class="hero-stagger inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#187115]/90 backdrop-blur-sm text-white text-xs sm:text-sm font-semibold shadow-sm" style="--hero-delay: 0ms;">
             <span>INOX 304 · NHÔM · ĐỒNG · MICA</span>
             <span>|</span>
             <span>SAI SỐ ±0.05 MM</span>
           </div>
 
-          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight leading-tight text-white">
+          <h1 class="hero-stagger text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight leading-tight text-white" style="--hero-delay: 90ms;">
             Xưởng Gia Công Tem Nhãn Kim Loại & Bảng Tên Máy
           </h1>
 
-          <div class="w-48 h-1.5 bg-[#65c20e] rounded-full"></div>
+          <div class="hero-stagger w-48 h-1.5 bg-[#65c20e] rounded-full" style="--hero-delay: 160ms;"></div>
 
-          <p class="text-base sm:text-lg text-white/90 leading-relaxed">
+          <p class="hero-stagger text-base sm:text-lg text-white/90 leading-relaxed" style="--hero-delay: 220ms;">
             Kĩ Nghệ NVX – Sài Gòn chuyên ăn mòn điện hóa, khắc Laser Fiber, phay CNC và in UV phẳng.
             Tính báo giá tự động theo kích thước mm, xem trước mô hình 3D và duyệt mẫu thực tế trước khi sản xuất.
           </p>
 
-          <div class="flex flex-wrap items-center gap-3.5 pt-2">
+          <div class="hero-stagger flex flex-wrap items-center gap-3.5 pt-2" style="--hero-delay: 300ms;">
             <a
               routerLink="/quote-builder"
-              class="inline-flex items-center gap-2 bg-[#187115] hover:bg-[#1e8a1b] text-white font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[5px] shadow-lg transition-colors"
+              class="inline-flex items-center gap-2 bg-[#187115] hover:bg-[#1e8a1b] hover:-translate-y-0.5 text-white font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[6px] shadow-lg transition-all"
             >
               <span>Báo Giá & Xem Mẫu 3D</span>
               <lucide-icon [img]="ArrowRightIcon" [size]="18" />
             </a>
             <a
               routerLink="/products"
-              class="inline-flex items-center gap-2 bg-white/95 hover:bg-white text-[#187115] font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[5px] shadow-lg transition-colors"
+              class="inline-flex items-center gap-2 bg-white/95 hover:bg-white hover:-translate-y-0.5 text-[#187115] font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[6px] shadow-lg transition-all"
             >
               Xem Sản Phẩm
             </a>
@@ -102,15 +104,19 @@ interface VisualCategoryCard {
       }
 
       <!-- SECTION 2: SẢN PHẨM CHÚNG TÔI (Exact OG 3-column + 2-column image gallery) -->
-      <section class="space-y-8">
+      <section class="space-y-8" appScrollReveal>
         <h2 class="fs-section-title text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
           Sản Phẩm Chúng Tôi
         </h2>
 
         <!-- Top 3-column row: TEM NHÃN, CNC, LASER -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          @for (item of topVisualCategories; track item.title) {
-            <div class="industrial-card group overflow-hidden flex flex-col hover:border-accent">
+          @for (item of topVisualCategories; track item.title; let idx = $index) {
+            <div
+              class="industrial-card group overflow-hidden flex flex-col hover:border-accent"
+              appScrollReveal
+              [revealDelay]="idx * 80"
+            >
               <a
                 routerLink="/products"
                 [queryParams]="item.productType ? { productType: item.productType } : { search: item.search }"
@@ -124,6 +130,7 @@ interface VisualCategoryCard {
                     class="w-full h-full object-cover fs-img-zoom"
                     loading="lazy"
                   />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 } @else {
                   <app-image-placeholder [sku]="item.skuHint" />
                 }
@@ -152,8 +159,12 @@ interface VisualCategoryCard {
 
         <!-- Bottom 2-column row: MÁY MÓC, VẬT PHẨM LƯU NIỆM -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          @for (item of bottomVisualCategories; track item.title) {
-            <div class="industrial-card group overflow-hidden flex flex-col hover:border-accent">
+          @for (item of bottomVisualCategories; track item.title; let idx = $index) {
+            <div
+              class="industrial-card group overflow-hidden flex flex-col hover:border-accent"
+              appScrollReveal
+              [revealDelay]="idx * 90"
+            >
               <a
                 routerLink="/products"
                 [queryParams]="item.productType ? { productType: item.productType } : { search: item.search }"
@@ -167,6 +178,7 @@ interface VisualCategoryCard {
                     class="w-full h-full object-cover fs-img-zoom"
                     loading="lazy"
                   />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 } @else {
                   <app-image-placeholder [sku]="item.skuHint" />
                 }
@@ -195,7 +207,7 @@ interface VisualCategoryCard {
       </section>
 
       <!-- SECTION 3: VỀ CHÚNG TÔI (Exact OG 2-column rounded video + green heading split) -->
-      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center" appScrollReveal>
         <div class="lg:col-span-6">
           <div class="relative aspect-video rounded-[20px] overflow-hidden shadow-md border border-border bg-surface">
             @if (!videoBroken()) {
@@ -242,7 +254,7 @@ interface VisualCategoryCard {
       </section>
 
       <!-- SECTION 4: ROLLABLE WORKSHOP GALLERY CAROUSEL -->
-      <section class="relative group/carousel">
+      <section class="relative group/carousel" appScrollReveal>
         <button
           type="button"
           (click)="scrollGallery(-1)"
@@ -284,7 +296,7 @@ interface VisualCategoryCard {
       </section>
 
       <!-- SECTION 5: LIVE CATALOG FEATURED PRODUCTS -->
-      <section class="space-y-6">
+      <section class="space-y-6" appScrollReveal>
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
             <h2 class="text-2xl sm:text-3xl font-extrabold uppercase text-accent">
@@ -367,11 +379,11 @@ interface VisualCategoryCard {
         </div>
 
         <!-- 4 Big Green Counters -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-border">
-          @for (stat of workshopStats; track stat.label) {
+        <div #statsGrid class="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-border">
+          @for (stat of workshopStats; track stat.label; let idx = $index) {
             <div>
               <div class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-accent tabular-nums">
-                {{ stat.value }}
+                +{{ animatedStatValues()[idx] }}
               </div>
               <div class="text-sm sm:text-base font-bold text-text-primary mt-1">
                 {{ stat.label }}
@@ -383,7 +395,7 @@ interface VisualCategoryCard {
     </section>
 
     <!-- SECTION 7: CHUẨN MỰC VỀ PHẨM CHẤT BANNER (matches OG bottom banner) -->
-    <section class="max-w-5xl mx-auto px-4 pt-12 text-center space-y-3">
+    <section class="max-w-5xl mx-auto px-4 pt-12 text-center space-y-3" appScrollReveal>
       <h2 class="text-2xl sm:text-3xl font-extrabold uppercase text-accent">
         CHUẨN MỰC VỀ PHẨM CHẤT
       </h2>
@@ -409,11 +421,13 @@ interface VisualCategoryCard {
     </section>
   `,
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly cartApi = inject(CartApiService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private statsObserver?: IntersectionObserver;
+  private statsRafId?: number;
 
   readonly ArrowRightIcon = ArrowRight;
   readonly CheckIcon = CheckCircle2;
@@ -422,6 +436,7 @@ export class HomeComponent implements OnInit {
   readonly ChevronRightIcon = ChevronRight;
 
   @ViewChild('galleryTrack') galleryTrack?: ElementRef<HTMLDivElement>;
+  @ViewChild('statsGrid') statsGrid?: ElementRef<HTMLDivElement>;
 
   readonly featuredProducts = signal<Product[]>([]);
   readonly loadingProducts = signal(true);
@@ -482,11 +497,15 @@ export class HomeComponent implements OnInit {
   ];
 
   readonly workshopStats = [
-    { value: '+1200', label: 'Đánh giá tốt' },
-    { value: '+68', label: 'Dự án trong năm' },
-    { value: '+88', label: 'Giải thưởng giành được' },
-    { value: '+668', label: 'Hỗ trợ cho khách hàng' },
+    { target: 1200, label: 'Đánh giá tốt' },
+    { target: 68, label: 'Dự án trong năm' },
+    { target: 88, label: 'Giải thưởng giành được' },
+    { target: 668, label: 'Hỗ trợ cho khách hàng' },
   ];
+
+  readonly animatedStatValues = signal<number[]>(
+    this.workshopStats.map(() => 0)
+  );
 
   ngOnInit(): void {
     this.catalogApi.getProducts({ page: 0, size: 8 }).subscribe({
@@ -498,6 +517,56 @@ export class HomeComponent implements OnInit {
       },
       error: () => this.loadingProducts.set(false),
     });
+  }
+
+  ngAfterViewInit(): void {
+    const el = this.statsGrid?.nativeElement;
+    if (!el) return;
+
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (reducedMotion || typeof IntersectionObserver === 'undefined') {
+      this.animatedStatValues.set(this.workshopStats.map((s) => s.target));
+      return;
+    }
+
+    this.statsObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          this.startStatsCountUp();
+          this.statsObserver?.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    this.statsObserver.observe(el);
+  }
+
+  ngOnDestroy(): void {
+    this.statsObserver?.disconnect();
+    if (this.statsRafId !== undefined) {
+      cancelAnimationFrame(this.statsRafId);
+    }
+  }
+
+  private startStatsCountUp(): void {
+    const durationMs = 1400;
+    const start = performance.now();
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      this.animatedStatValues.set(
+        this.workshopStats.map((s) => Math.round(s.target * eased))
+      );
+      if (t < 1) {
+        this.statsRafId = requestAnimationFrame(step);
+      }
+    };
+
+    this.statsRafId = requestAnimationFrame(step);
   }
 
   scrollGallery(direction: number): void {

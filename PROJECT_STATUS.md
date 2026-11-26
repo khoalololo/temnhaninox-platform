@@ -1,6 +1,6 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 4B/4C (Angular 18+ — Storefront Polish, Product Detail & 3D Quote Builder)
+## Current Phase: Phase 5 (End-to-End Integration & Verification) — Phase 4C & 4D Completed
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -51,14 +51,14 @@
 - [ ] Pagination controls on `/products`, `/products/:slug` detail gallery page, and mobile drawer nav
 - [ ] Shopping cart view
 
-### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [PENDING]
-- [ ] Standalone `Nameplate3dViewerComponent` (Three.js WebGL canvas, dynamic width/height/thickness scaling, metallic PBR shaders for Inox/Nhôm/Đồng/Mica, logo texture mapping, `.cdr` CAD badge)
-- [ ] Live pricing receipt wired to `/api/v1/quotes/calculate` and Add-to-Cart
+### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [COMPLETED]
+- [x] Standalone `Nameplate3dViewerComponent` (Three.js WebGL canvas, dynamic width/height/thickness scaling, metallic PBR shaders for Inox/Nhôm/Đồng/Mica, logo `artworkDataUrl` texture mapping, `.cdr`/CAD filename badge, camera presets, corner rivets)
+- [x] Live pricing receipt wired to `/api/v1/quotes/calculate`, SeaweedFS file upload, and Add-to-Cart (`QuoteBuilderComponent`)
 
-### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [PENDING]
-- [ ] Streamlined checkout (`/checkout`) with VAT accordion
-- [ ] Customer 7-step timeline (`/account/orders/:id`) with sample approval & deposit receipt upload
-- [ ] Admin cockpit (`/admin` dashboard, order management screen, catalog/pricing editor)
+### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [COMPLETED]
+- [x] Streamlined checkout (`/checkout`) with cart item summary, 50% deposit vs. 100% payment breakdown, saved VAT profile auto-fill, and VAT 10% accordion
+- [x] Customer 7-step timeline (`/account/orders/:id`) with `CANCELLED` state banner, `estimatedCompletionDate`, `productionWorkerNote`, sample approval, VNPAY redirect, and bank transfer receipt upload
+- [x] Admin cockpit (`/admin` dashboard KPIs, order management queue & inspector drawer with per-item unit price override, prototype upload, deposit-gated status transitions, VAT invoice number, pricing rule editor, and catalog product create/delete)
 
 ### Phase 5: End-to-End Integration & Verification [PENDING]
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]

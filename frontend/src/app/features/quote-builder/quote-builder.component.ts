@@ -202,6 +202,8 @@ import { ButtonDirective } from '../../shared/components/button/button.component
             [processName]="selectedMethod()?.name || 'Ăn mòn'"
             [previewText]="previewText"
             [cornerRivets]="cornerRivets"
+            [artworkDataUrl]="artworkDataUrl()"
+            [cadFileName]="uploadedFile()?.fileName || null"
           />
 
           <div class="industrial-card p-3 text-xs text-text-secondary flex flex-wrap items-center justify-between gap-2">
@@ -336,6 +338,7 @@ export class QuoteBuilderComponent implements OnInit {
   readonly materials = signal<Material[]>([]);
   readonly quote = signal<QuoteCalculationResponse | null>(null);
   readonly uploadedFile = signal<FileUploadResponse | null>(null);
+  readonly artworkDataUrl = signal<string | null>(null);
   readonly calculating = signal(false);
   readonly uploading = signal(false);
   readonly addingToCart = signal(false);
@@ -442,6 +445,16 @@ export class QuoteBuilderComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
+    if (/\.(png|jpe?g|svg|webp)$/i.test(file.name)) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.artworkDataUrl.set(typeof reader.result === 'string' ? reader.result : null);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.artworkDataUrl.set(null);
+    }
 
     this.uploading.set(true);
     this.quoteApi.uploadFile(file, 'design-files').subscribe({

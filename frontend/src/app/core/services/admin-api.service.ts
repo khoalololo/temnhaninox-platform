@@ -11,7 +11,7 @@ import {
   PaymentStatus,
   PricingRule,
 } from '../models/order.models';
-import { Category, Material, Product } from '../models/catalog.models';
+import { Category, Material, ProcessingMethod, Product } from '../models/catalog.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
@@ -102,6 +102,10 @@ export class AdminApiService {
     return this.http.get<ApiResponse<Material[]>>('/api/v1/admin/catalog/materials');
   }
 
+  getAdminProcessingMethods(): Observable<ApiResponse<ProcessingMethod[]>> {
+    return this.http.get<ApiResponse<ProcessingMethod[]>>('/api/v1/admin/catalog/processing-methods');
+  }
+
   getAdminProducts(page = 0, size = 50): Observable<ApiResponse<PageResponse<Product>>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<ApiResponse<PageResponse<Product>>>('/api/v1/admin/catalog/products', { params });
@@ -109,6 +113,10 @@ export class AdminApiService {
 
   createProduct(payload: Record<string, unknown>): Observable<ApiResponse<Product>> {
     return this.http.post<ApiResponse<Product>>('/api/v1/admin/catalog/products', payload);
+  }
+
+  updateProduct(id: string, payload: Record<string, unknown>): Observable<ApiResponse<Product>> {
+    return this.http.put<ApiResponse<Product>>(`/api/v1/admin/catalog/products/${id}`, payload);
   }
 
   deleteProduct(id: string): Observable<ApiResponse<void>> {
