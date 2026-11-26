@@ -280,6 +280,46 @@ class PricingEngineServiceTest {
                 .isEqualTo(ErrorCode.INCOMPATIBLE_MATERIAL_PROCESS);
     }
 
+    @Test
+    void calculateQuote_bulkDiscountBoundary_999NoDiscount_1000GetsTenPercent() {
+        mockCompatible(inox304, etching, 7);
+
+        QuoteCalculationResponse at999 = pricingEngineService.calculateQuote(quoteOf(999));
+        QuoteCalculationResponse at1000 = pricingEngineService.calculateQuote(quoteOf(1000));
+
+        // unit price 25,000 (0.1m x 0.05m x 5,000,000)
+        assertThat(at999.getDiscountAmount()).isEqualByComparingTo("0.00");
+        assertThat(at999.getTotalAmount()).isEqualByComparingTo("24975000.00");
+        assertThat(at1000.getDiscountAmount()).isEqualByComparingTo("2500000.00");
+        assertThat(at1000.getTotalAmount()).isEqualByComparingTo("22500000.00");
+    }
+
+    @Test
+    void calculateQuote_justAboveOneMm_switchesToThickMetalFormula() {
+        mockCompatible(inox304, etching, 7);
+
+        QuoteCalculationRequest request = quoteWith(1, "1.01");
+
+        assertThat(pricingEngineService.calculateQuote(request).getPricingFormulaMode())
+                .isEqualTo("THICK_METAL_MASS");
+    }
+
+    private QuoteCalculationRequest quoteOf(int quantity) {
+        return quoteWith(quantity, "0.50");
+    }
+
+    private QuoteCalculationRequest quoteWith(int quantity, String thicknessMm) {
+        return QuoteCalculationRequest.builder()
+                .materialId(inox304Id)
+                .processingMethodId(etchingId)
+                .widthMm(new BigDecimal("100"))
+                .heightMm(new BigDecimal("50"))
+                .thicknessMm(new BigDecimal(thicknessMm))
+                .quantity(quantity)
+                .requiresVatInvoice(false)
+                .build();
+    }
+
     private void mockCompatible(Material material, ProcessingMethod method, int leadDays) {
         when(materialRepository.findByIdAndIsActiveTrue(material.getId())).thenReturn(Optional.of(material));
         when(processingMethodRepository.findByIdAndIsActiveTrue(method.getId())).thenReturn(Optional.of(method));

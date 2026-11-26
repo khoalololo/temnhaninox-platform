@@ -182,6 +182,37 @@ class AdminOrderServiceTest {
     }
 
     @Test
+    void updateOrderStatus_toCompletedBeforeFullBalancePaid_throwsBalanceNotSettled() {
+        Order order = baseOrder(OrderStatus.READY_FOR_DELIVERY, OrderType.CUSTOM_QUOTE_ORDER, false);
+        order.setPaidAmount(new BigDecimal("500000.00")); // only the 50% deposit of a 1,000,000 order
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        AdminUpdateOrderStatusRequest request = AdminUpdateOrderStatusRequest.builder()
+                .targetStatus(OrderStatus.COMPLETED)
+                .build();
+
+        assertThatThrownBy(() -> adminOrderService.updateOrderStatus(adminId, orderId, request))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.BALANCE_NOT_SETTLED);
+    }
+
+    @Test
+    void updateOrderStatus_toCompletedWhenFullyPaid_succeeds() {
+        Order order = baseOrder(OrderStatus.READY_FOR_DELIVERY, OrderType.CUSTOM_QUOTE_ORDER, false);
+        order.setPaidAmount(new BigDecimal("1000000.00"));
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderDetailResponse response = adminOrderService.updateOrderStatus(adminId, orderId,
+                AdminUpdateOrderStatusRequest.builder().targetStatus(OrderStatus.COMPLETED).build());
+
+        assertThat(response.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+    }
+
+    @Test
     void updateOrderStatus_invalidTransition_throwsValidationError() {
         Order order = baseOrder(OrderStatus.COMPLETED, OrderType.CUSTOM_QUOTE_ORDER, false);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
