@@ -37,7 +37,7 @@
 - [x] VNPAY sandbox integration (`POST /api/v1/payments/vnpay/create-url`, `GET /api/v1/payments/vnpay-return` with `HMAC-SHA512` signature verification and auto-advance to `IN_PRODUCTION`)
 - [x] Async `TelegramNotificationService` (`@Async` + `RestClient`, no-ops safely when credentials are blank) for new custom quotes & payment proofs
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
-- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 28/28 passed — `AdminOrderServiceTest`: 8, `OrderServiceTest`: 6, `CartServiceTest`: 5, `PaymentServiceTest`: 4, `OrderControllerTest`: 3, `AdminOrderControllerTest`: 2)
+- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 39/39 passed — includes admin/customer role-separation controller tests)
 
 ### Phase 4A: Angular 18+ — Core App Shell & Auth [COMPLETE EXCEPT DEFERRED AUTH FLOWS]
 - [x] Top header/navbar layout with search bar, category quick-links, cart button, theme toggle, and login trigger
@@ -71,6 +71,7 @@
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]
 - [ ] Manually verify UC-03 through UC-12 at desktop and 375px mobile; no live-browser verification was performed in this task
 - [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`
+- [x] Admin/customer separation: backend denies ADMIN access to cart, customer order, and VNPAY create-url routes; customer route flows remain enabled. `mvn test -pl order-service` passed (39/39), and frontend `npm run build` passed.
 
 ### Phase E: Hardening (branch `hardening/phase5-prep`) [WRITTEN — NOT COMPILED OR RUN]
 - [x] VNPAY IPN endpoint + amount verification + idempotent processing (+4 unit tests)

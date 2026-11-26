@@ -209,67 +209,71 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
 
             <!-- Action Box -->
             <div class="mt-auto pt-4 border-t border-border">
-              @if (product()!.productType === 'CUSTOM_TEMPLATE') {
-                <a
-                  routerLink="/quote-builder"
-                  [queryParams]="{
-                    productId: product()!.id,
-                    materialId: product()!.materialId,
-                    processingMethodId: product()!.processingMethodId,
-                    w: product()!.defaultWidthMm || 80,
-                    h: product()!.defaultHeightMm || 40,
-                    t: product()!.defaultThicknessMm || 0.8
-                  }"
-                  appButton
-                  variant="primary"
-                  size="lg"
-                >
-                  Tùy chỉnh kích thước & Xem trước 3D →
-                </a>
+              @if (authService.isAdmin()) {
+                <p class="text-sm text-text-muted">Đang xem với tư cách quản trị viên</p>
               } @else {
-                <div class="flex flex-wrap items-center gap-3">
-                  <div class="flex items-center border border-border rounded-[6px] bg-bg">
-                    <button
-                      type="button"
-                      (click)="quantity = quantity > 1 ? quantity - 1 : 1"
-                      class="px-3 py-2 text-sm font-sans tabular-nums text-text-primary hover:bg-surface-raised"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      [(ngModel)]="quantity"
-                      min="1"
-                      class="w-16 text-center font-sans tabular-nums text-sm bg-bg text-text-primary border-x border-border py-2 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      (click)="quantity = quantity + 1"
-                      class="px-3 py-2 text-sm font-sans tabular-nums text-text-primary hover:bg-surface-raised"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    (click)="addToCart()"
-                    [disabled]="adding() || (product()!.stockQuantity ?? 0) <= 0"
+                @if (product()!.productType === 'CUSTOM_TEMPLATE') {
+                  <a
+                    routerLink="/quote-builder"
+                    [queryParams]="{
+                      productId: product()!.id,
+                      materialId: product()!.materialId,
+                      processingMethodId: product()!.processingMethodId,
+                      w: product()!.defaultWidthMm || 80,
+                      h: product()!.defaultHeightMm || 40,
+                      t: product()!.defaultThicknessMm || 0.8
+                    }"
                     appButton
                     variant="primary"
                     size="lg"
                   >
-                    {{ adding() ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
-                  </button>
-                </div>
+                    Tùy chỉnh kích thước & Xem trước 3D →
+                  </a>
+                } @else {
+                  <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center border border-border rounded-[6px] bg-bg">
+                      <button
+                        type="button"
+                        (click)="quantity = quantity > 1 ? quantity - 1 : 1"
+                        class="px-3 py-2 text-sm font-sans tabular-nums text-text-primary hover:bg-surface-raised"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        [(ngModel)]="quantity"
+                        min="1"
+                        class="w-16 text-center font-sans tabular-nums text-sm bg-bg text-text-primary border-x border-border py-2 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        (click)="quantity = quantity + 1"
+                        class="px-3 py-2 text-sm font-sans tabular-nums text-text-primary hover:bg-surface-raised"
+                      >
+                        +
+                      </button>
+                    </div>
 
-                @if (addedNotice()) {
-                  <div class="mt-3 text-xs text-success font-medium">
-                    ✓ Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Xem giỏ hàng</a>
+                    <button
+                      type="button"
+                      (click)="addToCart()"
+                      [disabled]="adding() || (product()!.stockQuantity ?? 0) <= 0"
+                      appButton
+                      variant="primary"
+                      size="lg"
+                    >
+                      {{ adding() ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
+                    </button>
                   </div>
-                }
-                @if (actionError()) {
-                  <p class="mt-3 text-xs text-danger" role="alert">{{ actionError() }}</p>
+
+                  @if (addedNotice()) {
+                    <div class="mt-3 text-xs text-success font-medium">
+                      ✓ Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Xem giỏ hàng</a>
+                    </div>
+                  }
+                  @if (actionError()) {
+                    <p class="mt-3 text-xs text-danger" role="alert">{{ actionError() }}</p>
+                  }
                 }
               }
             </div>
@@ -357,7 +361,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly catalogApi = inject(CatalogApiService);
   private readonly cartApi = inject(CartApiService);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
 
   readonly product = signal<Product | null>(null);
   readonly galleryImages = computed(() => {

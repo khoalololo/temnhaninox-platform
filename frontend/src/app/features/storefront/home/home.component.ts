@@ -78,13 +78,17 @@ interface VisualCategoryCard {
           </p>
 
           <div class="hero-stagger flex flex-wrap items-center gap-3.5 pt-2" style="--hero-delay: 300ms;">
-            <a
-              routerLink="/quote-builder"
-              class="inline-flex items-center gap-2 bg-[#187115] hover:bg-[#1e8a1b] hover:-translate-y-0.5 text-white font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[6px] shadow-lg transition-all"
-            >
-              <span>Báo Giá & Xem Mẫu 3D</span>
-              <lucide-icon [img]="ArrowRightIcon" [size]="18" />
-            </a>
+            @if (authService.isAdmin()) {
+              <span class="text-sm text-white/70">Đang xem với tư cách quản trị viên</span>
+            } @else {
+              <a
+                routerLink="/quote-builder"
+                class="inline-flex items-center gap-2 bg-[#187115] hover:bg-[#1e8a1b] hover:-translate-y-0.5 text-white font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[6px] shadow-lg transition-all"
+              >
+                <span>Báo Giá & Xem Mẫu 3D</span>
+                <lucide-icon [img]="ArrowRightIcon" [size]="18" />
+              </a>
+            }
             <a
               routerLink="/products"
               class="inline-flex items-center gap-2 bg-white/95 hover:bg-white hover:-translate-y-0.5 text-[#187115] font-bold uppercase text-sm sm:text-base px-6 py-3.5 rounded-[6px] shadow-lg transition-all"
@@ -248,9 +252,13 @@ interface VisualCategoryCard {
             KĨ NGHỆ NVX – SÀI GÒN hãnh diện là một trong những đơn vị tiên phong trong việc kết hợp giữa nghệ thuật thủ công truyền thống và công nghệ hiện đại. Chúng tôi không chỉ chú trọng đến việc sử dụng các phương pháp cổ điển như ăn mòn hoá chất và ăn mòn hoá lý để tạo ra những chi tiết tinh tế trên các chất liệu khác nhau, mà còn đầu tư mạnh mẽ vào các thiết bị tiên tiến như máy Laser Fiber, CNC, và công nghệ in UV lượng tử.
           </p>
           <div class="pt-2">
-            <a routerLink="/quote-builder" appButton variant="primary" size="md">
-              XEM THÊM & TẠO BÁO GIÁ 3D
-            </a>
+            @if (authService.isAdmin()) {
+              <span class="text-sm text-text-muted">Đang xem với tư cách quản trị viên</span>
+            } @else {
+              <a routerLink="/quote-builder" appButton variant="primary" size="md">
+                XEM THÊM & TẠO BÁO GIÁ 3D
+              </a>
+            }
           </div>
         </div>
       </section>
@@ -451,7 +459,7 @@ interface VisualCategoryCard {
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly cartApi = inject(CartApiService);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private statsObserver?: IntersectionObserver;
   private statsRafId?: number;

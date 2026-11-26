@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from 'lucide-angular';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-footer',
@@ -43,12 +44,16 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
           <p class="text-white/90 leading-relaxed mb-4">
             Khách hàng hiện tại, vui lòng gửi file thiết kế (.CDR, .AI, .PDF) hoặc sử dụng công cụ báo giá tự động trực tuyến.
           </p>
-          <a
-            routerLink="/quote-builder"
-            class="inline-block bg-[#187115] hover:bg-[#1e8a1b] text-white font-semibold uppercase text-xs px-4 py-2.5 rounded-[5px] transition-colors"
-          >
-            BÁO GIÁ & XEM MẪU 3D
-          </a>
+          @if (authService.isAdmin()) {
+            <p class="text-sm text-white/70">Đang xem với tư cách quản trị viên</p>
+          } @else {
+            <a
+              routerLink="/quote-builder"
+              class="inline-block bg-[#187115] hover:bg-[#1e8a1b] text-white font-semibold uppercase text-xs px-4 py-2.5 rounded-[5px] transition-colors"
+            >
+              BÁO GIÁ & XEM MẪU 3D
+            </a>
+          }
         </div>
 
         <!-- Col 3: THÔNG TIN LIÊN HỆ (with circular green icons matching OG site) -->
@@ -91,9 +96,10 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
           <div class="rounded-[8px] overflow-hidden border border-white/25 bg-white/10">
             <iframe
               title="Bản đồ Kĩ Nghệ NVX Sài Gòn"
-              src="https://www.google.com/maps?q=350%2F21%2F51%2C+Duong+T15%2C+An+Phu+Dong%2C+Ho+Chi+Minh+70000%2C+Vietnam&output=embed"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1043.3602203915927!2d106.69549236958476!3d10.861670499330698!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175290054df43a5%3A0xdb0760f4c8339c0f!2zQ8OUTkcgVFkgVE5ISCBOVlggU8OASSBHw5JO!5e1!3m2!1sen!2sus!4v1795695116262!5m2!1sen!2sus"
               class="w-full h-44 border-0"
               loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
             ></iframe>
           </div>
         </div>
@@ -111,7 +117,7 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
     <!-- Floating Contact Dock (Maps, WhatsApp/Zalo, Phone — matching OG right-side dock) -->
     <div class="fixed bottom-4 right-4 z-40 flex flex-col gap-2.5">
       <a
-        href="https://maps.google.com/?q=350%2F21%2F51%2C+Duong+T15%2C+An+Phu+Dong%2C+Ho+Chi+Minh+70000%2C+Vietnam"
+        [href]="googleMapsUrl"
         target="_blank"
         rel="noopener noreferrer"
         title="Mở bản đồ Google Maps"
@@ -139,6 +145,8 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
   `,
 })
 export class FooterComponent {
+  readonly authService = inject(AuthService);
+  readonly googleMapsUrl = 'https://maps.app.goo.gl/UVxYp5FyTrhiHvpL7';
   readonly PhoneIcon = Phone;
   readonly MessageIcon = MessageCircle;
   readonly MapPinIcon = MapPin;

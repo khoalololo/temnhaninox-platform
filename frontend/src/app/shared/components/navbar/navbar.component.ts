@@ -139,30 +139,32 @@ interface MegaMenuColumn {
 
         <!-- Actions -->
         <div class="flex items-center gap-2.5 shrink-0">
-          <a
-            routerLink="/quote-builder"
-            appButton
-            variant="primary"
-            size="sm"
-          >
-            <span class="hidden sm:inline">Báo Giá & Xem Mẫu 3D</span>
-            <span class="sm:hidden">Báo Giá 3D</span>
-          </a>
+          @if (!authService.isAdmin()) {
+            <a
+              routerLink="/quote-builder"
+              appButton
+              variant="primary"
+              size="sm"
+            >
+              <span class="hidden sm:inline">Báo Giá & Xem Mẫu 3D</span>
+              <span class="sm:hidden">Báo Giá 3D</span>
+            </a>
 
-          <a
-            routerLink="/cart"
-            appButton
-            variant="secondary"
-            size="sm"
-          >
-            <lucide-icon [img]="CartIcon" [size]="16" />
-            <span class="hidden sm:inline">Giỏ hàng</span>
-            @if (cartService.cartCount() > 0) {
-              <span class="bg-accent text-white font-mono tabular-nums text-xs font-bold px-2 py-0.5 rounded-full">
-                {{ cartService.cartCount() }}
-              </span>
-            }
-          </a>
+            <a
+              routerLink="/cart"
+              appButton
+              variant="secondary"
+              size="sm"
+            >
+              <lucide-icon [img]="CartIcon" [size]="16" />
+              <span class="hidden sm:inline">Giỏ hàng</span>
+              @if (cartService.cartCount() > 0) {
+                <span class="bg-accent text-white font-mono tabular-nums text-xs font-bold px-2 py-0.5 rounded-full">
+                  {{ cartService.cartCount() }}
+                </span>
+              }
+            </a>
+          }
 
           <button
             type="button"
@@ -194,13 +196,15 @@ interface MegaMenuColumn {
                 <div
                   class="absolute right-0 mt-1.5 w-56 bg-bg-elevated text-text-primary border border-border rounded-[10px] py-1.5 z-50 shadow-card-hover"
                 >
-                  <a
-                    routerLink="/account/orders"
-                    (click)="menuOpen.set(false)"
-                    class="block px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-raised hover:text-accent transition-colors border-b border-border"
-                  >
-                    Đơn hàng & Tiến độ xưởng
-                  </a>
+                  @if (!authService.isAdmin()) {
+                    <a
+                      routerLink="/account/orders"
+                      (click)="menuOpen.set(false)"
+                      class="block px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-raised hover:text-accent transition-colors border-b border-border"
+                    >
+                      Đơn hàng & Tiến độ xưởng
+                    </a>
+                  }
                   <a
                     routerLink="/account/profile"
                     (click)="menuOpen.set(false)"
@@ -327,17 +331,19 @@ interface MegaMenuColumn {
                         Nhập dài × rộng × dày (mm), chọn Inox 304, Nhôm, Đồng, Mica, tải file .CDR/.AI và nhận báo giá ngay lập tức.
                       </p>
                     </div>
-                    <a
-                      routerLink="/quote-builder"
-                      (click)="megaMenuOpen.set(false)"
-                      appButton
-                      variant="primary"
-                      size="sm"
-                      [fullWidth]="true"
-                      class="mt-4"
-                    >
-                      Mở Công Cụ 3D Ngay
-                    </a>
+                    @if (!authService.isAdmin()) {
+                      <a
+                        routerLink="/quote-builder"
+                        (click)="megaMenuOpen.set(false)"
+                        appButton
+                        variant="primary"
+                        size="sm"
+                        [fullWidth]="true"
+                        class="mt-4"
+                      >
+                        Mở Công Cụ 3D Ngay
+                      </a>
+                    }
                   </div>
                 </div>
               </div>
@@ -449,13 +455,15 @@ interface MegaMenuColumn {
               >
                 Tất cả sản phẩm
               </a>
-              <a
-                routerLink="/quote-builder"
-                (click)="mobileDrawerOpen.set(false)"
-                class="block px-3 py-2 rounded-[6px] font-bold text-accent hover:bg-surface-raised"
-              >
-                Báo Giá & Xem Mẫu 3D
-              </a>
+              @if (!authService.isAdmin()) {
+                <a
+                  routerLink="/quote-builder"
+                  (click)="mobileDrawerOpen.set(false)"
+                  class="block px-3 py-2 rounded-[6px] font-bold text-accent hover:bg-surface-raised"
+                >
+                  Báo Giá & Xem Mẫu 3D
+                </a>
+              }
               @if (authService.isAdmin()) {
                 <a
                   routerLink="/admin"

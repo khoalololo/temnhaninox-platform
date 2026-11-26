@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/catalog.models';
+import { AuthService } from '../../../core/services/auth.service';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../button/button.component';
 import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholder.component';
@@ -52,7 +53,9 @@ import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholde
         </a>
 
         <div class="mt-auto pt-3 border-t border-border">
-          @if (product.productType === 'CUSTOM_TEMPLATE') {
+          @if (authService.isAdmin()) {
+            <p class="text-xs text-text-muted">Đang xem với tư cách quản trị viên</p>
+          } @else if (product.productType === 'CUSTOM_TEMPLATE') {
             <div class="text-xs sm:text-sm text-text-secondary mb-3 flex items-center justify-between gap-2">
               <span>Kích thước mẫu:</span>
               <span class="font-mono tabular-nums font-semibold text-text-primary">
@@ -103,6 +106,7 @@ import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholde
   `,
 })
 export class ProductCardComponent {
+  readonly authService = inject(AuthService);
   @Input({ required: true }) product!: Product;
   @Output() addToCart = new EventEmitter<Product>();
 }

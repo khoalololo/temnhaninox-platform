@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, customerOrderGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -41,6 +41,7 @@ export const routes: Routes = [
   },
   {
     path: 'quote-builder',
+    canActivate: [customerOrderGuard],
     loadComponent: () =>
       import('./features/quote-builder/quote-builder.component').then(
         (m) => m.QuoteBuilderComponent
@@ -48,13 +49,13 @@ export const routes: Routes = [
   },
   {
     path: 'cart',
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerOrderGuard],
     loadComponent: () =>
       import('./features/cart/cart.component').then((m) => m.CartComponent),
   },
   {
     path: 'checkout',
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerOrderGuard],
     loadComponent: () =>
       import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
   },
@@ -81,13 +82,13 @@ export const routes: Routes = [
   },
   {
     path: 'account/orders',
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerOrderGuard],
     loadComponent: () =>
       import('./features/account/orders/order-list.component').then((m) => m.OrderListComponent),
   },
   {
     path: 'account/orders/:id',
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerOrderGuard],
     loadComponent: () =>
       import('./features/account/orders/order-detail.component').then((m) => m.OrderDetailComponent),
   },

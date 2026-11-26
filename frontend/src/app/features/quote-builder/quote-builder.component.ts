@@ -305,22 +305,26 @@ import { ButtonDirective } from '../../shared/components/button/button.component
             </div>
           }
 
-          <button
-            type="button"
-            (click)="addCustomItemToCart()"
-            [disabled]="addingToCart() || !quote() || !!quoteError()"
-            appButton
-            variant="primary"
-            size="lg"
-            [fullWidth]="true"
-          >
-            {{ addingToCart() ? 'Đang thêm vào giỏ...' : '+ Thêm Cấu Hình Này Vào Giỏ' }}
-          </button>
+          @if (authService.isAdmin()) {
+            <p class="text-xs text-text-muted">Đang xem với tư cách quản trị viên</p>
+          } @else {
+            <button
+              type="button"
+              (click)="addCustomItemToCart()"
+              [disabled]="addingToCart() || !quote() || !!quoteError()"
+              appButton
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+            >
+              {{ addingToCart() ? 'Đang thêm vào giỏ...' : '+ Thêm Cấu Hình Này Vào Giỏ' }}
+            </button>
 
-          @if (addedSuccess()) {
-            <div class="p-2.5 rounded-[6px] bg-success/10 border border-success/50 text-xs text-success text-center">
-              ✓ Đã lưu cấu hình vào giỏ! <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Mở giỏ hàng →</a>
-            </div>
+            @if (addedSuccess()) {
+              <div class="p-2.5 rounded-[6px] bg-success/10 border border-success/50 text-xs text-success text-center">
+                ✓ Đã lưu cấu hình vào giỏ! <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Mở giỏ hàng →</a>
+              </div>
+            }
           }
         </div>
       </div>
@@ -331,7 +335,7 @@ export class QuoteBuilderComponent implements OnInit {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly quoteApi = inject(QuoteApiService);
   private readonly cartApi = inject(CartApiService);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

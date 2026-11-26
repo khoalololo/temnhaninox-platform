@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-static-page',
@@ -25,7 +26,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
           <p><strong class="text-text-primary">Điện thoại/Zalo:</strong> <a href="tel:0989820101" class="text-steel hover:underline">098 98 20 101</a></p>
           <p><strong class="text-text-primary">Email:</strong> <a href="mailto:hoangvunew@gmail.com" class="text-steel hover:underline">hoangvunew&#64;gmail.com</a></p>
           <p><strong class="text-text-primary">Địa chỉ xưởng:</strong> 350/21/51, Đường T15, An Phú Đông, Hồ Chí Minh 70000, Việt Nam</p>
-          <a routerLink="/quote-builder" class="inline-flex font-semibold text-steel hover:underline">Tạo yêu cầu báo giá →</a>
+          @if (authService.isAdmin()) {
+            <p class="text-sm text-text-muted">Đang xem với tư cách quản trị viên</p>
+          } @else {
+            <a routerLink="/quote-builder" class="inline-flex font-semibold text-steel hover:underline">Tạo yêu cầu báo giá →</a>
+          }
         </div>
       </main>
     } @else {
@@ -50,6 +55,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 export class StaticPagesComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly authService = inject(AuthService);
   readonly page = this.route.snapshot.data['page'] as string;
   readonly isServerError = this.page === 'server-error';
   readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
