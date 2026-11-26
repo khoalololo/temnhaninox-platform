@@ -10,11 +10,19 @@ import com.temnhaninox.auth.repository.CustomerVatProfileRepository;
 import com.temnhaninox.auth.repository.UserRepository;
 import com.temnhaninox.common.exception.BusinessException;
 import com.temnhaninox.common.exception.ErrorCode;
+import com.temnhaninox.common.dto.PageResponse;
+import com.temnhaninox.common.enums.UserRole;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -23,6 +31,37 @@ public class UserProfileService {
 
     private final UserRepository userRepository;
     private final CustomerVatProfileRepository vatProfileRepository;
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserProfileResponse> getCustomers(String search, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("role"), UserRole.CUSTOMER));
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("fullName")), pattern),
+                        cb.like(cb.lower(root.get("email")), pattern),
+                        cb.like(cb.lower(root.get("phone")), pattern)
+                ));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<User> result = userRepository.findAll(
+                spec,
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return PageResponse.<UserProfileResponse>builder()
+                .content(result.getContent().stream().map(AuthService::toUserProfileResponse).toList())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .last(result.isLast())
+                .build();
+    }
 
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(UUID userId) {

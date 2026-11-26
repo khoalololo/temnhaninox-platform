@@ -1,6 +1,6 @@
 # TEM NHÃN INOX — UI/UX Overhaul & Feature Completion Plan
 **Document type:** Agent execution plan (phases A–D, follows completed Phase 1–3 backend and initial Phase 4 storefront work)
-**Status:** Design system, catalog seeding, image normalization, and numeric typography fixes verified against live app (2026-11-25)
+**Status (2026-11-26):** Phase C and D implementations are complete; Google sign-in and forgot/reset-password flows remain intentionally excluded per owner request. Production frontend build and modified backend module tests pass. Manual Use-Case Checklist verification remains pending.
 
 > **How to use this document:** Execute ONE phase at a time. After each phase, stop and manually verify against the Use-Case Checklist (Section 3) before telling the agent to proceed to the next phase. Do not trust a "done" report from the agent without clicking through the actual running app yourself — this is the same rule as the Master Implementation Plan review: an agent's report of completion and the feature actually working are two different facts.
 
@@ -61,38 +61,38 @@ Resolved in recent updates:
 
 ---
 
-## 2. Feature Gap Analysis
+## 2. Consolidated Feature Gap Tiers
 
-### Tier 1 — Must-fix before demo-ready (blocks real usage)
-| # | Feature | Status / Notes |
+This audit combines the gaps in the original Phase 0–5 checklist with the Phase C/D completion plan. “Implemented” means code exists; it does not mean the runtime/manual acceptance check has passed. Google sign-in and forgot/reset-password are intentionally excluded by owner request.
+
+### Tier 1 — Verify or resolve before production/demo sign-off
+| # | Gap | Current evidence / status | Required follow-up |
+|---|---|---|---|
+| 1 | Full cross-service order lifecycle is not verified end-to-end | Unit tests cover individual services and transitions; no cross-service integration test or recorded manual run covers custom quote → admin review → prototype → deposit → production → completion. | Add an integration test or execute and record the full workflow against running services, including payment and audit/status history. |
+| 2 | Storefront/admin acceptance checks are still pending | Pagination, product detail, admin catalog/pricing, order tracking, dashboard, loading/error states, and mobile navigation are implemented in code. The tracker explicitly says UC-03–UC-12 and 375px checks are pending. | Run and record UC-03–UC-12 on desktop and a 375px viewport. UC-01/UC-02 remain excluded, not outstanding work. |
+| 3 | Production RBAC depends on trusted network boundaries | The gateway validates JWTs, strips spoofed identity headers, and has tests for 401/403 behavior. Downstream services accept `X-User-Id`/`X-User-Role`; no repository deployment config currently restricts direct access to their ports. JWT config also has a development fallback secret. | Before deployment, make services reachable only through the gateway (private network/bind/firewall) and require a strong shared `JWT_SECRET` with no production fallback. Verify gateway-mediated and direct-service denial. |
+
+### Tier 2 — Align implementation with the Phase 0/3/5 architecture checklist
+| # | Gap | Current evidence / status | Required follow-up |
+|---|---|---|---|
+| 4 | Repeatable Docker/Nginx deployment setup is missing | `infra/` currently has PostgreSQL SQL seeds and `.env`, but no Docker Compose or `nginx/default.conf`; local frontend proxy targets the gateway directly. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
+| 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and allows `design-files` and `product-images` (two bucket names). The screenshot checklist refers to MinIO and three verified buckets, while the repository has no Compose setup to provision/verify them. | Confirm SeaweedFS vs. MinIO and define the intended third bucket/use before changing storage; then provision and verify the agreed buckets reproducibly. |
+| 6 | Admin order UI differs from the requested Phase 5 layout | `/admin` provides an orders tab/list and inspector in a tabbed cockpit. It does not provide the screenshot’s Kanban-plus-table `OrdersBoardComponent` / single-screen board layout. Core order operations exist. | Decide whether that exact layout is still required; if yes, build the board/table view and verify processing an order through completion without direct database access. |
+| 7 | Order-state logic is not factored into the named state-machine service | Transition validation and deposit gates exist in `AdminOrderService`/`OrderService`; there is no separate `OrderStateMachineService` as named in the Phase 3 checklist. | Extract a dedicated service only if the architecture requirement is retained; preserve and test the existing transition and deposit rules. |
+
+### Tier 3 — Evidence and quality gates
+| # | Gap | Current evidence / status | Required follow-up |
+|---|---|---|---|
+| 8 | “100%” pricing test coverage is not demonstrated | Pricing formula tests cover representative thin/thick, bulk, VAT, and deposit cases, but no coverage report was found to substantiate 100% coverage. | Generate a coverage report and report actual coverage; add tests for uncovered pricing boundaries rather than claiming a percentage without evidence. |
+| 9 | Runtime infrastructure claims are not verified by repository state | The tracker records earlier local PostgreSQL/SeaweedFS setup, but there is no checked-in deployment definition to reproduce the claimed running services, schemas, or buckets. | Re-run the setup from documented commands and record schema/bucket/health checks after Tier 2 deployment decisions are resolved. |
+
+### Tier 4 — Deferred or awaiting owner decision
+| # | Item | Status |
 |---|---|---|
-| 1 | Forgot/reset password flow | Pending (Phase B) |
-| 2 | Pagination controls on list views (catalog `/products`, admin orders, admin customers) | Backend `PageResponse` ready; frontend paginator UI pending (Phase C) |
-| 3 | Data-driven top nav category dropdown / mega-menu | Category tree API & sidebar tree working; top nav dropdown pending (Phase C) |
-| 4 | Detailed product page (`/products/:slug`: multi-image gallery, spec table, differentiated CTA) | Pending (Phase C) |
-| 5 | Admin product management UI (create/edit/delete + S3 image upload) | Backend API ready; UI pending (Phase D) |
-| 6 | Admin pricing-rule management UI (owner-editable rates, thickness threshold, bulk tiers) | Backend API ready; UI pending (Phase D) |
-| 7 | Mobile-responsive nav (hamburger/drawer below 768px) | Pending (Phase C) |
-| 8 | Consistent loading/empty/error states across all list and detail views | Placeholder empty state done; skeleton/error states pending |
-
-### Tier 2 — Should add soon
-| # | Feature | Notes |
-|---|---|---|
-| 9 | Google sign-in | Phase B (requires `GOOGLE_CLIENT_ID`) |
-| 10 | Order-tracking stepper UI on `/account/orders/:id` | Visualizes the 7-step lifecycle |
-| 11 | Toast/snackbar notification system | Replace any `alert()` calls |
-| 12 | Breadcrumbs on category/product pages | |
-| 13 | Form validation polish (Vietnamese phone format, MST/VAT format check) | |
-| 14 | Session/JWT expiry handling (auto-redirect on 401) | |
-| 15 | Admin dashboard summary widgets (`/api/v1/admin/dashboard/summary`) | Backend endpoint ready; UI pending |
-
-### Tier 3 — Nice-to-have, defer
-| # | Feature |
-|---|---|
-| 16 | Printable/downloadable VAT invoice PDF |
-| 17 | Static content pages (Về chúng tôi, Liên hệ) |
-| 18 | 404/500 custom error pages |
-| 19 | Search autocomplete dropdown |
+| 10 | Google sign-in and forgot/reset-password | Intentionally excluded per owner request; do not implement unless requested later. |
+| 11 | Meaning of “1 ly” for pricing threshold | Awaiting owner confirmation whether this means `1.0mm` or `0.1mm`. |
+| 12 | Mica/Decal pricing rate | Awaiting owner confirmation whether the thin-sheet rate applies uniformly or needs a separate material rate. |
+| 13 | Official VAT invoice PDF | Current print-friendly order summary is not a tax invoice; a compliant invoice integration remains out of scope until specified. |
 
 ---
 
@@ -100,8 +100,8 @@ Resolved in recent updates:
 
 | ID | Actor | Scenario | Steps | Expected result |
 |---|---|---|---|---|
-| UC-01 | Customer | Forgot password | Click "Quên mật khẩu" → enter email → check Mailpit (`localhost:8025`) → click reset link → set new password | Can log in with new password; old password fails; reset link cannot be reused |
-| UC-02 | Customer | Google sign-in | Click "Đăng nhập với Google" → select Google account | Account created or matched by email; logged in with app JWT |
+| UC-01 | Customer (deferred) | Forgot password | Excluded from current acceptance scope per owner request. | Do not implement or verify unless the owner reopens this scope. |
+| UC-02 | Customer (deferred) | Google sign-in | Excluded from current acceptance scope per owner request. | Do not implement or verify unless the owner reopens this scope. |
 | UC-03 | Visitor | Browse paginated catalog | Open `/products` with 37 seeded items | Shows page size (e.g., 12) + pagination bar; page 2 loads next set |
 | UC-04 | Visitor | Use category mega-menu | Hover/click "Sản phẩm" in top nav | Dropdown shows nested categories (`Tem Nhãn` → `Inox`, `Nhôm`, `Đồng`, `Mica`, `Decal`, `CNC`, `Laser`, `Máy Móc`, `Hoá Chất`, `Vật Phẩm Lưu Niệm`) |
 | UC-05 | Visitor | View product detail | Click a product card | Image gallery with thumbnail swap, full spec table, "Thêm vào giỏ" (`STANDARD_ITEM`) or "Tuỳ chỉnh kích thước 3D" (`CUSTOM_TEMPLATE`) |
@@ -120,8 +120,7 @@ Resolved in recent updates:
 Run these as separate sessions, in order. **Stop after each and run the relevant Use-Case rows above before starting the next.**
 
 ### Manual Prerequisites
-1. **Google OAuth:** Create a Web OAuth Client ID in Google Cloud Console with `http://localhost:4200` as an authorized JavaScript origin and copy `GOOGLE_CLIENT_ID`.
-2. **Dev Email:** No external provider needed—Phase B adds `axllent/mailpit` (`1025` SMTP / `8025` Web UI) to `infra/docker-compose.yml`.
+Phase B is deferred and is not part of the current acceptance scope. If the owner reopens it, configure Google OAuth and a development email sink (for example Mailpit) before implementation and verification.
 
 ---
 
@@ -143,9 +142,11 @@ Apply the remaining design system updates from docs/PHASE_UI_IMPLEMENTATION_PLAN
 
 ---
 
-### Phase B — Auth Completeness (Google Sign-In + Forgot/Reset Password)
+### Phase B — Auth Completeness (Google Sign-In + Forgot/Reset Password) [DEFERRED]
 
 ```
+Do not execute this prompt unless the owner explicitly reopens the deferred auth scope.
+
 Implement Google sign-in and forgot/reset password for backend/auth-service (8081) and the Angular frontend, building on the existing JWT auth from Phase 1.
 
 ### Part 1: Database (infra/postgres/init.sql)
@@ -171,7 +172,7 @@ Add a `mailpit` service (`axllent/mailpit`) exposing SMTP on `1025` and Web UI o
 
 ---
 
-### Phase C — Catalog Pagination, Mega-Menu, Mobile Drawer & Product Detail Page
+### Phase C — Catalog Pagination, Mega-Menu, Mobile Drawer & Product Detail Page [IMPLEMENTED; MANUAL CHECKS PENDING]
 
 ```
 Implement catalog pagination, the data-driven category dropdown menu, mobile drawer nav, and the detailed product page.
@@ -195,7 +196,7 @@ Build a reusable `PaginatorComponent` (prev/next, page numbers, current-page hig
 
 ---
 
-### Phase D — Admin Product & Pricing Management
+### Phase D — Admin Product & Pricing Management [IMPLEMENTED; MANUAL CHECKS PENDING]
 
 ```
 Build the admin UI for product and pricing-rule management wired to the existing backend admin endpoints.

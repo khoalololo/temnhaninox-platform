@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { animate, query, style, transition, trigger } from '@angular/animations';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
+import { ToastViewportComponent } from './shared/components/toast/toast.component';
 import { ThemeService } from './core/services/theme.service';
 
 const prefersReducedMotion = (): boolean =>
@@ -28,7 +29,7 @@ export const routeFadeAnimation = trigger('routeFade', [
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
+  imports: [RouterOutlet, NavbarComponent, FooterComponent, ToastViewportComponent],
   animations: [routeFadeAnimation],
   template: `
     <div class="min-h-screen flex flex-col bg-bg text-text-primary font-body">
@@ -37,6 +38,7 @@ export const routeFadeAnimation = trigger('routeFade', [
         <router-outlet #outlet="outlet" />
       </main>
       <app-footer />
+      <app-toast-viewport />
     </div>
   `,
 })

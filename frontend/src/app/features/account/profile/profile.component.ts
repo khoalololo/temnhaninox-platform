@@ -62,7 +62,9 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                 type="text"
                 [(ngModel)]="phone"
                 name="phone"
-                class="industrial-input w-full px-3 py-2 text-sm font-mono"
+                pattern="^(0[0-9]{9}|\\+84[0-9]{9})$"
+                placeholder="0912345678"
+                class="industrial-input w-full px-3 py-2 text-sm font-sans tabular-nums"
               />
             </div>
 
@@ -156,6 +158,8 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   [(ngModel)]="newTaxCode"
                   name="newTaxCode"
                   required
+                  pattern="^[0-9]{10}(-[0-9]{3})?$"
+                  maxlength="14"
                   placeholder="0316892304"
                   class="industrial-input w-full px-3 py-2 text-xs font-mono"
                 />
@@ -238,6 +242,10 @@ export class ProfileComponent implements OnInit {
 
   saveProfile(): void {
     if (!this.fullName.trim()) return;
+    if (this.phone.trim() && !/^(?:0\d{9}|\+84\d{9})$/.test(this.phone.trim())) {
+      this.error.set('Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam bắt đầu bằng 0 hoặc +84.');
+      return;
+    }
     this.savingProfile.set(true);
     this.notice.set('');
     this.error.set('');
@@ -266,6 +274,10 @@ export class ProfileComponent implements OnInit {
   addVatProfile(): void {
     if (!this.newCompanyName.trim() || !this.newTaxCode.trim() || !this.newCompanyAddress.trim()) {
       this.error.set('Vui lòng nhập đầy đủ Tên công ty, Mã số thuế và Địa chỉ.');
+      return;
+    }
+    if (!/^\d{10}(-\d{3})?$/.test(this.newTaxCode.trim())) {
+      this.error.set('Mã số thuế cần gồm 10 hoặc 13 chữ số.');
       return;
     }
 

@@ -39,17 +39,19 @@
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
 - [x] JUnit 5 tests passing (`mvn test -pl order-service`: 28/28 passed — `AdminOrderServiceTest`: 8, `OrderServiceTest`: 6, `CartServiceTest`: 5, `PaymentServiceTest`: 4, `OrderControllerTest`: 3, `AdminOrderControllerTest`: 2)
 
-### Phase 4A: Angular 18+ — Core App Shell & Auth [IN PROGRESS]
+### Phase 4A: Angular 18+ — Core App Shell & Auth [COMPLETE EXCEPT DEFERRED AUTH FLOWS]
 - [x] Top header/navbar layout with search bar, category quick-links, cart button, theme toggle, and login trigger
 - [x] `AuthService` (signals/localStorage), HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
 - [x] Login/Register pages and Customer Profile / Saved VAT Profiles
-- [ ] Forgot/Reset password flow & Google OAuth sign-in
+- [ ] Forgot/Reset password flow & Google OAuth sign-in (intentionally deferred per owner request)
 
-### Phase 4B: Angular 18+ — Storefront & Cart [IN PROGRESS]
+### Phase 4B: Angular 18+ — Storefront & Cart [IMPLEMENTED; MANUAL UC CHECKS PENDING]
 - [x] Landing page hero + category grid + workshop gallery
 - [x] `/products` filterable catalog (search by keyword/SKU, filter by `STANDARD_ITEM` vs `CUSTOM_TEMPLATE`, nested category tree sidebar, `CatalogApiService` `images[]` normalization with `(error)` placeholder fallback, `font-sans tabular-nums` readability styling on prices/dimensions)
-- [ ] Pagination controls on `/products`, `/products/:slug` detail gallery page, and mobile drawer nav
-- [ ] Shopping cart view
+- [x] `/products` pagination, data-driven category mega-menu, responsive mobile drawer, and `/products/:slug` gallery/specification/CTA page
+- [x] Expanded the workshop showcase with additional product photos and an infinite, momentum-driven drag/trackpad carousel; product detail has a larger infinite image carousel, thumbnail navigation, and a compact zoom control with keyboard-accessible lightbox
+- [x] Shopping cart view
+- [x] Consistent list/detail loading, empty, retry/error states; search autocomplete; shared toast notifications; static About/Contact and custom 404/500 views
 
 ### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [COMPLETED]
 - [x] Standalone `Nameplate3dViewerComponent` (Three.js WebGL canvas, dynamic width/height/thickness scaling, metallic PBR shaders for Inox/Nhôm/Đồng/Mica, logo `artworkDataUrl` texture mapping, `.cdr`/CAD filename badge, camera presets, corner rivets)
@@ -58,7 +60,14 @@
 ### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [COMPLETED]
 - [x] Streamlined checkout (`/checkout`) with cart item summary, 50% deposit vs. 100% payment breakdown, saved VAT profile auto-fill, and VAT 10% accordion
 - [x] Customer 7-step timeline (`/account/orders/:id`) with `CANCELLED` state banner, `estimatedCompletionDate`, `productionWorkerNote`, sample approval, VNPAY redirect, and bank transfer receipt upload
-- [x] Admin cockpit (`/admin` dashboard KPIs, order management queue & inspector drawer with per-item unit price override, prototype upload, deposit-gated status transitions, VAT invoice number, pricing rule editor, and catalog product create/delete)
+- [x] Admin cockpit (`/admin` dashboard KPIs, order management queue & inspector drawer with per-item unit price override, prototype upload, deposit-gated status transitions, VAT invoice number, pricing rule editor, and paginated/filterable product create/edit/delete/image upload)
+- [x] Paginated/filterable admin orders and customer directory; admin customer search endpoint guarded at gateway and controller
+- [x] Unit-aware pricing rule editor; product active toggle; shared notifications and accessible delete confirmation
+- [x] Refined admin navigation and typography, reorganized product editor into clear sections, and moved live order/revenue summary into the Orders tab with loading/error/empty states
+- [x] Restyled pricing, order, product, and customer admin views to match storefront spacing/type; localized order statuses and standardized paginator order, controls, and spacing across list pages
+- [x] Vietnamese phone/MST validation and print-friendly order summary (browser Save as PDF; not a tax invoice)
 
 ### Phase 5: End-to-End Integration & Verification [PENDING]
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]
+- [ ] Manually verify UC-03 through UC-12 at desktop and 375px mobile; no live-browser verification was performed in this task
+- [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`

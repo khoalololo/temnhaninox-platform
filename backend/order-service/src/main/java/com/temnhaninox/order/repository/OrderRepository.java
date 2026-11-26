@@ -25,8 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             SELECT o FROM Order o
             WHERE (:status IS NULL OR o.status = :status)
               AND (:orderType IS NULL OR o.orderType = :orderType)
-              AND (:search IS NULL OR LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(o.recipientPhone) LIKE LOWER(CONCAT('%', :search, '%')))
+              AND (LOWER(o.orderCode) LIKE CONCAT('%', :search, '%')
+                   OR LOWER(o.recipientPhone) LIKE CONCAT('%', :search, '%'))
             ORDER BY o.createdAt DESC
             """)
     Page<Order> searchAdminOrders(

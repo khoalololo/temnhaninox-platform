@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -19,8 +19,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CartApiService } from '../../../core/services/cart-api.service';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
-import { Category } from '../../../core/models/catalog.models';
+import { Category, Product } from '../../../core/models/catalog.models';
 import { ButtonDirective } from '../button/button.component';
+import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 
 interface MegaMenuColumn {
   title: string;
@@ -101,7 +102,9 @@ interface MegaMenuColumn {
             <input
               type="text"
               [(ngModel)]="searchQuery"
+              (input)="onSearchInput()"
               name="searchQuery"
+              autocomplete="off"
               placeholder="Tìm tem inox 304, tem nhôm, khắc laser..."
               class="w-full bg-surface border border-border text-sm text-text-primary placeholder-text-muted rounded-l-[6px] px-3.5 py-2 focus:outline-none focus:border-accent"
             />
@@ -115,6 +118,22 @@ interface MegaMenuColumn {
               <lucide-icon [img]="SearchIcon" [size]="15" />
               <span>Tìm</span>
             </button>
+            @if (searchSuggestionsOpen()) {
+              <div class="absolute left-0 right-0 top-full z-[60] border border-border bg-bg-elevated text-text-primary shadow-card-hover">
+                @if (searchSuggestionsError()) {
+                  <p class="p-3 text-xs text-danger">{{ searchSuggestionsError() }}</p>
+                } @else if (searchSuggestions().length) {
+                  @for (product of searchSuggestions(); track product.id) {
+                    <button type="button" (click)="openProduct(product)" class="block w-full border-b border-border px-3 py-2 text-left hover:bg-surface-raised">
+                      <span class="block text-xs font-semibold">{{ product.name }}</span>
+                      <span class="block text-[11px] text-text-muted">{{ product.sku }}</span>
+                    </button>
+                  }
+                } @else {
+                  <p class="p-3 text-xs text-text-muted">Không tìm thấy sản phẩm phù hợp.</p>
+                }
+              </div>
+            }
           </div>
         </form>
 
@@ -233,6 +252,15 @@ interface MegaMenuColumn {
           >
             Trang chủ
           </a>
+          @if (authService.isAdmin()) {
+            <a
+              routerLink="/admin"
+              routerLinkActive="text-accent active-nav"
+              class="h-full inline-flex items-center fs-nav-underline hover:text-accent whitespace-nowrap"
+            >
+              Quản trị xưởng
+            </a>
+          }
 
           <!-- Mega-Menu Trigger: SẢN PHẨM -->
           <div
@@ -376,15 +404,33 @@ interface MegaMenuColumn {
             </button>
           </div>
 
-          <form (ngSubmit)="onSearch(); mobileDrawerOpen.set(false)" class="p-3.5 border-b border-border flex gap-2">
+          <form (ngSubmit)="onSearch(); mobileDrawerOpen.set(false)" class="relative p-3.5 border-b border-border flex gap-2">
             <input
               type="text"
               [(ngModel)]="searchQuery"
+              (input)="onSearchInput()"
               name="mobileSearchQuery"
+              autocomplete="off"
               placeholder="Tìm tem inox, nhôm, laser..."
               class="industrial-input w-full px-3 py-2 text-sm"
             />
             <button type="submit" appButton variant="primary" size="sm">Tìm</button>
+            @if (searchSuggestionsOpen()) {
+              <div class="absolute left-3 right-3 top-full z-[60] border border-border bg-bg-elevated text-text-primary shadow-card-hover">
+                @if (searchSuggestionsError()) {
+                  <p class="p-3 text-xs text-danger">{{ searchSuggestionsError() }}</p>
+                } @else if (searchSuggestions().length) {
+                  @for (product of searchSuggestions(); track product.id) {
+                    <button type="button" (click)="openProduct(product); mobileDrawerOpen.set(false)" class="block w-full border-b border-border px-3 py-2 text-left hover:bg-surface-raised">
+                      <span class="block text-xs font-semibold">{{ product.name }}</span>
+                      <span class="block text-[11px] text-text-muted">{{ product.sku }}</span>
+                    </button>
+                  }
+                } @else {
+                  <p class="p-3 text-xs text-text-muted">Không tìm thấy sản phẩm phù hợp.</p>
+                }
+              </div>
+            }
           </form>
 
           <div class="p-4 space-y-4 flex-1 text-sm">
@@ -410,6 +456,15 @@ interface MegaMenuColumn {
               >
                 Báo Giá & Xem Mẫu 3D
               </a>
+              @if (authService.isAdmin()) {
+                <a
+                  routerLink="/admin"
+                  (click)="mobileDrawerOpen.set(false)"
+                  class="block px-3 py-2 rounded-[6px] font-bold text-accent bg-accent/10 hover:bg-accent/20"
+                >
+                  Quản trị xưởng (Admin)
+                </a>
+              }
             </div>
 
             @for (col of megaMenuColumns(); track col.title) {
@@ -458,13 +513,15 @@ interface MegaMenuColumn {
     }
   `,
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
   readonly cartService = inject(CartApiService);
   readonly catalogApi = inject(CatalogApiService);
   readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  private readonly searchTerms = new Subject<string>();
+  private searchSubscription?: { unsubscribe(): void };
 
   readonly SearchIcon = Search;
   readonly CartIcon = ShoppingCart;
@@ -483,6 +540,9 @@ export class NavbarComponent implements OnInit {
   readonly mobileDrawerOpen = signal(false);
   readonly logoBroken = signal(false);
   readonly categories = signal<Category[]>([]);
+  readonly searchSuggestions = signal<Product[]>([]);
+  readonly searchSuggestionsOpen = signal(false);
+  readonly searchSuggestionsError = signal('');
 
   readonly megaMenuColumns = signal<MegaMenuColumn[]>([
     {
@@ -516,6 +576,29 @@ export class NavbarComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
+    this.searchSubscription = this.searchTerms
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        switchMap((query) => {
+          if (query.length < 2) return of(null);
+          this.searchSuggestionsOpen.set(true);
+          this.searchSuggestionsError.set('');
+          return this.catalogApi.getProducts({ search: query, page: 0, size: 5 }).pipe(
+            catchError(() => {
+              this.searchSuggestionsError.set('Không thể tải gợi ý tìm kiếm.');
+              return of(null);
+            })
+          );
+        })
+      )
+      .subscribe((response) => {
+        this.searchSuggestions.set(response?.success ? response.data?.content || [] : []);
+        if (response && !response.success) {
+          this.searchSuggestionsError.set(response.message || 'Không thể tải gợi ý tìm kiếm.');
+        }
+      });
+
     if (this.authService.isAuthenticated()) {
       this.cartService.loadCart().subscribe({ error: () => {} });
     }
@@ -566,6 +649,7 @@ export class NavbarComponent implements OnInit {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.menuOpen.set(false);
       this.megaMenuOpen.set(false);
+      this.searchSuggestionsOpen.set(false);
     }
   }
 
@@ -574,12 +658,38 @@ export class NavbarComponent implements OnInit {
     this.menuOpen.set(false);
     this.megaMenuOpen.set(false);
     this.mobileDrawerOpen.set(false);
+    this.searchSuggestionsOpen.set(false);
+  }
+
+  onSearchInput(): void {
+    const query = this.searchQuery.trim();
+    if (query.length < 2) {
+      this.searchSuggestions.set([]);
+      this.searchSuggestionsError.set('');
+      this.searchSuggestionsOpen.set(false);
+      return;
+    }
+    this.searchSuggestionsOpen.set(true);
+    this.searchTerms.next(query);
   }
 
   onSearch(): void {
+    const query = this.searchQuery.trim();
+    this.searchSuggestionsOpen.set(false);
     this.router.navigate(['/products'], {
-      queryParams: this.searchQuery.trim() ? { search: this.searchQuery.trim() } : {},
+      queryParams: query ? { search: query } : {},
     });
+  }
+
+  openProduct(product: Product): void {
+    this.searchSuggestionsOpen.set(false);
+    this.searchQuery = '';
+    this.router.navigate(['/products', product.slug]);
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
+    this.searchTerms.complete();
   }
 
   logout(): void {

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { QuoteApiService } from '../../core/services/quote-api.service';
 import {
@@ -10,113 +11,123 @@ import {
   OrderSummary,
   PricingRule,
 } from '../../core/models/order.models';
-import { Category, Material, Product } from '../../core/models/catalog.models';
+import { Category, Material, ProcessingMethod, Product, ProductType } from '../../core/models/catalog.models';
+import { AdminCustomer } from '../../core/models/auth.models';
 import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../shared/components/button/button.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ToastService } from '../../shared/components/toast/toast.component';
 
 @Component({
   selector: 'app-admin-cockpit',
   standalone: true,
-  imports: [CommonModule, FormsModule, VndCurrencyPipe, ButtonDirective],
+  imports: [CommonModule, FormsModule, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
   template: `
-    <div class="max-w-[1440px] mx-auto px-4 py-6 space-y-6">
+    <div class="admin-page max-w-[1440px] mx-auto px-4 py-8 space-y-7">
       <!-- Header & Tabs -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 border-b border-border pb-5">
         <div>
-          <div class="text-[11px] font-mono uppercase tracking-wider text-accent font-medium">
-            BẢNG ĐIỀU HÀNH XƯỞNG GIA CÔNG
-          </div>
-          <h1 class="font-heading text-xl font-bold text-text-primary">Quản Lý Đơn Hàng, Duyệt Mẫu, Thu Cọc & Định Mức Giá</h1>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            (click)="activeTab.set('orders')"
-            appButton
-            [variant]="activeTab() === 'orders' ? 'primary' : 'secondary'"
-            size="sm"
-          >
-            Đơn hàng & Sản xuất
-          </button>
-          <button
-            type="button"
-            (click)="activeTab.set('pricing')"
-            appButton
-            [variant]="activeTab() === 'pricing' ? 'primary' : 'secondary'"
-            size="sm"
-          >
-            Cấu hình đơn giá & Chiết khấu
-          </button>
-          <button
-            type="button"
-            (click)="activeTab.set('products')"
-            appButton
-            [variant]="activeTab() === 'products' ? 'primary' : 'secondary'"
-            size="sm"
-          >
-            Kho sản phẩm ({{ adminProducts().length }})
-          </button>
-        </div>
+        <div class="text-sm text-text-muted mb-1">Quản trị</div>
+        <h1 class="font-heading text-2xl sm:text-3xl font-semibold text-text-primary">Quản lý xưởng</h1>
       </div>
 
-      <!-- KPI Cards -->
-      @if (summary()) {
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <div class="industrial-card p-3.5">
-            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ duyệt báo giá</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-accent mt-1">
-              {{ summary()!.pendingQuotesCount }}
-            </div>
-          </div>
-          <div class="industrial-card p-3.5">
-            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ xác nhận cọc</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-warning mt-1">
-              {{ summary()!.awaitingDepositCount }}
-            </div>
-          </div>
-          <div class="industrial-card p-3.5">
-            <div class="text-[11px] font-mono text-text-muted uppercase">Đang chạy máy SX</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-steel mt-1">
-              {{ summary()!.inProductionCount }}
-            </div>
-          </div>
-          <div class="industrial-card p-3.5">
-            <div class="text-[11px] font-mono text-text-muted uppercase">Chờ xuất HĐ VAT</div>
-            <div class="text-2xl font-mono tabular-nums font-bold text-danger mt-1">
-              {{ summary()!.vatPendingCount }}
-            </div>
-          </div>
-          <div class="industrial-card border-accent/60 p-3.5 col-span-2 lg:col-span-1">
-            <div class="text-[11px] font-mono text-text-muted uppercase">Doanh thu tháng</div>
-            <div class="text-xl font-mono tabular-nums font-bold text-accent mt-1">
-              {{ summary()!.monthlyRevenue | vnd }}
-            </div>
-          </div>
-        </div>
-      }
-
-      @if (toast()) {
-        <div class="p-3 rounded-[6px] border border-success/50 bg-success/10 text-xs text-success font-semibold">
-          ✓ {{ toast() }}
-        </div>
-      }
-      @if (errorMsg()) {
-        <div class="p-3 rounded-[6px] border border-danger/50 bg-danger/10 text-xs text-danger font-semibold">
-          ✕ {{ errorMsg() }}
-        </div>
-      }
+      <nav class="flex flex-wrap gap-2" aria-label="Khu vực quản trị">
+        <button
+          type="button"
+          (click)="setActiveTab('orders')"
+          class="admin-tab"
+          [class.admin-tab-active]="activeTab() === 'orders'"
+        >
+          Đơn hàng
+        </button>
+        <button
+          type="button"
+          (click)="setActiveTab('pricing')"
+          class="admin-tab"
+          [class.admin-tab-active]="activeTab() === 'pricing'"
+        >
+          Định giá
+        </button>
+        <button
+          type="button"
+          (click)="setActiveTab('products')"
+          class="admin-tab"
+          [class.admin-tab-active]="activeTab() === 'products'"
+        >
+          Sản phẩm <span class="tab-count">{{ productsTotalElements() }}</span>
+        </button>
+        <button
+          type="button"
+          (click)="setActiveTab('customers')"
+          class="admin-tab"
+          [class.admin-tab-active]="activeTab() === 'customers'"
+        >
+          Khách hàng
+        </button>
+      </nav>
+      </div>
 
       <!-- TAB 1: ORDERS & WORKFLOW DRAWER -->
       @if (activeTab() === 'orders') {
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <section class="industrial-card overflow-hidden" aria-labelledby="order-overview-title">
+        <div class="px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="order-overview-title" class="font-heading text-lg font-semibold text-text-primary">Tổng quan đơn hàng</h2>
+            <p class="text-sm text-text-secondary mt-0.5">Số liệu hiện tại từ đơn hàng và thanh toán đã xác nhận.</p>
+          </div>
+          @if (summaryLoading()) {
+            <span class="text-sm text-text-muted">Đang cập nhật…</span>
+          } @else if (summaryError()) {
+            <button type="button" (click)="refreshDashboard()" class="text-sm font-medium text-accent hover:underline">Thử tải lại</button>
+          } @else {
+            <span class="text-sm text-text-muted">Cập nhật {{ summaryUpdatedAt() | date:'HH:mm' }}</span>
+          }
+        </div>
+        @if (summaryLoading()) {
+          <div class="h-24 animate-pulse bg-surface-raised" aria-label="Đang tải tổng quan đơn hàng"></div>
+        } @else if (summaryError()) {
+          <p class="px-5 py-4 text-sm text-danger">{{ summaryError() }}</p>
+        } @else {
+          @if (summary(); as stats) {
+            <dl class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 divide-x divide-y xl:divide-y-0 divide-border">
+              <div class="px-5 py-4">
+                <dt class="text-sm text-text-secondary">Chờ duyệt báo giá</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-text-primary">{{ stats.pendingQuotesCount }}</dd>
+              </div>
+              <div class="px-5 py-4">
+                <dt class="text-sm text-text-secondary">Chờ xác nhận cọc</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-text-primary">{{ stats.awaitingDepositCount }}</dd>
+              </div>
+              <div class="px-5 py-4">
+                <dt class="text-sm text-text-secondary">Đang sản xuất</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-text-primary">{{ stats.inProductionCount }}</dd>
+              </div>
+              <div class="px-5 py-4">
+                <dt class="text-sm text-text-secondary">Chờ hóa đơn VAT</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-text-primary">{{ stats.vatPendingCount }}</dd>
+              </div>
+              <div class="px-5 py-4 col-span-2 md:col-span-1">
+                <dt class="text-sm text-text-secondary">Doanh thu tháng này</dt>
+                <dd class="mt-1 text-xl font-semibold tabular-nums text-text-primary">{{ stats.monthlyRevenue | vnd }}</dd>
+              </div>
+            </dl>
+            @if (!stats.pendingQuotesCount && !stats.awaitingDepositCount && !stats.inProductionCount && !stats.vatPendingCount) {
+              <p class="px-5 py-3 bg-surface-raised border-t border-border text-sm text-text-secondary">
+                Hiện chưa có đơn hàng đang chờ xử lý.
+              </p>
+            }
+          }
+        }
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <!-- Orders Queue -->
           <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="industrial-card overflow-hidden">
-            <div class="p-3 bg-surface-raised border-b border-border flex flex-wrap items-center gap-2">
+            <div class="px-5 py-4 bg-surface-raised border-b border-border flex flex-wrap items-center gap-3">
               <select
                 [(ngModel)]="statusFilter"
-                (ngModelChange)="loadOrders()"
-                class="industrial-input px-2.5 py-1.5 text-xs"
+                (ngModelChange)="resetOrdersPage()"
+                class="industrial-input min-w-48"
               >
                 <option value="">Tất cả trạng thái</option>
                 <option value="QUOTE_PENDING">Chờ duyệt giá</option>
@@ -131,30 +142,33 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               <input
                 type="text"
                 [(ngModel)]="searchFilter"
-                (keyup.enter)="loadOrders()"
+                (keyup.enter)="resetOrdersPage()"
                 placeholder="Tìm mã đơn / tên khách..."
-                class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[180px]"
+                class="industrial-input flex-1 min-w-[220px]"
               />
               <button
                 type="button"
-                (click)="loadOrders()"
+                (click)="resetOrdersPage()"
                 appButton
                 variant="secondary"
-                size="xs"
+                size="sm"
               >
                 Lọc
               </button>
             </div>
 
+            @if (ordersLoading()) {
+              <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải đơn hàng"></div>
+            } @else {
             <div class="overflow-x-auto">
-              <table class="w-full text-xs text-left">
-                <thead class="bg-bg border-b border-border font-mono text-text-secondary">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-surface border-b border-border text-text-secondary">
                 <tr>
-                  <th class="px-3.5 py-2.5">Mã đơn</th>
-                  <th class="px-3 py-2.5">Khách hàng</th>
-                  <th class="px-3 py-2.5">Trạng thái</th>
-                  <th class="px-3 py-2.5 text-right">Tổng tiền</th>
-                  <th class="px-3 py-2.5 text-right">Thao tác</th>
+                  <th class="px-5 py-3 font-medium">Mã đơn</th>
+                  <th class="px-4 py-3 font-medium">Khách hàng</th>
+                  <th class="px-4 py-3 font-medium">Trạng thái</th>
+                  <th class="px-4 py-3 text-right font-medium">Tổng tiền</th>
+                  <th class="px-5 py-3 text-right font-medium">Thao tác</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -164,23 +178,32 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                       [class]="selectedOrder()?.id === ord.id ? 'bg-surface-raised' : ''"
                       (click)="openOrder(ord.id)"
                     >
-                      <td class="px-3.5 py-3 font-mono font-bold text-text-primary">
+                      <td class="px-5 py-4 font-sans tabular-nums font-semibold text-text-primary">
                         {{ ord.orderCode }}
                         @if (ord.requiresVatInvoice) {
-                          <span class="ml-1 px-1.5 py-0.5 text-[9px] border border-danger/70 text-danger rounded-full">VAT</span>
+                          <span class="ml-2 px-2 py-0.5 text-xs border border-danger/50 text-danger rounded-full">VAT</span>
                         }
                       </td>
-                      <td class="px-3 py-3 text-text-primary">{{ ord.recipientName }}</td>
-                      <td class="px-3 py-3 font-mono text-[11px] font-medium text-steel">{{ ord.status }}</td>
-                      <td class="px-3 py-3 text-right font-mono tabular-nums font-bold text-text-primary">{{ ord.totalAmount | vnd }}</td>
-                      <td class="px-3 py-3 text-right">
-                        <button type="button" class="text-steel hover:text-steel-hover font-medium hover:underline">Xử lý</button>
+                      <td class="px-4 py-4 text-text-primary">{{ ord.recipientName }}</td>
+                      <td class="px-4 py-4 text-text-secondary">{{ orderStatusLabel(ord.status) }}</td>
+                      <td class="px-4 py-4 text-right font-sans tabular-nums font-medium text-text-primary">{{ ord.totalAmount | vnd }}</td>
+                      <td class="px-5 py-4 text-right">
+                        <button type="button" class="font-medium text-accent hover:underline">Xử lý</button>
                       </td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
+            @if (!ordersLoading() && !orders().length) {
+              <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy đơn hàng phù hợp.</div>
+            }
+            <app-paginator
+              [page]="ordersPage()"
+              [totalPages]="ordersTotalPages()"
+              (pageChange)="goToOrdersPage($event)"
+            />
+            }
           </div>
 
           <!-- Right Detail Inspector Drawer -->
@@ -248,6 +271,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                     </div>
                   </div>
                 }
+
               </div>
 
               <!-- Approve Quote Action + Per-Item Unit Price Override -->
@@ -393,48 +417,85 @@ import { ButtonDirective } from '../../shared/components/button/button.component
 
       <!-- TAB 2: PRICING RULES -->
       @if (activeTab() === 'pricing') {
-        <div class="industrial-card p-5 max-w-3xl space-y-4">
-          <div class="flex items-center justify-between border-b border-border pb-3">
-            <h2 class="font-heading text-sm font-bold text-text-primary">Tham Số Công Thức Báo Giá Xưởng</h2>
+        <section class="industrial-card overflow-hidden" aria-labelledby="pricing-title">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 sm:px-7 py-5 border-b border-border">
+            <div>
+              <h2 id="pricing-title" class="font-heading text-xl sm:text-2xl font-semibold text-text-primary">Định giá</h2>
+              <p class="mt-1 text-sm text-text-secondary">Điều chỉnh các tham số dùng để tính báo giá mới.</p>
+            </div>
             <button
               type="button"
               (click)="savePricingRules()"
+              [disabled]="pricingLoading() || pricingSaving() || !pricingRules().length"
               appButton
               variant="primary"
-              size="sm"
+              size="md"
             >
-              Lưu cấu hình giá
+              {{ pricingSaving() ? 'Đang lưu…' : 'Lưu thay đổi' }}
             </button>
           </div>
-          <div class="space-y-3">
-            @for (rule of pricingRules(); track rule.ruleKey) {
-              <div class="grid grid-cols-12 gap-3 items-center text-xs border-b border-border pb-2.5">
-                <div class="col-span-5 font-mono font-bold text-text-primary">{{ rule.ruleKey }}</div>
-                <div class="col-span-4 text-text-secondary">{{ rule.description }}</div>
-                <div class="col-span-3">
-                  <input
-                    type="number"
-                    [(ngModel)]="rule.ruleValue"
-                    step="0.01"
-                    class="industrial-input w-full px-2.5 py-1.5 font-mono text-right"
-                  />
+
+          @if (pricingLoading()) {
+            <div class="p-6 space-y-4" aria-label="Đang tải tham số định giá">
+              <div class="h-14 animate-pulse rounded bg-surface-raised"></div>
+              <div class="h-14 animate-pulse rounded bg-surface-raised"></div>
+              <div class="h-14 animate-pulse rounded bg-surface-raised"></div>
+            </div>
+          } @else if (pricingError()) {
+            <div class="px-5 sm:px-7 py-6 flex items-center justify-between gap-4">
+              <p class="text-sm text-danger">{{ pricingError() }}</p>
+              <button type="button" (click)="loadPricingRules()" class="text-sm font-medium text-accent hover:underline">Thử lại</button>
+            </div>
+          } @else if (pricingRules().length) {
+            <div class="divide-y divide-border">
+              @for (rule of pricingRules(); track rule.ruleKey) {
+                <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-3 md:gap-8 items-center px-5 sm:px-7 py-4">
+                  <div>
+                    <label [for]="'pricing-' + rule.ruleKey" class="block text-base font-medium text-text-primary">
+                      {{ pricingRuleLabel(rule.ruleKey) }}
+                    </label>
+                    @if (rule.description) {
+                      <p class="mt-1 text-sm text-text-secondary">{{ rule.description }}</p>
+                    }
+                  </div>
+                  <div class="flex min-w-0 items-center gap-3">
+                    <input
+                      [id]="'pricing-' + rule.ruleKey"
+                      type="number"
+                      [(ngModel)]="rule.ruleValue"
+                      [name]="rule.ruleKey"
+                      step="0.01"
+                      min="0"
+                      class="industrial-input pricing-value-input min-w-0 flex-1 text-left font-sans tabular-nums"
+                    />
+                    @if (pricingRuleUnit(rule.ruleKey)) {
+                      <span class="w-16 shrink-0 text-sm text-text-secondary">
+                        {{ pricingRuleUnit(rule.ruleKey) }}
+                      </span>
+                    }
+                  </div>
                 </div>
-              </div>
-            }
-          </div>
-        </div>
+              }
+            </div>
+            <div class="px-5 sm:px-7 py-4 bg-surface text-sm text-text-secondary">
+              Thay đổi chỉ áp dụng cho báo giá được tạo sau khi lưu.
+            </div>
+          } @else {
+            <p class="px-5 sm:px-7 py-8 text-center text-sm text-text-secondary">Chưa có tham số định giá.</p>
+          }
+        </section>
       }
 
       <!-- TAB 3: CATALOG PRODUCTS -->
       @if (activeTab() === 'products') {
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="font-heading text-sm font-bold text-text-primary">
-              Danh Sách Sản Phẩm & Phôi Xưởng ({{ adminProducts().length }})
+            <h2 class="font-heading text-xl font-semibold text-text-primary">
+            Sản phẩm <span class="text-base font-normal text-text-secondary">({{ productsTotalElements() }})</span>
             </h2>
             <button
               type="button"
-              (click)="showCreateProduct.set(!showCreateProduct())"
+              (click)="startNewProduct()"
               appButton
               variant="primary"
               size="sm"
@@ -444,94 +505,267 @@ import { ButtonDirective } from '../../shared/components/button/button.component
           </div>
 
           @if (showCreateProduct()) {
-            <form (ngSubmit)="createProduct()" class="industrial-card p-5 space-y-4 text-xs">
-              <div class="font-heading font-bold uppercase text-text-primary border-b border-border pb-2">
-                Tạo Sản Phẩm / Mẫu Tem Mới
+            <form (ngSubmit)="createProduct()" class="industrial-card p-5 sm:p-7 space-y-7">
+              <div class="border-b border-border pb-4">
+                <h3 class="font-heading text-xl font-semibold text-text-primary">
+                  {{ editingProductId() ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm' }}
+                </h3>
+                <p class="mt-1 text-sm text-text-secondary">Thông tin có dấu * là bắt buộc.</p>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Mã SKU *</label>
-                  <input type="text" [(ngModel)]="newProd.sku" name="sku" required placeholder="VD: NVX-2001" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
+
+              <section class="space-y-4">
+                <h4 class="text-base font-semibold text-text-primary">Thông tin cơ bản</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <label class="admin-field">
+                    <span>Mã SKU *</span>
+                    <input type="text" [(ngModel)]="newProd.sku" name="sku" required placeholder="VD: NVX-2001" class="industrial-input w-full font-sans tabular-nums" />
+                  </label>
+                  <label class="admin-field md:col-span-2">
+                    <span>Tên sản phẩm *</span>
+                    <input type="text" [(ngModel)]="newProd.name" name="name" required placeholder="VD: Tem inox 304 khắc laser" class="industrial-input w-full" />
+                  </label>
+                  <label class="admin-field md:col-span-2 xl:col-span-1">
+                    <span>Đường dẫn sản phẩm *</span>
+                    <input type="text" [(ngModel)]="newProd.slug" name="slug" required placeholder="tem-inox-304-khac-laser" class="industrial-input w-full font-sans" />
+                  </label>
+                  <label class="admin-field">
+                    <span>Danh mục *</span>
+                    <select [(ngModel)]="newProd.categoryId" name="categoryId" required class="industrial-input w-full">
+                      @for (c of adminCategories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+                    </select>
+                  </label>
+                  <label class="admin-field">
+                    <span>Vật liệu</span>
+                    <select [(ngModel)]="newProd.materialId" name="materialId" class="industrial-input w-full">
+                      <option value="">Chọn vật liệu</option>
+                      @for (m of adminMaterials(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+                    </select>
+                  </label>
+                  <label class="admin-field">
+                    <span>Loại sản phẩm *</span>
+                    <select [(ngModel)]="newProd.productType" name="productType" class="industrial-input w-full">
+                      <option value="STANDARD_ITEM">Hàng có sẵn</option>
+                      <option value="CUSTOM_TEMPLATE">Gia công theo yêu cầu</option>
+                    </select>
+                  </label>
                 </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Tên sản phẩm *</label>
-                  <input type="text" [(ngModel)]="newProd.name" name="name" required placeholder="VD: Tem inox 304 khắc laser" class="industrial-input w-full px-2.5 py-1.5" />
+              </section>
+
+              @if (newProd.productType === 'STANDARD_ITEM') {
+                <section class="space-y-4 border-t border-border pt-5">
+                  <div>
+                    <h4 class="text-base font-semibold text-text-primary">Giá bán và tồn kho</h4>
+                    <p class="mt-1 text-sm text-text-secondary">Áp dụng cho sản phẩm bán sẵn.</p>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                    <label class="admin-field">
+                      <span>Đơn giá (VNĐ)</span>
+                      <input type="number" [(ngModel)]="newProd.basePrice" name="basePrice" min="0" class="industrial-input w-full font-sans tabular-nums" />
+                    </label>
+                    <label class="admin-field">
+                      <span>Số lượng tồn kho</span>
+                      <input type="number" [(ngModel)]="newProd.stockQuantity" name="stockQuantity" min="0" class="industrial-input w-full font-sans tabular-nums" />
+                    </label>
+                  </div>
+                </section>
+              } @else {
+                <section class="space-y-4 border-t border-border pt-5">
+                  <div>
+                    <h4 class="text-base font-semibold text-text-primary">Thông số gia công</h4>
+                    <p class="mt-1 text-sm text-text-secondary">Kích thước mặc định được dùng làm gợi ý cho báo giá.</p>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <label class="admin-field">
+                      <span>Phương pháp gia công</span>
+                      <select [(ngModel)]="newProd.processingMethodId" name="processingMethodId" class="industrial-input w-full">
+                        <option value="">Chọn phương pháp</option>
+                        @for (method of adminProcessingMethods(); track method.id) { <option [value]="method.id">{{ method.name }}</option> }
+                      </select>
+                    </label>
+                    <label class="admin-field">
+                      <span>Chiều rộng (mm)</span>
+                      <input type="number" [(ngModel)]="newProd.defaultWidthMm" name="defaultWidthMm" min="0" step="0.1" class="industrial-input w-full font-sans tabular-nums" />
+                    </label>
+                    <label class="admin-field">
+                      <span>Chiều cao (mm)</span>
+                      <input type="number" [(ngModel)]="newProd.defaultHeightMm" name="defaultHeightMm" min="0" step="0.1" class="industrial-input w-full font-sans tabular-nums" />
+                    </label>
+                    <label class="admin-field">
+                      <span>Độ dày (mm)</span>
+                      <input type="number" [(ngModel)]="newProd.defaultThicknessMm" name="defaultThicknessMm" min="0" step="0.1" class="industrial-input w-full font-sans tabular-nums" />
+                    </label>
+                  </div>
+                </section>
+              }
+
+              <section class="space-y-4 border-t border-border pt-5">
+                <h4 class="text-base font-semibold text-text-primary">Mô tả và hình ảnh</h4>
+                <label class="admin-field">
+                  <span>Mô tả sản phẩm</span>
+                  <textarea [(ngModel)]="newProd.description" name="description" rows="4" placeholder="Mô tả chất liệu, cách gia công hoặc đặc điểm sản phẩm..." class="industrial-input w-full"></textarea>
+                </label>
+                <div class="space-y-3">
+                  <div>
+                    <label for="product-images" class="block text-sm font-medium text-text-primary">Ảnh sản phẩm</label>
+                    <p class="mt-1 text-sm text-text-secondary">Ảnh đầu tiên sẽ được dùng làm ảnh đại diện. Có thể đổi thứ tự sau khi tải lên.</p>
+                  </div>
+                  <input id="product-images" type="file" accept="image/*" multiple (change)="uploadProductImages($event)" class="admin-file-input block w-full" />
+                  @if (newProd.images.length) {
+                    <div class="flex flex-wrap gap-4">
+                      @for (image of newProd.images; track image; let idx = $index) {
+                        <div class="w-36 overflow-hidden rounded-lg border border-border bg-bg">
+                          <img [src]="image" [alt]="'Ảnh sản phẩm ' + (idx + 1)" class="w-full h-32 object-cover" />
+                          <div class="flex items-center justify-between gap-1 border-t border-border px-2 py-1.5 text-xs">
+                            <span class="truncate text-text-secondary">{{ idx === 0 ? 'Ảnh đại diện' : 'Ảnh ' + (idx + 1) }}</span>
+                            <div class="flex shrink-0 gap-1">
+                              <button type="button" (click)="moveProductImage(idx, -1)" [disabled]="idx === 0" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' lên trước'">←</button>
+                              <button type="button" (click)="removeProductImage(idx)" class="image-action image-action-remove" [attr.aria-label]="'Xóa ảnh ' + (idx + 1)">×</button>
+                              <button type="button" (click)="moveProductImage(idx, 1)" [disabled]="idx === newProd.images.length - 1" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' xuống sau'">→</button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Slug URL *</label>
-                  <input type="text" [(ngModel)]="newProd.slug" name="slug" required placeholder="VD: tem-inox-304-khac-laser" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Danh mục *</label>
-                  <select [(ngModel)]="newProd.categoryId" name="categoryId" required class="industrial-input w-full px-2.5 py-1.5">
-                    @for (c of adminCategories(); track c.id) {
-                      <option [value]="c.id">{{ c.name }}</option>
-                    }
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Vật liệu *</label>
-                  <select [(ngModel)]="newProd.materialId" name="materialId" required class="industrial-input w-full px-2.5 py-1.5">
-                    @for (m of adminMaterials(); track m.id) {
-                      <option [value]="m.id">{{ m.name }}</option>
-                    }
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Loại sản phẩm *</label>
-                  <select [(ngModel)]="newProd.productType" name="productType" class="industrial-input w-full px-2.5 py-1.5">
-                    <option value="STANDARD_ITEM">STANDARD_ITEM (Bán sẵn)</option>
-                    <option value="CUSTOM_TEMPLATE">CUSTOM_TEMPLATE (Báo giá 3D)</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Đơn giá (VNĐ)</label>
-                  <input type="number" [(ngModel)]="newProd.basePrice" name="basePrice" min="0" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Tồn kho</label>
-                  <input type="number" [(ngModel)]="newProd.stockQuantity" name="stockQuantity" min="0" class="industrial-input w-full px-2.5 py-1.5 font-mono" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-medium text-text-secondary mb-1">Ảnh sản phẩm (URL)</label>
-                  <input type="text" [(ngModel)]="newProd.imageUrl" name="imageUrl" placeholder="/assets/products/..." class="industrial-input w-full px-2.5 py-1.5 font-mono" />
-                </div>
-              </div>
-              <div class="flex justify-end gap-2">
-                <button type="button" (click)="showCreateProduct.set(false)" appButton variant="secondary" size="xs">Hủy</button>
-                <button type="submit" appButton variant="primary" size="xs">Lưu sản phẩm</button>
+              </section>
+
+              <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-border pt-5">
+                <button type="button" (click)="cancelProductEdit()" appButton variant="secondary" size="md">Hủy</button>
+                <button type="submit" [disabled]="productSaving()" appButton variant="primary" size="md">{{ productSaving() ? 'Đang lưu...' : 'Lưu sản phẩm' }}</button>
               </div>
             </form>
           }
 
           <div class="industrial-card overflow-hidden">
-            <table class="w-full text-xs text-left">
-              <thead class="bg-bg border-b border-border font-mono text-text-secondary">
+            <div class="p-3 bg-surface-raised border-b border-border flex flex-wrap gap-2">
+              <input [(ngModel)]="productSearch" (keyup.enter)="resetProductsPage()" placeholder="Tìm tên / SKU" class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[160px]" />
+              <select [(ngModel)]="productCategoryFilter" (ngModelChange)="resetProductsPage()" class="industrial-input px-2.5 py-1.5 text-xs">
+                <option value="">Tất cả danh mục</option>
+                @for (c of adminCategories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+              </select>
+              <select [(ngModel)]="productTypeFilter" (ngModelChange)="resetProductsPage()" class="industrial-input px-2.5 py-1.5 text-xs">
+                <option value="">Tất cả loại</option>
+                <option value="STANDARD_ITEM">Hàng có sẵn</option>
+                <option value="CUSTOM_TEMPLATE">Gia công theo yêu cầu</option>
+              </select>
+              <button type="button" (click)="resetProductsPage()" appButton variant="secondary" size="xs">Tìm</button>
+            </div>
+            @if (productsLoading()) {
+              <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải sản phẩm"></div>
+            } @else {
+            <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-surface border-b border-border text-text-secondary">
               <tr>
-                <th class="px-4 py-3">SKU</th>
-                <th class="px-3 py-3">Tên sản phẩm</th>
-                <th class="px-3 py-3">Loại</th>
-                <th class="px-3 py-3 text-right">Đơn giá / Tồn kho</th>
-                <th class="px-4 py-3 text-right">Xóa</th>
+                <th class="px-4 py-3 font-medium">Ảnh</th>
+                <th class="px-4 py-3 font-medium">SKU</th>
+                <th class="px-4 py-3 font-medium">Tên sản phẩm</th>
+                <th class="px-4 py-3 font-medium">Danh mục</th>
+                <th class="px-4 py-3 font-medium">Loại</th>
+                <th class="px-4 py-3 text-right font-medium">Đơn giá / Tồn kho</th>
+                <th class="px-4 py-3 text-center font-medium">Hiển thị</th>
+                <th class="px-5 py-3 text-right font-medium">Thao tác</th>
               </tr>
               </thead>
               <tbody class="divide-y divide-border">
                 @for (p of adminProducts(); track p.id) {
                   <tr class="hover:bg-surface-raised transition-colors">
-                    <td class="px-4 py-3 font-mono font-bold text-text-primary">{{ p.sku }}</td>
-                    <td class="px-3 py-3 font-medium text-text-primary">{{ p.name }}</td>
-                    <td class="px-3 py-3 font-mono text-[11px] text-steel">{{ p.productType }}</td>
-                    <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">
+                    <td class="px-4 py-3">
+                      @if (p.imageUrl || p.images?.[0]) {
+                        <img [src]="p.imageUrl || p.images?.[0]" [alt]="p.name" class="w-12 h-12 object-cover rounded-[6px] border border-border" />
+                      } @else {
+                        <span class="w-12 h-12 flex items-center justify-center rounded-[6px] border border-border text-[9px] text-text-muted">Chưa có ảnh</span>
+                      }
+                    </td>
+                    <td class="px-4 py-4 font-sans tabular-nums font-medium text-text-primary">{{ p.sku }}</td>
+                    <td class="px-4 py-4 font-medium text-text-primary">{{ p.name }}</td>
+                    <td class="px-4 py-4 text-text-secondary">{{ p.categoryName }}</td>
+                    <td class="px-4 py-4 text-text-secondary">{{ p.productType === 'STANDARD_ITEM' ? 'Hàng có sẵn' : 'Gia công theo yêu cầu' }}</td>
+                    <td class="px-4 py-4 text-right font-sans tabular-nums text-text-primary">
                       {{ p.productType === 'STANDARD_ITEM' ? (p.basePrice | vnd) + ' · Kho: ' + (p.stockQuantity ?? 0) : 'Báo giá 3D' }}
                     </td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-4 py-4 text-center">
+                      <input type="checkbox" [checked]="p.isActive" (change)="toggleProductActive(p)" [attr.aria-label]="'Hiển thị ' + p.name" />
+                    </td>
+                    <td class="px-5 py-4 text-right whitespace-nowrap">
+                      <button type="button" (click)="editProduct(p)" class="text-accent hover:underline mr-4">Sửa</button>
                       <button type="button" (click)="removeProduct(p.id)" class="text-danger hover:underline">Xóa</button>
                     </td>
                   </tr>
                 }
               </tbody>
             </table>
+            </div>
+            @if (!adminProducts().length) {
+              <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy sản phẩm.</div>
+            }
+            <app-paginator
+              [page]="productsPage()"
+              [totalPages]="productsTotalPages()"
+              (pageChange)="goToProductsPage($event)"
+            />
+            }
           </div>
+        </div>
+      }
+
+      @if (activeTab() === 'customers') {
+        <section class="industrial-card overflow-hidden">
+          <div class="px-5 py-4 bg-surface border-b border-border">
+            <h2 class="font-heading text-xl font-semibold text-text-primary">Khách hàng</h2>
+            <p class="mt-1 text-sm text-text-secondary">Tra cứu thông tin khách hàng đã đăng ký.</p>
+          </div>
+          <div class="px-5 py-4 bg-surface-raised border-b border-border flex flex-wrap gap-3">
+            <input [(ngModel)]="customerSearch" (keyup.enter)="resetCustomersPage()" placeholder="Tìm tên, email, số điện thoại" class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[180px]" />
+            <button type="button" (click)="resetCustomersPage()" appButton variant="secondary" size="xs">Tìm khách hàng</button>
+          </div>
+          @if (customersLoading()) {
+            <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải khách hàng"></div>
+          } @else if (customers().length) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-bg border-b border-border text-text-secondary">
+                  <tr>
+                    <th class="px-5 py-3 font-medium">Khách hàng</th>
+                    <th class="px-4 py-3 font-medium">Email</th>
+                    <th class="px-4 py-3 font-medium">Điện thoại</th>
+                    <th class="px-4 py-3 font-medium">Địa chỉ mặc định</th>
+                    <th class="px-5 py-3 font-medium">Ngày tạo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  @for (customer of customers(); track customer.id) {
+                    <tr>
+                      <td class="px-5 py-4 font-medium text-text-primary">{{ customer.fullName }}</td>
+                      <td class="px-4 py-4 text-text-secondary">{{ customer.email }}</td>
+                      <td class="px-4 py-4 font-sans tabular-nums text-text-secondary">{{ customer.phone || '—' }}</td>
+                      <td class="px-4 py-4 text-text-secondary">{{ customer.defaultAddress || '—' }}</td>
+                      <td class="px-5 py-4 font-sans tabular-nums text-text-secondary">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy khách hàng.</div>
+          }
+          <app-paginator [page]="customersPage()" [totalPages]="customersTotalPages()" (pageChange)="goToCustomersPage($event)" />
+        </section>
+      }
+
+      @if (deleteProductId()) {
+        <div class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="presentation">
+          <section class="industrial-card w-full max-w-md space-y-4 p-5" role="dialog" aria-modal="true" aria-labelledby="delete-product-title">
+            <h2 id="delete-product-title" class="font-heading text-base font-bold text-text-primary">Xóa sản phẩm?</h2>
+            <p class="text-sm text-text-secondary">Thao tác này sẽ xóa sản phẩm khỏi danh mục.</p>
+            <div class="flex justify-end gap-2">
+              <button type="button" (click)="deleteProductId.set(null)" appButton variant="secondary" size="sm">Hủy</button>
+              <button type="button" (click)="confirmRemoveProduct()" [disabled]="productSaving()" appButton variant="danger" size="sm">
+                {{ productSaving() ? 'Đang xóa...' : 'Xóa sản phẩm' }}
+              </button>
+            </div>
+          </section>
         </div>
       }
     </div>
@@ -540,21 +774,45 @@ import { ButtonDirective } from '../../shared/components/button/button.component
 export class AdminCockpitComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   private readonly quoteApi = inject(QuoteApiService);
+  private readonly toastService = inject(ToastService);
 
-  readonly activeTab = signal<'orders' | 'pricing' | 'products'>('orders');
+  readonly activeTab = signal<'orders' | 'pricing' | 'products' | 'customers'>('orders');
   readonly summary = signal<AdminDashboardSummary | null>(null);
+  readonly summaryLoading = signal(true);
+  readonly summaryError = signal('');
+  readonly summaryUpdatedAt = signal<Date | null>(null);
   readonly orders = signal<OrderSummary[]>([]);
   readonly selectedOrder = signal<OrderDetail | null>(null);
   readonly pricingRules = signal<PricingRule[]>([]);
+  readonly pricingLoading = signal(true);
+  readonly pricingError = signal('');
+  readonly pricingSaving = signal(false);
   readonly adminProducts = signal<Product[]>([]);
   readonly adminCategories = signal<Category[]>([]);
   readonly adminMaterials = signal<Material[]>([]);
+  readonly adminProcessingMethods = signal<ProcessingMethod[]>([]);
+  readonly customers = signal<AdminCustomer[]>([]);
   readonly showCreateProduct = signal(false);
-  readonly toast = signal('');
-  readonly errorMsg = signal('');
+  readonly editingProductId = signal<string | null>(null);
+  readonly ordersPage = signal(0);
+  readonly ordersTotalPages = signal(0);
+  readonly ordersLoading = signal(true);
+  readonly productsPage = signal(0);
+  readonly productsTotalPages = signal(0);
+  readonly productsTotalElements = signal(0);
+  readonly productsLoading = signal(true);
+  readonly customersPage = signal(0);
+  readonly customersTotalPages = signal(0);
+  readonly customersLoading = signal(false);
+  readonly deleteProductId = signal<string | null>(null);
+  readonly productSaving = signal(false);
 
   statusFilter: OrderStatus | '' = '';
   searchFilter = '';
+  productSearch = '';
+  productCategoryFilter = '';
+  productTypeFilter: ProductType | '' = '';
+  customerSearch = '';
   estimatedCompletionDate = '';
   workerNote = '';
   nextStatus: OrderStatus = 'IN_PRODUCTION';
@@ -570,29 +828,29 @@ export class AdminCockpitComponent implements OnInit {
     productType: 'STANDARD_ITEM' as 'STANDARD_ITEM' | 'CUSTOM_TEMPLATE',
     basePrice: 50000,
     stockQuantity: 50,
-    imageUrl: '',
+    defaultWidthMm: 80,
+    defaultHeightMm: 40,
+    defaultThicknessMm: 0.8,
+    processingMethodId: '',
+    description: '',
+    images: [] as string[],
+    isActive: true,
   };
 
   ngOnInit(): void {
     this.refreshDashboard();
     this.loadOrders();
-    this.adminApi.getPricingRules().subscribe({
-      next: (res) => {
-        if (res.success) this.pricingRules.set(res.data || []);
-      },
-    });
-    this.adminApi.getAdminProducts().subscribe({
-      next: (res) => {
-        if (res.success && res.data) this.adminProducts.set(res.data.content || []);
-      },
-    });
+    this.loadPricingRules();
+    this.fetchAdminProducts();
     this.adminApi.getAdminCategories().subscribe({
       next: (res) => {
         if (res.success && res.data?.length) {
-          this.adminCategories.set(res.data);
-          this.newProd.categoryId = res.data[0].id;
+          const categories = this.flattenCategories(res.data);
+          this.adminCategories.set(categories);
+          this.newProd.categoryId = categories[0].id;
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể tải danh mục sản phẩm.'),
     });
     this.adminApi.getAdminMaterials().subscribe({
       next: (res) => {
@@ -601,30 +859,168 @@ export class AdminCockpitComponent implements OnInit {
           this.newProd.materialId = res.data[0].id;
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể tải danh sách vật liệu.'),
+    });
+    this.adminApi.getAdminProcessingMethods().subscribe({
+      next: (res) => {
+        if (res.success) this.adminProcessingMethods.set(res.data || []);
+      },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể tải phương pháp gia công.'),
     });
   }
 
-  refreshDashboard(): void {
-    this.adminApi.getDashboardSummary().subscribe({
+  loadPricingRules(): void {
+    this.pricingLoading.set(true);
+    this.pricingError.set('');
+    this.adminApi.getPricingRules().subscribe({
       next: (res) => {
-        if (res.success) this.summary.set(res.data);
+        this.pricingLoading.set(false);
+        if (res.success) {
+          this.pricingRules.set((res.data || []).map((rule) => ({
+            ...rule,
+            ruleValue: rule.ruleKey.endsWith('_RATE') ? rule.ruleValue * 100 : rule.ruleValue,
+          })));
+        } else {
+          this.pricingError.set(res.message || 'Không thể tải quy tắc giá.');
+        }
+      },
+      error: (err) => {
+        this.pricingLoading.set(false);
+        this.pricingError.set(err?.error?.message || 'Không thể tải quy tắc giá.');
       },
     });
   }
 
+  refreshDashboard(): void {
+    this.summaryLoading.set(true);
+    this.summaryError.set('');
+    this.adminApi.getDashboardSummary().subscribe({
+      next: (res) => {
+        this.summaryLoading.set(false);
+        if (res.success && res.data) {
+          this.summary.set(res.data);
+          this.summaryUpdatedAt.set(new Date());
+        } else {
+          this.summaryError.set(res.message || 'Không thể tải tổng quan đơn hàng.');
+        }
+      },
+      error: (err) => {
+        this.summaryLoading.set(false);
+        this.summaryError.set(err?.error?.message || 'Không thể tải tổng quan đơn hàng.');
+      },
+    });
+  }
+
+  setActiveTab(tab: 'orders' | 'pricing' | 'products' | 'customers'): void {
+    this.activeTab.set(tab);
+    if (tab === 'orders') this.refreshDashboard();
+    if (tab === 'customers') this.loadCustomers();
+  }
+
   loadOrders(): void {
+    this.ordersLoading.set(true);
     this.adminApi
       .getOrders({
         status: this.statusFilter || undefined,
         search: this.searchFilter || undefined,
+        page: this.ordersPage(),
+        size: 20,
       })
       .subscribe({
         next: (res) => {
+          this.ordersLoading.set(false);
           if (res.success && res.data) {
             this.orders.set(res.data.content || []);
+            this.ordersTotalPages.set(res.data.totalPages || 0);
+          } else {
+            this.notifyError(res.message || 'Không thể tải danh sách đơn hàng.');
           }
         },
+        error: (err) => {
+          this.ordersLoading.set(false);
+          this.notifyError(err?.error?.message || 'Không thể tải danh sách đơn hàng.');
+        },
       });
+  }
+
+  resetOrdersPage(): void {
+    this.ordersPage.set(0);
+    this.loadOrders();
+  }
+
+  goToOrdersPage(page: number): void {
+    this.ordersPage.set(page);
+    this.loadOrders();
+  }
+
+  private fetchAdminProducts(): void {
+    this.productsLoading.set(true);
+    this.adminApi.getAdminProducts(this.productsPage(), 20, {
+      search: this.productSearch,
+      categoryId: this.productCategoryFilter,
+      productType: this.productTypeFilter,
+    }).subscribe({
+      next: (res) => {
+        this.productsLoading.set(false);
+        if (res.success && res.data) {
+          this.adminProducts.set(res.data.content || []);
+          this.productsTotalPages.set(res.data.totalPages || 0);
+          this.productsTotalElements.set(res.data.totalElements || 0);
+        } else {
+          this.notifyError(res.message || 'Không thể tải danh sách sản phẩm.');
+        }
+      },
+      error: (err) => {
+        this.productsLoading.set(false);
+        this.notifyError(err?.error?.message || 'Không thể tải danh sách sản phẩm.');
+      },
+    });
+  }
+
+  resetProductsPage(): void {
+    this.productsPage.set(0);
+    this.fetchAdminProducts();
+  }
+
+  goToProductsPage(page: number): void {
+    this.productsPage.set(page);
+    this.fetchAdminProducts();
+  }
+
+  private flattenCategories(categories: Category[], depth = 0): Category[] {
+    return categories.flatMap((category) => [
+      { ...category, name: '— '.repeat(depth) + category.name, children: undefined },
+      ...this.flattenCategories(category.children || [], depth + 1),
+    ]);
+  }
+
+  loadCustomers(): void {
+    this.customersLoading.set(true);
+    this.adminApi.getCustomers(this.customerSearch, this.customersPage(), 20).subscribe({
+      next: (res) => {
+        this.customersLoading.set(false);
+        if (res.success && res.data) {
+          this.customers.set(res.data.content || []);
+          this.customersTotalPages.set(res.data.totalPages || 0);
+        } else {
+          this.notifyError(res.message || 'Không thể tải danh sách khách hàng.');
+        }
+      },
+      error: (err) => {
+        this.customersLoading.set(false);
+        this.notifyError(err?.error?.message || 'Không thể tải danh sách khách hàng.');
+      },
+    });
+  }
+
+  resetCustomersPage(): void {
+    this.customersPage.set(0);
+    this.loadCustomers();
+  }
+
+  goToCustomersPage(page: number): void {
+    this.customersPage.set(page);
+    this.loadCustomers();
   }
 
   openOrder(id: string): void {
@@ -688,11 +1084,17 @@ export class AdminCockpitComponent implements OnInit {
                   this.selectedOrder.set(ordRes.data);
                   this.notify('Đã đính kèm ảnh mẫu thực tế và thông báo cho khách.');
                   this.loadOrders();
+                } else {
+                  this.notifyError(ordRes.message || 'Không thể đính kèm ảnh mẫu.');
                 }
               },
+              error: (err) => this.notifyError(err?.error?.message || 'Không thể đính kèm ảnh mẫu.'),
             });
+        } else {
+          this.notifyError(uploadRes.message || 'Tải ảnh mẫu thất bại.');
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Tải ảnh mẫu thất bại.'),
     });
   }
 
@@ -704,8 +1106,11 @@ export class AdminCockpitComponent implements OnInit {
           this.notify(status === 'VERIFIED' ? 'Đã xác nhận thanh toán.' : 'Đã từ chối giao dịch.');
           this.loadOrders();
           this.refreshDashboard();
+        } else {
+          this.notifyError(res.message || 'Không thể cập nhật trạng thái thanh toán.');
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể cập nhật trạng thái thanh toán.'),
     });
   }
 
@@ -736,80 +1141,270 @@ export class AdminCockpitComponent implements OnInit {
           this.selectedOrder.set(res.data);
           this.notify('Đã lưu số hóa đơn VAT đỏ.');
           this.refreshDashboard();
+        } else {
+          this.notifyError(res.message || 'Không thể lưu số hóa đơn VAT.');
         }
       },
+      error: (err) => this.notifyError(err?.error?.message || 'Không thể lưu số hóa đơn VAT.'),
     });
   }
 
   savePricingRules(): void {
+    this.pricingSaving.set(true);
     const payload = this.pricingRules().map((r) => ({
       ruleKey: r.ruleKey,
-      ruleValue: Number(r.ruleValue),
+      ruleValue: r.ruleKey.endsWith('_RATE') ? Number(r.ruleValue) / 100 : Number(r.ruleValue),
       description: r.description,
     }));
     this.adminApi.updatePricingRules(payload).subscribe({
       next: (res) => {
+        this.pricingSaving.set(false);
         if (res.success && res.data) {
-          this.pricingRules.set(res.data);
+          this.pricingRules.set(res.data.map((rule) => ({
+            ...rule,
+            ruleValue: rule.ruleKey.endsWith('_RATE') ? rule.ruleValue * 100 : rule.ruleValue,
+          })));
           this.notify('Đã cập nhật bảng tham số định mức giá.');
+        } else {
+          this.notifyError(res.message || 'Cập nhật tham số giá thất bại.');
         }
+      },
+      error: (err) => {
+        this.pricingSaving.set(false);
+        this.notifyError(err?.error?.message || 'Cập nhật tham số giá thất bại.');
       },
     });
   }
 
-  createProduct(): void {
-    if (!this.newProd.sku.trim() || !this.newProd.name.trim() || !this.newProd.slug.trim()) {
-      this.notifyError('Vui lòng nhập đầy đủ SKU, Tên sản phẩm và Slug.');
+  pricingRuleLabel(key: string): string {
+    const labels: Record<string, string> = {
+      THIN_SHEET_RATE_M2: 'Đơn giá tấm mỏng',
+      THICK_METAL_MULTIPLIER: 'Hệ số kim loại dày',
+      THIN_SHEET_THRESHOLD_MM: 'Ngưỡng tấm mỏng',
+      BULK_DISCOUNT_MIN_QTY: 'Số lượng chiết khấu',
+      BULK_DISCOUNT_RATE: 'Tỷ lệ chiết khấu',
+      VAT_RATE: 'Thuế VAT',
+      DEPOSIT_RATE: 'Tỷ lệ đặt cọc',
+    };
+    return labels[key] || key;
+  }
+
+  pricingRuleUnit(key: string): string {
+    if (key.endsWith('_MM')) return 'mm';
+    if (key.endsWith('_RATE_M2')) return 'đ/m²';
+    if (key.endsWith('_M2')) return 'đ/m²';
+    if (key.endsWith('_QTY')) return 'cái';
+    if (key.endsWith('_RATE')) return '%';
+    return key.includes('MULTIPLIER') ? '×' : '';
+  }
+
+  orderStatusLabel(status: OrderStatus): string {
+    const labels: Record<OrderStatus, string> = {
+      QUOTE_PENDING: 'Chờ duyệt báo giá',
+      QUOTE_APPROVED: 'Đã duyệt báo giá',
+      PROTOTYPING: 'Đang làm mẫu',
+      AWAITING_DEPOSIT: 'Chờ đặt cọc',
+      IN_PRODUCTION: 'Đang sản xuất',
+      READY_FOR_DELIVERY: 'Chờ giao hàng',
+      COMPLETED: 'Hoàn tất',
+      CANCELLED: 'Đã hủy',
+    };
+    return labels[status] || status;
+  }
+
+  startNewProduct(): void {
+    if (this.showCreateProduct() && !this.editingProductId()) {
+      this.cancelProductEdit();
       return;
     }
-    this.adminApi
-      .createProduct({
-        sku: this.newProd.sku.trim(),
-        name: this.newProd.name.trim(),
-        slug: this.newProd.slug.trim(),
-        categoryId: this.newProd.categoryId,
-        materialId: this.newProd.materialId,
-        productType: this.newProd.productType,
-        basePrice: Number(this.newProd.basePrice),
-        stockQuantity: Number(this.newProd.stockQuantity),
-        images: this.newProd.imageUrl.trim() ? [this.newProd.imageUrl.trim()] : [],
-        isActive: true,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) {
-            this.adminProducts.set([res.data, ...this.adminProducts()]);
-            this.showCreateProduct.set(false);
-            this.newProd.sku = '';
-            this.newProd.name = '';
-            this.newProd.slug = '';
-            this.newProd.imageUrl = '';
-            this.notify('Đã tạo sản phẩm mới.');
-          }
-        },
-        error: (err) => this.notifyError(err?.error?.message || 'Tạo sản phẩm thất bại.'),
-      });
+    this.editingProductId.set(null);
+    this.newProd = {
+      sku: '',
+      name: '',
+      slug: '',
+      categoryId: this.adminCategories()[0]?.id || '',
+      materialId: '',
+      productType: 'STANDARD_ITEM',
+      basePrice: 50000,
+      stockQuantity: 50,
+      defaultWidthMm: 80,
+      defaultHeightMm: 40,
+      defaultThicknessMm: 0.8,
+      processingMethodId: '',
+      description: '',
+      images: [],
+      isActive: true,
+    };
+    this.showCreateProduct.set(true);
+  }
+
+  cancelProductEdit(): void {
+    this.editingProductId.set(null);
+    this.showCreateProduct.set(false);
+  }
+
+  editProduct(product: Product): void {
+    this.editingProductId.set(product.id);
+    this.newProd = {
+      sku: product.sku,
+      name: product.name,
+      slug: product.slug,
+      categoryId: product.categoryId,
+      materialId: product.materialId || '',
+      productType: product.productType,
+      basePrice: product.basePrice ?? 0,
+      stockQuantity: product.stockQuantity ?? 0,
+      defaultWidthMm: product.defaultWidthMm ?? 80,
+      defaultHeightMm: product.defaultHeightMm ?? 40,
+      defaultThicknessMm: product.defaultThicknessMm ?? 0.8,
+      processingMethodId: product.processingMethodId || '',
+      description: product.description || '',
+      images: [...(product.images?.length ? product.images : product.imageUrl ? [product.imageUrl] : [])],
+      isActive: product.isActive ?? true,
+    };
+    this.showCreateProduct.set(true);
+  }
+
+  uploadProductImages(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const invalidFile = files.find((file) => !file.type.startsWith('image/'));
+    if (invalidFile) {
+      this.notifyError(`${invalidFile.name} không phải là tệp hình ảnh.`);
+      input.value = '';
+      return;
+    }
+
+    forkJoin(files.map((file) => this.quoteApi.uploadFile(file, 'product-images'))).subscribe({
+      next: (responses) => {
+        const uploaded = responses.filter((res) => res.success && res.data?.url).map((res) => res.data!.url);
+        if (uploaded.length !== files.length) {
+          this.notifyError('Một số ảnh không tải lên được. Vui lòng thử lại.');
+        }
+        this.newProd.images = [...this.newProd.images, ...uploaded];
+        input.value = '';
+      },
+      error: (err) => {
+        this.notifyError(err?.error?.message || 'Tải ảnh sản phẩm thất bại.');
+        input.value = '';
+      },
+    });
+  }
+
+  moveProductImage(index: number, offset: number): void {
+    const target = index + offset;
+    if (target < 0 || target >= this.newProd.images.length) return;
+    const images = [...this.newProd.images];
+    [images[index], images[target]] = [images[target], images[index]];
+    this.newProd.images = images;
+  }
+
+  removeProductImage(index: number): void {
+    this.newProd.images = this.newProd.images.filter((_, imageIndex) => imageIndex !== index);
+  }
+
+  createProduct(): void {
+    if (!this.newProd.sku.trim() || !this.newProd.name.trim() || !this.newProd.slug.trim() || !this.newProd.categoryId) {
+      this.notifyError('Vui lòng nhập SKU, tên, slug và danh mục sản phẩm.');
+      return;
+    }
+    const payload = {
+      sku: this.newProd.sku.trim(),
+      name: this.newProd.name.trim(),
+      slug: this.newProd.slug.trim(),
+      description: this.newProd.description.trim(),
+      categoryId: this.newProd.categoryId,
+      materialId: this.newProd.materialId || undefined,
+      processingMethodId: this.newProd.processingMethodId || undefined,
+      productType: this.newProd.productType,
+      basePrice: Number(this.newProd.basePrice),
+      stockQuantity: Number(this.newProd.stockQuantity),
+      defaultWidthMm: this.newProd.productType === 'CUSTOM_TEMPLATE' ? Number(this.newProd.defaultWidthMm) : undefined,
+      defaultHeightMm: this.newProd.productType === 'CUSTOM_TEMPLATE' ? Number(this.newProd.defaultHeightMm) : undefined,
+      defaultThicknessMm: this.newProd.productType === 'CUSTOM_TEMPLATE' ? Number(this.newProd.defaultThicknessMm) : undefined,
+      images: [...this.newProd.images],
+      isActive: this.newProd.isActive,
+    };
+    this.productSaving.set(true);
+    const request = this.editingProductId()
+      ? this.adminApi.updateProduct(this.editingProductId()!, payload)
+      : this.adminApi.createProduct(payload);
+    request.subscribe({
+      next: (res) => {
+        this.productSaving.set(false);
+        if (res.success && res.data) {
+          this.notify(this.editingProductId() ? 'Đã cập nhật sản phẩm.' : 'Đã tạo sản phẩm mới.');
+          this.cancelProductEdit();
+          this.fetchAdminProducts();
+        }
+      },
+      error: (err) => {
+        this.productSaving.set(false);
+        this.notifyError(err?.error?.message || 'Lưu sản phẩm thất bại.');
+      },
+    });
+  }
+
+  toggleProductActive(product: Product): void {
+    const payload = {
+      sku: product.sku,
+      name: product.name,
+      slug: product.slug,
+      description: product.description || '',
+      categoryId: product.categoryId,
+      materialId: product.materialId,
+      processingMethodId: product.processingMethodId,
+      productType: product.productType,
+      basePrice: product.basePrice ?? 0,
+      stockQuantity: product.stockQuantity ?? 0,
+      defaultWidthMm: product.defaultWidthMm,
+      defaultHeightMm: product.defaultHeightMm,
+      defaultThicknessMm: product.defaultThicknessMm,
+      images: product.images || (product.imageUrl ? [product.imageUrl] : []),
+      isActive: !product.isActive,
+    };
+    this.adminApi.updateProduct(product.id, payload).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.adminProducts.update((products) => products.map((item) => item.id === product.id ? res.data! : item));
+          this.notify(res.data.isActive ? 'Đã hiển thị sản phẩm.' : 'Đã ẩn sản phẩm.');
+        }
+      },
+      error: (err) => {
+        this.notifyError(err?.error?.message || 'Không thể cập nhật trạng thái sản phẩm.');
+        this.fetchAdminProducts();
+      },
+    });
   }
 
   removeProduct(id: string): void {
+    this.deleteProductId.set(id);
+  }
+
+  confirmRemoveProduct(): void {
+    const id = this.deleteProductId();
+    if (!id) return;
+    this.productSaving.set(true);
     this.adminApi.deleteProduct(id).subscribe({
       next: () => {
-        this.adminProducts.set(this.adminProducts().filter((p) => p.id !== id));
+        this.productSaving.set(false);
+        this.deleteProductId.set(null);
+        this.fetchAdminProducts();
         this.notify('Đã xóa sản phẩm.');
       },
-      error: (err) => this.notifyError(err?.error?.message || 'Xóa sản phẩm thất bại.'),
+      error: (err) => {
+        this.productSaving.set(false);
+        this.notifyError(err?.error?.message || 'Xóa sản phẩm thất bại.');
+      },
     });
   }
 
   private notify(msg: string): void {
-    this.errorMsg.set('');
-    this.toast.set(msg);
-    setTimeout(() => this.toast.set(''), 3000);
+    this.toastService.show(msg);
   }
 
   private notifyError(msg: string): void {
-    this.toast.set('');
-    this.errorMsg.set(msg);
-    setTimeout(() => this.errorMsg.set(''), 4500);
+    this.toastService.show(msg, 'error');
   }
 }

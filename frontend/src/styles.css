@@ -100,6 +100,59 @@ html[data-theme="dark"] {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   }
 
+  .print-invoice {
+    display: none;
+  }
+
+  @media print {
+    @page {
+      margin: 18mm;
+    }
+
+    body * {
+      visibility: hidden !important;
+    }
+
+    .print-invoice,
+    .print-invoice * {
+      visibility: visible !important;
+    }
+
+    .print-invoice {
+      display: block !important;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      color: #111;
+      background: white;
+      font: 12pt/1.5 Arial, sans-serif;
+    }
+
+    .print-invoice h1,
+    .print-invoice h2,
+    .print-invoice h3 {
+      margin: 0.8em 0 0.35em;
+    }
+
+    .print-invoice table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+
+    .print-invoice th,
+    .print-invoice td {
+      border: 1px solid #777;
+      padding: 6px;
+      text-align: left;
+    }
+
+    .print-invoice .print-disclaimer {
+      margin-top: 2em;
+      font-size: 9pt;
+    }
+  }
+
   .industrial-input {
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -115,7 +168,203 @@ html[data-theme="dark"] {
     outline: none;
     border-color: var(--color-accent);
   }
+}
 
+@layer utilities {
+  .admin-page {
+    font-size: 15px;
+  }
+
+  .admin-page .industrial-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.035);
+  }
+
+  .admin-page .text-xs {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .admin-page [class~="text-[11px]"] {
+    font-size: 0.8125rem !important;
+    line-height: 1.45;
+  }
+
+  .admin-page [class~="text-[10px]"] {
+    font-size: 0.75rem !important;
+    line-height: 1.4;
+  }
+
+  .admin-page .industrial-input {
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    font: inherit;
+  }
+
+  .admin-page textarea.industrial-input {
+    min-height: 7rem;
+  }
+
+  .admin-tab {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-elevated);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: var(--transition-interactive);
+  }
+
+  .admin-tab:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .admin-tab-active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-bg-elevated));
+    font-weight: 600;
+  }
+
+  .tab-count {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .admin-field .industrial-input {
+    color: var(--color-text-primary);
+    font-size: 0.9375rem;
+  }
+
+  .pricing-value-input {
+    appearance: textfield;
+  }
+
+  .pricing-value-input::-webkit-inner-spin-button,
+  .pricing-value-input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  .admin-file-input {
+    min-height: 3rem;
+    padding: 0.625rem;
+    border: 1px dashed var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .admin-file-input::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .image-action {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  .image-action:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .image-action:disabled {
+    opacity: 0.35;
+  }
+
+  .image-action-remove:hover:not(:disabled) {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+
+  .admin-page table th {
+    white-space: nowrap;
+  }
+
+  .admin-page table tbody tr {
+    border-color: var(--color-border);
+  }
+
+  .pagination-bar {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+  }
+
+  .pagination-step,
+  .pagination-number {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-secondary);
+    transition: var(--transition-interactive);
+  }
+
+  .pagination-step {
+    padding: 0 0.75rem;
+    white-space: nowrap;
+  }
+
+  .pagination-step:hover:not(:disabled),
+  .pagination-number:hover:not(.pagination-number-current) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .pagination-step:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .pagination-number {
+    padding: 0 0.625rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .pagination-number-current {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: white;
+    font-weight: 600;
+  }
+}
+
+@layer components {
   /* Flatsome-inspired centered section title with flanking lines */
   .fs-section-title {
     display: flex;

@@ -16,6 +16,7 @@ import com.temnhaninox.catalog.service.PricingEngineService;
 import com.temnhaninox.common.dto.ApiResponse;
 import com.temnhaninox.common.dto.PageResponse;
 import com.temnhaninox.common.enums.UserRole;
+import com.temnhaninox.common.enums.ProductType;
 import com.temnhaninox.common.exception.BusinessException;
 import com.temnhaninox.common.exception.ErrorCode;
 import jakarta.validation.Valid;
@@ -164,9 +165,12 @@ public class AdminCatalogController {
     public ApiResponse<PageResponse<ProductResponse>> getAllProducts(
             @RequestHeader(value = "X-User-Role", required = false) String role,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) ProductType productType) {
         requireAdmin(role);
-        return ApiResponse.ok(catalogService.getAllProducts(page, size));
+        return ApiResponse.ok(catalogService.getAllProducts(page, size, search, categoryId, productType));
     }
 
     @PostMapping("/catalog/products")

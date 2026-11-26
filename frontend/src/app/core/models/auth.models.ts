@@ -9,6 +9,18 @@ export interface AuthResponse {
   role: UserRole;
 }
 
+export interface AuthApiResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInMs: number;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: UserRole;
+  };
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -29,6 +41,10 @@ export interface UserProfile {
   defaultAddress?: string;
   role: UserRole;
   createdAt?: string;
+}
+
+export interface AdminCustomer extends UserProfile {
+  isActive: boolean;
 }
 
 export interface UpdateProfileRequest {

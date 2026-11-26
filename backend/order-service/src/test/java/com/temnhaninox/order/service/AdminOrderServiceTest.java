@@ -26,6 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,6 +40,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,6 +64,15 @@ class AdminOrderServiceTest {
         adminId = UUID.randomUUID();
         orderId = UUID.randomUUID();
         itemId = UUID.randomUUID();
+    }
+
+    @Test
+    void getAdminOrders_usesEmptySearchInsteadOfNullWhenSearchIsOmitted() {
+        when(orderRepository.searchAdminOrders(any(), any(), any(), any())).thenReturn(Page.empty());
+
+        adminOrderService.getAdminOrders(null, null, null, 0, 20);
+
+        verify(orderRepository).searchAdminOrders(null, null, "", PageRequest.of(0, 20));
     }
 
     @Test

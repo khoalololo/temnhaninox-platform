@@ -117,7 +117,9 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isAdminEndpoint(String path) {
-        return path.startsWith("/api/v1/admin/") || path.equals("/api/v1/admin");
+        return path.startsWith("/api/v1/admin/")
+                || path.equals("/api/v1/admin")
+                || path.startsWith("/api/v1/users/admin/");
     }
 
     private Mono<Void> writeErrorResponse(

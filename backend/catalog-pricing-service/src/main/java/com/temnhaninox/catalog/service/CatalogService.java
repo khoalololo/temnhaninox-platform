@@ -324,7 +324,12 @@ public class CatalogService {
     // -------------------------------------------------------------------------
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductResponse> getAllProducts(int page, int size) {
+    public PageResponse<ProductResponse> getAllProducts(
+            int page,
+            int size,
+            String search,
+            UUID categoryId,
+            ProductType productType) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -335,10 +340,30 @@ public class CatalogService {
                 root.fetch("material", JoinType.LEFT);
                 root.fetch("processingMethod", JoinType.LEFT);
             }
-            return cb.conjunction();
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), pattern),
+                        cb.like(cb.lower(root.get("sku")), pattern),
+                        cb.like(cb.lower(root.get("slug")), pattern)
+                ));
+            }
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            if (productType != null) {
+                predicates.add(cb.equal(root.get("productType"), productType));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return toPageResponse(productRepository.findAll(spec, pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProductResponse> getAllProducts(int page, int size) {
+        return getAllProducts(page, size, null, null, null);
     }
 
     @Transactional

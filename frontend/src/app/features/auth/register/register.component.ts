@@ -56,6 +56,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               type="tel"
               [(ngModel)]="phone"
               name="phone"
+              pattern="^(0[0-9]{9}|\\+84[0-9]{9})$"
               placeholder="0909123456"
               class="industrial-input w-full px-3 py-2 text-sm font-mono"
             />
@@ -108,6 +109,10 @@ export class RegisterComponent {
   onSubmit(): void {
     if (!this.fullName.trim() || !this.email.trim() || this.password.length < 6) {
       this.errorMessage.set('Vui lòng điền họ tên, email hợp lệ và mật khẩu từ 6 ký tự.');
+      return;
+    }
+    if (this.phone.trim() && !/^(?:0\d{9}|\+84\d{9})$/.test(this.phone.trim())) {
+      this.errorMessage.set('Số điện thoại cần gồm 10 chữ số bắt đầu bằng 0 hoặc mã +84 và 9 chữ số.');
       return;
     }
 

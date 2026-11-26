@@ -80,7 +80,11 @@ export class LoginComponent {
   email = '';
   password = '';
   readonly loading = signal(false);
-  readonly errorMessage = signal('');
+  readonly errorMessage = signal(
+    this.route.snapshot.queryParamMap.has('expired')
+      ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+      : ''
+  );
 
   onSubmit(): void {
     if (!this.email.trim() || !this.password) {

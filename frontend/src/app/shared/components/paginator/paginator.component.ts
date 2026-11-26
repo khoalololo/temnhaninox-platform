@@ -1,56 +1,41 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ButtonDirective } from '../button/button.component';
 
 @Component({
   selector: 'app-paginator',
   standalone: true,
-  imports: [CommonModule, ButtonDirective],
+  imports: [CommonModule],
   template: `
     @if (totalPages > 1) {
       <nav
         aria-label="Phân trang"
-        class="mt-6 flex flex-wrap items-center justify-center gap-1.5 text-xs font-sans tabular-nums"
+        class="pagination-bar flex items-center justify-between gap-3 px-4 py-4 text-sm font-sans tabular-nums"
       >
-        <button
-          type="button"
-          [disabled]="page <= 0"
-          (click)="selectPage(page - 1)"
-          appButton
-          variant="secondary"
-          size="sm"
-        >
-          ← Trước
+        <button type="button" class="pagination-step" [disabled]="page <= 0" (click)="selectPage(page - 1)">
+          <span aria-hidden="true">←</span><span class="hidden sm:inline">Trước</span>
         </button>
-
-        @for (p of visiblePages(); track p) {
-          @if (p === -1) {
-            <span class="px-2 text-text-muted">…</span>
-          } @else {
-            <button
-              type="button"
-              (click)="selectPage(p)"
-              class="min-w-[32px] h-8 px-2.5 rounded-[6px] border font-semibold transition-colors"
-              [class]="
-                p === page
-                  ? 'bg-accent text-white border-accent'
-                  : 'bg-surface text-text-primary border-border hover:border-accent hover:text-accent'
-              "
-            >
-              {{ p + 1 }}
-            </button>
+        <ol class="flex items-center justify-center gap-1.5 overflow-x-auto px-1" aria-label="Trang">
+          @for (p of visiblePages(); track $index) {
+            @if (p === -1) {
+              <li class="px-1 text-text-muted" aria-hidden="true">…</li>
+            } @else {
+              <li>
+                <button
+                  type="button"
+                  (click)="selectPage(p)"
+                  class="pagination-number"
+                  [class.pagination-number-current]="p === page"
+                  [attr.aria-current]="p === page ? 'page' : null"
+                  [attr.aria-label]="'Trang ' + (p + 1)"
+                >
+                  {{ p + 1 }}
+                </button>
+              </li>
+            }
           }
-        }
-
-        <button
-          type="button"
-          [disabled]="page + 1 >= totalPages"
-          (click)="selectPage(page + 1)"
-          appButton
-          variant="secondary"
-          size="sm"
-        >
-          Sau →
+        </ol>
+        <button type="button" class="pagination-step" [disabled]="page + 1 >= totalPages" (click)="selectPage(page + 1)">
+          <span class="hidden sm:inline">Sau</span><span aria-hidden="true">→</span>
         </button>
       </nav>
     }

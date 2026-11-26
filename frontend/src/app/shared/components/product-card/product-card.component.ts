@@ -26,10 +26,10 @@ import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholde
         }
 
         <span
-          class="absolute top-2.5 left-2.5 text-xs font-semibold uppercase px-2.5 py-0.5 rounded-full bg-bg-elevated/95 border"
-          [class]="product.productType === 'CUSTOM_TEMPLATE'
-            ? 'text-accent border-accent/60'
-            : 'text-steel border-steel/60'"
+          class="absolute top-2.5 left-2.5 text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full border shadow-sm"
+          [ngClass]="product.productType === 'CUSTOM_TEMPLATE'
+            ? 'bg-[#187115]/95 text-white border-white/80'
+            : 'bg-white/95 text-[#187115] border-white'"
         >
           {{ product.productType === 'CUSTOM_TEMPLATE' ? 'Gia công 3D' : 'Có sẵn' }}
         </span>

@@ -22,6 +22,24 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'about',
+    loadComponent: () =>
+      import('./features/static/static-pages.component').then((m) => m.StaticPagesComponent),
+    data: { page: 'about' },
+  },
+  {
+    path: 'contact',
+    loadComponent: () =>
+      import('./features/static/static-pages.component').then((m) => m.StaticPagesComponent),
+    data: { page: 'contact' },
+  },
+  {
+    path: 'server-error',
+    loadComponent: () =>
+      import('./features/static/static-pages.component').then((m) => m.StaticPagesComponent),
+    data: { page: 'server-error' },
+  },
+  {
     path: 'quote-builder',
     loadComponent: () =>
       import('./features/quote-builder/quote-builder.component').then(
@@ -79,5 +97,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/admin/admin-cockpit.component').then((m) => m.AdminCockpitComponent),
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/static/static-pages.component').then((m) => m.StaticPagesComponent),
+    data: { page: 'not-found' },
+  },
 ];

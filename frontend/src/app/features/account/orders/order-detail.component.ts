@@ -35,6 +35,11 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
 
       @if (loading()) {
         <div class="bg-surface border border-border rounded-[10px] h-96 animate-pulse"></div>
+      } @else if (loadError()) {
+        <div class="industrial-card p-8 text-center space-y-3">
+          <p class="text-sm font-semibold text-danger">{{ loadError() }}</p>
+          <button type="button" (click)="retryLoad()" appButton variant="primary" size="sm">Thử lại</button>
+        </div>
       } @else if (order()) {
         <!-- 7-Step Industrial Manufacturing Stepper -->
         <div class="industrial-card p-5 mb-6">
@@ -53,6 +58,11 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   size="xs"
                 >
                   Hủy đơn hàng
+                </button>
+              }
+              @if (order()!.requiresVatInvoice && order()!.vatInvoiceNumber) {
+                <button type="button" (click)="printOrderSummary()" appButton variant="secondary" size="xs">
+                  In bản tóm tắt / Lưu PDF
                 </button>
               }
             </div>
@@ -80,6 +90,39 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
             </div>
           }
         </div>
+
+        @if (order()!.requiresVatInvoice && order()!.vatInvoiceNumber) {
+          <section class="print-invoice" aria-label="Bản tóm tắt đơn hàng">
+            <h1>KĨ NGHỆ NVX - SÀI GÒN</h1>
+            <h2>BẢN TÓM TẮT ĐƠN HÀNG</h2>
+            <p>Mã đơn: {{ order()!.orderCode }} · Số hóa đơn điện tử: {{ order()!.vatInvoiceNumber }}</p>
+            <p>Ngày đặt: {{ order()!.createdAt | date:'dd/MM/yyyy' }}</p>
+            <hr />
+            <h3>Thông tin nhận hàng</h3>
+            <p>{{ order()!.recipientName }} · {{ order()!.recipientPhone }}</p>
+            <p>{{ order()!.shippingAddress }}</p>
+            <h3>Thông tin xuất hóa đơn</h3>
+            <p>{{ order()!.vatCompanyName }} · MST: {{ order()!.vatTaxCode }}</p>
+            <p>{{ order()!.vatCompanyAddress }}</p>
+            <table>
+              <thead><tr><th>Hạng mục</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+              <tbody>
+                @for (item of order()!.items; track item.id) {
+                  <tr>
+                    <td>{{ item.itemName }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.finalUnitPrice | vnd }}</td>
+                    <td>{{ item.lineTotal | vnd }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p>Tạm tính: {{ order()!.subtotalAmount | vnd }}</p>
+            <p>VAT ({{ order()!.vatRate }}%): {{ order()!.vatAmount | vnd }}</p>
+            <h3>Tổng thanh toán: {{ order()!.totalAmount | vnd }}</h3>
+            <p class="print-disclaimer">Bản tóm tắt này không thay thế hóa đơn điện tử do cơ quan thuế chấp thuận.</p>
+          </section>
+        }
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <!-- Left 8 cols: Items, Prototype Approval & Payment Actions -->
@@ -323,6 +366,7 @@ export class OrderDetailComponent implements OnInit {
 
   readonly order = signal<OrderDetail | null>(null);
   readonly loading = signal(true);
+  readonly loadError = signal('');
   readonly actionLoading = signal(false);
   readonly notice = signal('');
   readonly error = signal('');
@@ -343,17 +387,35 @@ export class OrderDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.loadOrder(id);
+    else {
+      this.loading.set(false);
+      this.loadError.set('Không tìm thấy mã đơn hàng.');
+    }
   }
 
   loadOrder(id: string): void {
     this.loading.set(true);
+    this.loadError.set('');
     this.orderApi.getMyOrderDetail(id).subscribe({
       next: (res) => {
         this.loading.set(false);
         if (res.success && res.data) this.order.set(res.data);
+        else this.loadError.set('Không thể tải thông tin đơn hàng.');
       },
-      error: () => this.loading.set(false),
+      error: (err) => {
+        this.loading.set(false);
+        this.loadError.set(err?.error?.message || 'Không thể kết nối máy chủ để tải đơn hàng.');
+      },
     });
+  }
+
+  retryLoad(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.loadOrder(id);
+  }
+
+  printOrderSummary(): void {
+    window.print();
   }
 
   isStepActive(stepKey: OrderStatus): boolean {

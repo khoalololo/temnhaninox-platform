@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, CheckCircle2, ArrowRight, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-angular';
@@ -41,9 +41,11 @@ interface VisualCategoryCard {
           src="/assets/videos/hero-workshop.mp4"
           poster="/assets/images/workshop-1.jpg"
           autoplay
-          muted
+          [muted]="true"
+          [volume]="0"
           loop
           playsinline
+          (play)="muteVideo($event)"
           (error)="videoBroken.set(true)"
         ></video>
       } @else if (!brokenImages()['/assets/images/project-bg.jpg']) {
@@ -62,18 +64,16 @@ interface VisualCategoryCard {
         <div class="max-w-2xl space-y-5">
           <div class="hero-stagger inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#187115]/90 backdrop-blur-sm text-white text-xs sm:text-sm font-semibold shadow-sm" style="--hero-delay: 0ms;">
             <span>INOX 304 · NHÔM · ĐỒNG · MICA</span>
-            <span>|</span>
-            <span>SAI SỐ ±0.05 MM</span>
           </div>
 
-          <h1 class="hero-stagger text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight leading-tight text-white" style="--hero-delay: 90ms;">
-            Xưởng Gia Công Tem Nhãn Kim Loại & Bảng Tên Máy
+          <h1 class="hero-stagger whitespace-nowrap text-[clamp(1.1rem,3.5vw,3rem)] font-extrabold uppercase tracking-tight leading-tight text-white" style="--hero-delay: 90ms;">
+            CÔNG TY TNHH NVX SÀI GÒN
           </h1>
 
           <div class="hero-stagger w-48 h-1.5 bg-[#65c20e] rounded-full" style="--hero-delay: 160ms;"></div>
 
           <p class="hero-stagger text-base sm:text-lg text-white/90 leading-relaxed" style="--hero-delay: 220ms;">
-            Kĩ Nghệ NVX – Sài Gòn chuyên ăn mòn điện hóa, khắc Laser Fiber, phay CNC và in UV phẳng.
+            Xưởng gia công tem nhãn kim loại & bảng tên máy. Chuyên ăn mòn điện hóa, khắc Laser Fiber, phay CNC và in UV phẳng.
             Tính báo giá tự động theo kích thước mm, xem trước mô hình 3D và duyệt mẫu thực tế trước khi sản xuất.
           </p>
 
@@ -216,9 +216,11 @@ interface VisualCategoryCard {
                 src="/assets/videos/hero-workshop.mp4"
                 poster="/assets/images/workshop-1.jpg"
                 autoplay
-                muted
+                [muted]="true"
+                [volume]="0"
                 loop
                 playsinline
+                (play)="muteVideo($event)"
                 (error)="videoBroken.set(true)"
               ></video>
             } @else if (!brokenImages()['/assets/images/workshop-1.jpg']) {
@@ -253,45 +255,70 @@ interface VisualCategoryCard {
         </div>
       </section>
 
-      <!-- SECTION 4: ROLLABLE WORKSHOP GALLERY CAROUSEL -->
-      <section class="relative group/carousel" appScrollReveal>
+      <!-- SECTION 4: FULL-BLEED WORKSHOP SHOWCASE -->
+      <section
+        class="relative ml-[calc(50%-50vw)] w-screen max-w-[100vw] overflow-hidden bg-[#101710] h-[72svh] min-h-[360px] max-h-[900px] sm:h-[78vh] sm:min-h-[480px] group/carousel"
+        [style.height.px]="showcaseHeight()"
+      >
         <button
           type="button"
-          (click)="scrollGallery(-1)"
+          (click)="navigateShowcase(-1)"
           aria-label="Ảnh trước"
-          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-bg-elevated/95 border border-border shadow-md flex items-center justify-center text-text-primary hover:bg-accent hover:text-white hover:border-accent transition-all opacity-90 sm:opacity-0 sm:group-hover/carousel:opacity-100"
+          class="absolute left-3 sm:left-8 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/35 border border-white/50 shadow-md backdrop-blur-sm flex items-center justify-center text-white hover:bg-white hover:text-[#142414] transition-all"
         >
-          <lucide-icon [img]="ChevronLeftIcon" [size]="20" />
+          <lucide-icon [img]="ChevronLeftIcon" [size]="22" />
         </button>
 
         <div
           #galleryTrack
-          class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar pb-1"
+          class="relative h-full w-full overflow-hidden cursor-grab select-none"
+          tabindex="0"
+          aria-label="Thư viện hình ảnh xưởng và sản phẩm"
+          (pointerdown)="startGalleryDrag($event)"
+          (pointermove)="moveGalleryDrag($event)"
+          (pointerup)="endGalleryDrag($event)"
+          (pointercancel)="endGalleryDrag($event)"
         >
-          @for (photo of workshopPhotos; track photo.src) {
-            <div class="group snap-start shrink-0 w-[72%] sm:w-[44%] lg:w-[calc(25%-15px)] rounded-[16px] overflow-hidden border border-border shadow-sm bg-surface aspect-square">
-              @if (!brokenImages()[photo.src]) {
-                <img
-                  [src]="photo.src"
-                  [alt]="photo.caption"
-                  (error)="markImageBroken(photo.src)"
-                  class="w-full h-full object-cover fs-img-zoom"
-                  loading="lazy"
-                />
-              } @else {
-                <app-image-placeholder [sku]="photo.code" />
-              }
-            </div>
-          }
+          <div
+            class="flex h-full w-full"
+            [style.transform]="showcaseTransform()"
+            [style.transition]="showcaseTransition()"
+            (transitionend)="finishShowcaseTransition()"
+          >
+            @for (photo of showcaseSlides; track $index) {
+              <div class="relative h-full w-full shrink-0 overflow-hidden bg-[#101710]">
+                @if (!brokenImages()[photo.src]) {
+                  <img
+                    [src]="photo.src"
+                    [alt]="photo.caption"
+                    (error)="markImageBroken(photo.src)"
+                    (load)="onShowcaseImageLoad($event, photo.src)"
+                    draggable="false"
+                    class="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                    loading="lazy"
+                  />
+                } @else {
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <app-image-placeholder [sku]="photo.code" />
+                  </div>
+                }
+                <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 pointer-events-none"></div>
+                <div class="absolute inset-x-0 bottom-0 mx-auto w-full max-w-7xl px-6 pb-10 sm:px-16 sm:pb-14 text-white pointer-events-none">
+                  <p class="mb-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Kĩ Nghệ NVX · Showcase</p>
+                  <p class="max-w-3xl text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight drop-shadow-lg">{{ photo.caption }}</p>
+                </div>
+              </div>
+            }
+          </div>
         </div>
 
         <button
           type="button"
-          (click)="scrollGallery(1)"
+          (click)="navigateShowcase(1)"
           aria-label="Ảnh tiếp theo"
-          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-bg-elevated/95 border border-border shadow-md flex items-center justify-center text-text-primary hover:bg-accent hover:text-white hover:border-accent transition-all opacity-90 sm:opacity-0 sm:group-hover/carousel:opacity-100"
+          class="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/35 border border-white/50 shadow-md backdrop-blur-sm flex items-center justify-center text-white hover:bg-white hover:text-[#142414] transition-all"
         >
-          <lucide-icon [img]="ChevronRightIcon" [size]="20" />
+          <lucide-icon [img]="ChevronRightIcon" [size]="22" />
         </button>
       </section>
 
@@ -444,6 +471,15 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly videoBroken = signal(false);
   readonly brokenImages = signal<Record<string, boolean>>({});
 
+  muteVideo(event: Event): void {
+    const video = event.currentTarget;
+    if (video instanceof HTMLVideoElement) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+    }
+  }
+
   readonly topVisualCategories: VisualCategoryCard[] = [
     {
       title: 'TEM NHÃN',
@@ -494,7 +530,28 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     { src: '/assets/images/cat-cnc.jpg', caption: 'Phay & cắt CNC chi tiết chính xác', code: 'NVX-06' },
     { src: '/assets/images/cat-laser.jpg', caption: 'Khắc Laser Fiber số serial & QR', code: 'NVX-07' },
     { src: '/assets/images/cat-luu-niem.jpg', caption: 'Vật phẩm lưu niệm & bảng vinh danh', code: 'NVX-08' },
+    { src: '/assets/products/tem-nhan-inox-1.png', caption: 'Thành phẩm tem nhãn Inox', code: 'NVX-09' },
+    { src: '/assets/products/bang-hieu-cong-ty-inox-304-1.jpg', caption: 'Bảng hiệu công ty Inox 304', code: 'NVX-10' },
+    { src: '/assets/products/gia-cong-khac-laser-fiber-ma-qr-serial-1.jpg', caption: 'Khắc Laser Fiber mã QR và serial', code: 'NVX-11' },
+    { src: '/assets/products/cnc-nhom-67-1.png', caption: 'Gia công CNC trên nhôm', code: 'NVX-12' },
   ];
+  readonly showcaseHeight = signal(560);
+  private readonly showcaseImageRatios = signal<Record<string, number>>({});
+  private showcaseActivePhotoIndex = 0;
+  readonly showcasePosition = signal(1);
+  readonly showcaseDragOffset = signal(0);
+  readonly showcaseTransitionEnabled = signal(true);
+  readonly showcaseSlides = [
+    this.workshopPhotos[this.workshopPhotos.length - 1],
+    ...this.workshopPhotos,
+    this.workshopPhotos[0],
+  ];
+
+  private galleryDragStartX = 0;
+  private galleryDragging = false;
+  private galleryLastX = 0;
+  private galleryLastMoveAt = 0;
+  private galleryVelocity = 0;
 
   readonly workshopStats = [
     { target: 1200, label: 'Đánh giá tốt' },
@@ -520,6 +577,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    requestAnimationFrame(() => {
+      this.updateShowcaseHeight();
+    });
     const el = this.statsGrid?.nativeElement;
     if (!el) return;
 
@@ -569,11 +629,100 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.statsRafId = requestAnimationFrame(step);
   }
 
-  scrollGallery(direction: number): void {
+  navigateShowcase(direction: number): void {
+    if (this.workshopPhotos.length < 2) return;
+    this.showcaseTransitionEnabled.set(true);
+    this.showcasePosition.update((position) => position + direction);
+  }
+
+  showcaseTransform(): string {
+    return `translate3d(calc(-${this.showcasePosition() * 100}% + ${this.showcaseDragOffset()}px), 0, 0)`;
+  }
+
+  showcaseTransition(): string {
+    return this.showcaseTransitionEnabled()
+      ? 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
+      : 'none';
+  }
+
+  finishShowcaseTransition(): void {
+    const position = this.showcasePosition();
+    if (position === 0 || position === this.workshopPhotos.length + 1) {
+      this.showcaseTransitionEnabled.set(false);
+      this.showcasePosition.set(position === 0 ? this.workshopPhotos.length : 1);
+      requestAnimationFrame(() => this.showcaseTransitionEnabled.set(true));
+    }
+    this.showcaseActivePhotoIndex = (this.showcasePosition() - 1 + this.workshopPhotos.length) % this.workshopPhotos.length;
+    this.updateShowcaseHeight();
+  }
+
+  startGalleryDrag(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
     const el = this.galleryTrack?.nativeElement;
     if (!el) return;
-    const step = Math.max(260, Math.round(el.clientWidth * 0.75));
-    el.scrollBy({ left: direction * step, behavior: 'smooth' });
+    this.galleryDragging = true;
+    this.galleryDragStartX = event.clientX;
+    this.galleryLastX = event.clientX;
+    this.galleryLastMoveAt = performance.now();
+    this.galleryVelocity = 0;
+    this.showcaseTransitionEnabled.set(false);
+    el.classList.add('cursor-grabbing');
+    el.setPointerCapture(event.pointerId);
+  }
+
+  moveGalleryDrag(event: PointerEvent): void {
+    const el = this.galleryTrack?.nativeElement;
+    if (!this.galleryDragging || !el) return;
+    const now = performance.now();
+    const distance = event.clientX - this.galleryLastX;
+    const elapsed = Math.max(1, now - this.galleryLastMoveAt);
+    this.galleryVelocity = distance / elapsed;
+    this.galleryLastX = event.clientX;
+    this.galleryLastMoveAt = now;
+    const offset = event.clientX - this.galleryDragStartX;
+    if (Math.abs(offset) > 4) {
+      event.preventDefault();
+      el.classList.add('cursor-grabbing');
+    }
+    this.showcaseDragOffset.set(offset);
+  }
+
+  endGalleryDrag(event: PointerEvent): void {
+    const el = this.galleryTrack?.nativeElement;
+    if (!this.galleryDragging) return;
+    this.galleryDragging = false;
+    if (el?.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+    el?.classList.remove('cursor-grabbing');
+    const width = el?.clientWidth || 1;
+    const distance = event.clientX - this.galleryDragStartX;
+    const projectedDistance = distance + this.galleryVelocity * 180;
+    this.showcaseDragOffset.set(0);
+    this.showcaseTransitionEnabled.set(true);
+    if (Math.abs(projectedDistance) > width * 0.16) {
+      this.navigateShowcase(projectedDistance < 0 ? 1 : -1);
+    }
+  }
+
+  onShowcaseImageLoad(event: Event, src: string): void {
+    const image = event.currentTarget;
+    if (!(image instanceof HTMLImageElement) || !image.naturalWidth || !image.naturalHeight) return;
+    this.showcaseImageRatios.update((ratios) => ({
+      ...ratios,
+      [src]: image.naturalWidth / image.naturalHeight,
+    }));
+    if (this.workshopPhotos[this.showcaseActivePhotoIndex]?.src === src) {
+      this.updateShowcaseHeight();
+    }
+  }
+
+  @HostListener('window:resize')
+  updateShowcaseHeight(): void {
+    if (typeof window === 'undefined') return;
+    const activePhoto = this.workshopPhotos[this.showcaseActivePhotoIndex];
+    const ratio = activePhoto ? this.showcaseImageRatios()[activePhoto.src] : undefined;
+    if (!ratio) return;
+    const maxHeight = Math.min(window.innerHeight * 0.78, 900);
+    this.showcaseHeight.set(Math.round(Math.max(320, Math.min(maxHeight, window.innerWidth / ratio))));
   }
 
   markImageBroken(url: string): void {

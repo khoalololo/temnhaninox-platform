@@ -73,7 +73,7 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
               <span class="w-8 h-8 rounded-full bg-[#187115] flex items-center justify-center shrink-0 mt-0.5">
                 <lucide-icon [img]="MapPinIcon" [size]="15" />
               </span>
-              <span>1006/3g Đường An Phú Đông 25, An Phú Đông, Quận 12, Sài Gòn, Việt Nam</span>
+              <span>350/21/51, Đường T15, An Phú Đông, Hồ Chí Minh 70000, Việt Nam</span>
             </li>
 
           </ul>
@@ -84,10 +84,14 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
           <h3 class="font-bold text-base uppercase tracking-wide text-white mb-4">
             VỊ TRÍ CỬA HÀNG
           </h3>
+          <nav aria-label="Liên kết thông tin" class="mb-4 flex gap-4 text-xs">
+            <a routerLink="/about" class="hover:underline">Về chúng tôi</a>
+            <a routerLink="/contact" class="hover:underline">Liên hệ</a>
+          </nav>
           <div class="rounded-[8px] overflow-hidden border border-white/25 bg-white/10">
             <iframe
               title="Bản đồ Kĩ Nghệ NVX Sài Gòn"
-              src="https://www.google.com/maps?q=1006/3g+Duong+An+Phu+Dong+25,+Quan+12,+TP.HCM&output=embed"
+              src="https://www.google.com/maps?q=350%2F21%2F51%2C+Duong+T15%2C+An+Phu+Dong%2C+Ho+Chi+Minh+70000%2C+Vietnam&output=embed"
               class="w-full h-44 border-0"
               loading="lazy"
             ></iframe>
@@ -107,7 +111,7 @@ import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from '
     <!-- Floating Contact Dock (Maps, WhatsApp/Zalo, Phone — matching OG right-side dock) -->
     <div class="fixed bottom-4 right-4 z-40 flex flex-col gap-2.5">
       <a
-        href="https://maps.google.com/?q=1006/3g+Duong+An+Phu+Dong+25,+Quan+12,+TP.HCM"
+        href="https://maps.google.com/?q=350%2F21%2F51%2C+Duong+T15%2C+An+Phu+Dong%2C+Ho+Chi+Minh+70000%2C+Vietnam"
         target="_blank"
         rel="noopener noreferrer"
         title="Mở bản đồ Google Maps"

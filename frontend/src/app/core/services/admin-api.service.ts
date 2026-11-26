@@ -12,6 +12,7 @@ import {
   PricingRule,
 } from '../models/order.models';
 import { Category, Material, ProcessingMethod, Product } from '../models/catalog.models';
+import { AdminCustomer } from '../models/auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
@@ -19,6 +20,12 @@ export class AdminApiService {
 
   getDashboardSummary(): Observable<ApiResponse<AdminDashboardSummary>> {
     return this.http.get<ApiResponse<AdminDashboardSummary>>('/api/v1/admin/dashboard/summary');
+  }
+
+  getCustomers(search = '', page = 0, size = 20): Observable<ApiResponse<PageResponse<AdminCustomer>>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search.trim()) params = params.set('search', search.trim());
+    return this.http.get<ApiResponse<PageResponse<AdminCustomer>>>('/api/v1/users/admin/customers', { params });
   }
 
   getOrders(filters: {
@@ -106,8 +113,15 @@ export class AdminApiService {
     return this.http.get<ApiResponse<ProcessingMethod[]>>('/api/v1/admin/catalog/processing-methods');
   }
 
-  getAdminProducts(page = 0, size = 50): Observable<ApiResponse<PageResponse<Product>>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getAdminProducts(
+    page = 0,
+    size = 20,
+    filters: { search?: string; categoryId?: string; productType?: string } = {}
+  ): Observable<ApiResponse<PageResponse<Product>>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.search) params = params.set('search', filters.search.trim());
+    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters.productType) params = params.set('productType', filters.productType);
     return this.http.get<ApiResponse<PageResponse<Product>>>('/api/v1/admin/catalog/products', { params });
   }
 

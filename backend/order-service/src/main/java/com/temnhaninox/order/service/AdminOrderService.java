@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -57,7 +58,7 @@ public class AdminOrderService {
             int page,
             int size) {
 
-        String normalizedSearch = isBlank(search) ? null : search.trim();
+        String normalizedSearch = isBlank(search) ? "" : search.trim().toLowerCase(Locale.ROOT);
         Page<Order> orderPage = orderRepository.searchAdminOrders(
                 status, orderType, normalizedSearch, PageRequest.of(page, size));
 

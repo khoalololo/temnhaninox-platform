@@ -50,11 +50,13 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Số điện thoại / Zalo *</label>
                 <input
-                  type="text"
+                  type="tel"
                   [(ngModel)]="recipientPhone"
                   name="recipientPhone"
                   required
-                  class="industrial-input w-full px-3 py-2 text-sm font-mono"
+                  pattern="^(0[0-9]{9}|\\+84[0-9]{9})$"
+                  placeholder="0912345678"
+                  class="industrial-input w-full px-3 py-2 text-sm font-sans tabular-nums"
                 />
               </div>
             </div>
@@ -135,6 +137,8 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                       [(ngModel)]="vatTaxCode"
                       name="vatTaxCode"
                       required
+                      pattern="^[0-9]{10}(-[0-9]{3})?$"
+                      maxlength="14"
                       class="industrial-input w-full px-3 py-2 text-xs font-mono"
                     />
                   </div>
@@ -303,6 +307,19 @@ export class CheckoutComponent implements OnInit {
   submitOrder(): void {
     if (!this.recipientName.trim() || !this.recipientPhone.trim() || !this.shippingAddress.trim()) {
       this.errorMessage.set('Vui lòng nhập đầy đủ Tên người nhận, Số điện thoại và Địa chỉ giao hàng.');
+      return;
+    }
+    if (!/^(?:0\d{9}|\+84\d{9})$/.test(this.recipientPhone.trim())) {
+      this.errorMessage.set('Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam bắt đầu bằng 0 hoặc +84.');
+      return;
+    }
+    if (
+      this.requiresVatInvoice &&
+      (!this.vatCompanyName.trim() ||
+        !/^\d{10}(-\d{3})?$/.test(this.vatTaxCode.trim()) ||
+        !this.vatCompanyAddress.trim())
+    ) {
+      this.errorMessage.set('Vui lòng nhập đúng tên công ty, MST gồm 10 hoặc 13 chữ số và địa chỉ xuất hóa đơn.');
       return;
     }
 

@@ -5,11 +5,12 @@ import { OrderApiService } from '../../../core/services/order-api.service';
 import { OrderStatus, OrderSummary } from '../../../core/models/order.models';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, VndCurrencyPipe, ButtonDirective],
+  imports: [CommonModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
@@ -29,6 +30,11 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
 
       @if (loading()) {
         <div class="bg-surface border border-border rounded-[10px] h-64 animate-pulse"></div>
+      } @else if (loadError()) {
+        <div class="industrial-card p-8 text-center space-y-3">
+          <p class="text-sm font-semibold text-danger">{{ loadError() }}</p>
+          <button type="button" (click)="loadOrders()" appButton variant="primary" size="sm">Thử lại</button>
+        </div>
       } @else if (orders().length === 0) {
         <div class="industrial-card p-10 text-center space-y-2">
           <div class="font-heading text-sm font-bold text-text-primary">Bạn chưa có đơn hàng nào</div>
@@ -83,6 +89,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               </tbody>
             </table>
           </div>
+          <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
         </div>
       }
     </div>
@@ -93,17 +100,37 @@ export class OrderListComponent implements OnInit {
 
   readonly orders = signal<OrderSummary[]>([]);
   readonly loading = signal(true);
+  readonly loadError = signal('');
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
 
   ngOnInit(): void {
-    this.orderApi.getMyOrders(0, 20).subscribe({
+    this.loadOrders();
+  }
+
+  loadOrders(): void {
+    this.loading.set(true);
+    this.loadError.set('');
+    this.orderApi.getMyOrders(this.page(), 20).subscribe({
       next: (res) => {
         this.loading.set(false);
         if (res.success && res.data) {
           this.orders.set(res.data.content || []);
+          this.totalPages.set(res.data.totalPages || 0);
+        } else {
+          this.loadError.set('Không thể tải danh sách đơn hàng.');
         }
       },
-      error: () => this.loading.set(false),
+      error: (err) => {
+        this.loading.set(false);
+        this.loadError.set(err?.error?.message || 'Không thể kết nối máy chủ để tải đơn hàng.');
+      },
     });
+  }
+
+  goToPage(page: number): void {
+    this.page.set(page);
+    this.loadOrders();
   }
 
   statusLabel(status: OrderStatus): string {
