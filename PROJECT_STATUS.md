@@ -1,6 +1,10 @@
 # Tem Nhãn Inox — Implementation Progress Tracker
 
-## Current Phase: Phase 5 (End-to-End Integration & Verification) — Phase 4C & 4D Completed
+## Current Phase: Phase 5 (End-to-End Integration & Verification) — all feature phases written; verification in progress
+
+**Last updated: 2026-11-27.** Owner-confirmed: `mvn test` passes on all modules (through Phases B/E/F) and Google sign-in works. Not yet done: `node scripts/e2e-smoke.mjs`, `docker compose up --build`, manual UC-01 and UC-03–UC-16, and `mvn test` for the newest backend change (Phase G5, uncompiled by the author). See `docs/feature_completion_plan.md` for the detailed spec, use-case table and open questions.
+
+**Owner decisions recorded 2026-11-27:** 1 ly = 1 mm; the 5,000,000 đ/m² thin-sheet rate applies to metals only (Mica/Decal need their own rate — value still to be provided); this project is the previous SE project, not the capstone.
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -19,7 +23,7 @@
 
 ### Phase 2: `catalog-pricing-service` (8082) & S3 File Upload [COMPLETED]
 - [x] Entities & repositories (`Category`, `Material`, `ProcessingMethod`, `MaterialProcessingRule`, `Product`, `PricingRule`) mapped to `catalog_pricing_schema` with `ddl-auto=validate`
-- [x] Deterministic `PricingEngineService` (thin sheet `<= 1mm` / non-metal area formula vs. thick metal `> 1mm` mass x 5 formula, `1,000+` bulk discount, `10%` VAT, `50%` deposit)
+- [x] Deterministic `PricingEngineService` (thin metal `<= 1mm` area × rate vs. thick metal `> 1mm` mass x price/kg x 5 formula; non-metal materials (Mica/Decal) use their own per-material đ/m² rate and are refused until one is configured; `1,000+` bulk discount, `10%` VAT, `50%` deposit)
 - [x] Public catalog (`GET /api/v1/catalog/categories`, `/materials`, `/products`, `/products/{slug}`), quote (`POST /api/v1/quotes/calculate`), S3 upload (`POST /api/v1/files/upload` with `forcePathStyle(true)` and auto-bucket creation), and Admin CRUD endpoints (`/api/v1/admin/catalog/**`, `GET/PUT /api/v1/admin/pricing/rules`)
 - [x] JUnit 5 pricing formula & S3 upload tests passing (`mvn test -pl catalog-pricing-service`: 10/10 passed — 7 `PricingEngineServiceTest`, 3 `S3StorageServiceTest`)
 
@@ -39,11 +43,11 @@
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
 - [x] JUnit 5 tests passing (`mvn test -pl order-service`: 39/39 passed — includes admin/customer role-separation controller tests)
 
-### Phase 4A: Angular 18+ — Core App Shell & Auth [COMPLETE EXCEPT DEFERRED AUTH FLOWS]
+### Phase 4A: Angular 18+ — Core App Shell & Auth [COMPLETE]
 - [x] Top header/navbar layout with search bar, category quick-links, cart button, theme toggle, and login trigger
 - [x] `AuthService` (signals/localStorage), HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
 - [x] Login/Register pages and Customer Profile / Saved VAT Profiles
-- [ ] Forgot/Reset password flow & Google OAuth sign-in (intentionally deferred per owner request)
+- [x] Forgot/Reset password flow & Google OAuth sign-in (implemented in Phase B; Google verified working by the owner, reset flow still to be checked with Mailpit — UC-01)
 
 ### Phase 4B: Angular 18+ — Storefront & Cart [IMPLEMENTED; MANUAL UC CHECKS PENDING]
 - [x] Landing page hero + category grid + workshop gallery
@@ -59,7 +63,7 @@
 
 ### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [COMPLETED]
 - [x] Streamlined checkout (`/checkout`) with cart item summary, 50% deposit vs. 100% payment breakdown, saved VAT profile auto-fill, and VAT 10% accordion
-- [x] Customer 7-step timeline (`/account/orders/:id`) with `CANCELLED` state banner, `estimatedCompletionDate`, `productionWorkerNote`, sample approval, VNPAY redirect, and bank transfer receipt upload
+- [x] Customer 7-step timeline (`/account/orders/:id`) with `CANCELLED` state banner, `estimatedCompletionDate`, sample approval, VNPAY redirect, and bank transfer receipt upload
 - [x] Admin cockpit (`/admin` dashboard KPIs, order management queue & inspector drawer with per-item unit price override, prototype upload, deposit-gated status transitions, VAT invoice number, pricing rule editor, and paginated/filterable product create/edit/delete/image upload)
 - [x] Paginated/filterable admin orders and customer directory; admin customer search endpoint guarded at gateway and controller
 - [x] Unit-aware pricing rule editor; product active toggle; shared notifications and accessible delete confirmation
@@ -73,21 +77,38 @@
 - [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`
 - [x] Admin/customer separation: backend denies ADMIN access to cart, customer order, and VNPAY create-url routes; customer route flows remain enabled. `mvn test -pl order-service` passed (39/39), and frontend `npm run build` passed.
 
-### Phase E: Hardening (branch `hardening/phase5-prep`) [WRITTEN — NOT COMPILED OR RUN]
+### Phase E: Hardening [MERGED — `mvn test` passes (owner-run); stack start-up on an empty DB not yet verified]
 - [x] VNPAY IPN endpoint + amount verification + idempotent processing (+4 unit tests)
 - [x] Secret fallbacks removed from main config; dev defaults moved to `application-dev.yml`; admin seed from `ADMIN_EMAIL`/`ADMIN_PASSWORD`
 - [x] Flyway baselines per service; `init.sql` made non-destructive; `infra/postgres/dev-reset.sql` added; `infra/.env.example` added
-- [ ] Run `mvn test` (all modules) and start every service on the existing DB and on an empty DB
-- [ ] Gateway-only network exposure in `infra/docker-compose.yml`
+- [x] Run `mvn test` (all modules) — passed (owner)
+- [ ] Start every service on the existing DB and on an empty DB
+- [x] Gateway-only network exposure written in `infra/docker-compose.yml` (not yet run)
 - [ ] Manual UC-03..UC-12 and the full quote → deposit → production → completion run (Phase 5)
 
-### Phase B + Docker wiring (branch `feature/phase-b-auth`) [WRITTEN — backend not compiled, nothing run]
+### Phase B + Docker wiring [MERGED — Google sign-in verified; reset flow and Docker not yet run]
 - [x] Forgot/reset password + Google sign-in (backend, Flyway V2, frontend pages, Mailpit)
 - [x] Dockerfiles for api-gateway/auth/catalog/order/frontend; gateway route URLs from env; compose S3_* names fixed
-- [ ] `mvn test`, then `docker compose -f infra/docker-compose.yml up --build` and verify through http://localhost:4200 only
-- [ ] UC-01 (Mailpit) and UC-02 (needs your Google client ID)
+- [x] `mvn test` passed (owner)
+- [ ] `docker compose -f infra/docker-compose.yml up --build` and verify through http://localhost:4200 only
+- [ ] UC-01 (Mailpit)
+- [x] UC-02 Google sign-in works (owner, 2026-11-27)
 
-### Phase F: Automated verification (branch `feature/e2e-smoke-and-coverage`) [WRITTEN — not run]
+### Phase F: Automated verification [MERGED — unit tests pass; smoke script not run yet]
 - [x] Fix: COMPLETED now requires the full balance verified (+2 tests); JaCoCo + pricing boundary tests (+2)
 - [x] `scripts/e2e-smoke.mjs` end-to-end lifecycle + guards + IPN
-- [ ] Run `mvn test`, start the stack, run `node scripts/e2e-smoke.mjs`, fix whatever it reports
+- [x] `mvn test` passed (owner)
+- [ ] Start the stack, run `node scripts/e2e-smoke.mjs`, fix whatever it reports
+
+### Phase G: Admin Kanban, UI/UX polish, image previews, per-material pricing (branch `feature/kanban-and-gaps`) [FRONTEND BUILT + SCREENSHOT-CHECKED; BACKEND PART NOT COMPILED]
+- [x] Admin Kanban board at `/admin/board` — columns per status, drag simple steps (`IN_PRODUCTION → READY_FOR_DELIVERY → COMPLETED`), cancel by drag, one-click next-step buttons, search/type filter, 60 s refresh, balance guard mirrored for `COMPLETED`; steps that need data open the inspector
+- [x] Shared UI primitives (`.tni-*` classes, `shared/utils/order-ui.ts`, `app-image-lightbox`): status/type/payment chips, progress bars, switches, avatars, thumbnails, empty states, sticky tables
+- [x] Admin cockpit polish: orders (status pills, chips, payment progress, previews of customer design / prototype / payment proof), pricing (new “Giá theo vật liệu” panel), products (thumbnails, stock chips, on/off switch, button actions), customers (avatars, status chips)
+- [x] Customer order screens: card list with “cần thao tác” hints and filters; detail with numbered stepper, localized timeline, correct VAT %, payment history, previewable images; the internal `productionWorkerNote` is no longer shown to customers
+- [x] Bug fixes found during review: VAT rate displayed as `0.1%` instead of `10%`; raw enum names in the customer timeline and admin inspector; native checkbox for product visibility
+- [x] Pricing: 5,000,000 đ/m² is metal-only; per-material rate for Mica/Decal (Flyway `V2__material_specific_thin_sheet_rate.sql`, `PricingEngineService`, +1 test, 1 test updated) — **uncompiled; run `mvn test -pl catalog-pricing-service`**
+- [x] `ng build` passes; screenshots reviewed at 1440 px light, 1440 px dark and 390 px dark using mocked API responses
+- [ ] Run `mvn test` for catalog-pricing-service; apply the V2 migration to your DB (Flyway does this on start)
+- [ ] Enter the Mica/Decal đ/m² in Admin → Định giá (needs the uncle's number) — until then mica quotes return a validation error
+- [ ] Verify UC-13 (Kanban drag-and-drop in a real browser), UC-14, UC-15, UC-16
+- [ ] Open: customer-visible progress note separate from the internal worker note (backend change in order-service); Kanban has no touch drag (use buttons on phones)

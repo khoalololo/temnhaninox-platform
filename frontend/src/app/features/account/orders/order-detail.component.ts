@@ -7,11 +7,24 @@ import { QuoteApiService } from '../../../core/services/quote-api.service';
 import { OrderDetail, OrderStatus, PaymentPhase } from '../../../core/models/order.models';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
+import { ImageLightboxComponent } from '../../../shared/components/image-lightbox/image-lightbox.component';
+import {
+  PAYMENT_METHOD_LABEL,
+  PAYMENT_PHASE_LABEL,
+  PAYMENT_STATUS_LABEL,
+  fileExtension,
+  isImageUrl,
+  orderStatusLabel,
+  orderStatusTone,
+  orderTypeLabel,
+  paidPercent,
+  paymentStatusTone,
+} from '../../../shared/utils/order-ui';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, ImageLightboxComponent],
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="mb-4 text-xs text-text-muted flex items-center gap-2">
@@ -45,8 +58,12 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
         <div class="industrial-card p-5 mb-6">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-border">
             <div>
-              <div class="text-[11px] font-mono text-text-muted">MÃ ĐƠN HÀNG</div>
-              <h1 class="font-heading text-xl font-mono font-bold text-text-primary">{{ order()!.orderCode }}</h1>
+              <div class="text-xs text-text-muted">Mã đơn hàng · đặt ngày {{ order()!.createdAt | date:'dd/MM/yyyy' }}</div>
+              <div class="flex flex-wrap items-center gap-3">
+                <h1 class="font-heading text-2xl font-mono font-bold text-text-primary">{{ order()!.orderCode }}</h1>
+                <span class="tni-chip" [attr.data-tone]="statusTone(order()!.status)">{{ statusLabel(order()!.status) }}</span>
+                <span class="tni-chip no-dot" data-tone="muted">{{ typeLabel(order()!.orderType) }}</span>
+              </div>
             </div>
             <div class="flex items-center gap-2">
               @if (canCancel(order()!.status)) {
@@ -73,21 +90,19 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               Đơn hàng này đã bị hủy.
             </div>
           } @else {
-            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-center">
+            <ol class="order-steps" aria-label="Tiến độ đơn hàng">
               @for (step of steps; track step.key; let idx = $index) {
-                <div
-                  class="p-2.5 rounded-[6px] border text-xs"
-                  [class]="isStepActive(step.key)
-                    ? 'bg-accent text-bg border-accent font-bold'
-                    : isStepCompleted(idx)
-                      ? 'bg-bg text-success border-success/60 font-medium'
-                      : 'bg-bg text-text-muted border-border'"
+                <li
+                  class="order-step"
+                  [class.is-done]="isStepCompleted(idx)"
+                  [class.is-current]="isStepActive(step.key)"
+                  [attr.aria-current]="isStepActive(step.key) ? 'step' : null"
                 >
-                  <div class="font-mono text-[10px] mb-0.5">BƯỚC {{ idx + 1 }}</div>
-                  <div class="leading-tight">{{ step.label }}</div>
-                </div>
+                  <span class="order-step-dot">{{ isStepCompleted(idx) ? '✓' : idx + 1 }}</span>
+                  <span class="order-step-label">{{ step.label }}</span>
+                </li>
               }
-            </div>
+            </ol>
           }
         </div>
 
@@ -118,7 +133,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               </tbody>
             </table>
             <p>Tạm tính: {{ order()!.subtotalAmount | vnd }}</p>
-            <p>VAT ({{ order()!.vatRate }}%): {{ order()!.vatAmount | vnd }}</p>
+            <p>VAT ({{ vatPercent() }}%): {{ order()!.vatAmount | vnd }}</p>
             <h3>Tổng thanh toán: {{ order()!.totalAmount | vnd }}</h3>
             <p class="print-disclaimer">Bản tóm tắt này không thay thế hóa đơn điện tử do cơ quan thuế chấp thuận.</p>
           </section>
@@ -200,7 +215,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
             <!-- Payment Action Card -->
             @if (canPayNow()) {
               <div class="industrial-card p-5 space-y-4">
-                <div class="flex items-center justify-between border-b border-border pb-3">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
                   <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-text-primary">
                     Thanh Toán {{ paymentPhaseLabel() }}
                   </h2>
@@ -214,7 +229,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   <div class="border border-border rounded-[6px] p-4 flex flex-col justify-between bg-bg">
                     <div>
                       <div class="text-xs font-semibold text-text-primary mb-1">Cổng thanh toán VNPAY / Thẻ ATM / QR</div>
-                      <p class="text-[11px] text-text-secondary mb-3">
+                      <p class="text-xs text-text-secondary mb-3">
                         Xác nhận tự động ngay lập tức và chuyển trạng thái đơn hàng sang sản xuất.
                       </p>
                     </div>
@@ -234,7 +249,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   <!-- Option 2: Bank Transfer Proof Upload -->
                   <div class="border border-border rounded-[6px] p-4 space-y-2.5 bg-bg">
                     <div class="text-xs font-semibold text-text-primary">Chuyển khoản ngân hàng (Ủy nhiệm chi)</div>
-                    <div class="text-[11px] font-mono bg-surface border border-border p-2 rounded-[6px] text-text-secondary">
+                    <div class="text-xs font-mono bg-surface border border-border p-2.5 rounded-[6px] text-text-secondary leading-relaxed">
                       ACB · STK: 88830468 · CTY TEM NHÃN INOX<br />
                       Nội dung: <span class="text-text-primary">{{ order()!.orderCode }}</span>
                     </div>
@@ -242,13 +257,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                       type="text"
                       [(ngModel)]="bankRef"
                       placeholder="Mã giao dịch / Nội dung CK"
-                      class="industrial-input w-full px-2.5 py-1.5 text-xs font-mono"
+                      class="industrial-input w-full px-2.5 py-2 text-sm"
                     />
+                    <label class="block text-xs text-text-secondary" for="proof-file">Ảnh/PDF biên lai chuyển khoản</label>
                     <input
+                      id="proof-file"
                       type="file"
                       (change)="onProofFileSelected($event)"
                       accept="image/*,.pdf"
-                      class="block w-full text-[11px] text-text-secondary file:mr-2 file:py-1 file:px-2.5 file:rounded-[6px] file:border file:border-border file:text-[11px] file:bg-surface file:text-text-primary"
+                      class="admin-file-input block w-full"
                     />
                     <button
                       type="button"
@@ -271,8 +288,9 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
               <div class="bg-surface-raised px-4 py-2.5 border-b border-border font-heading text-xs font-bold uppercase text-text-primary">
                 Chi Tiết Hạng Mục Gia Công ({{ order()!.items.length }})
               </div>
-              <table class="w-full text-xs text-left">
-                <thead class="border-b border-border text-text-muted font-mono">
+              <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <thead class="border-b border-border text-text-muted text-xs uppercase tracking-wide">
                   <tr>
                     <th class="px-4 py-2.5">Hạng mục</th>
                     <th class="px-3 py-2.5 text-right">Đơn giá chốt</th>
@@ -291,10 +309,28 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                             {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
                           </div>
                         }
-                        @if (item.designFileUrl) {
-                          <a [href]="item.designFileUrl" target="_blank" class="text-[11px] text-steel hover:text-steel-hover underline font-mono">
-                            Bản vẽ thiết kế
-                          </a>
+                        @if (item.designFileUrl || item.prototypeImageUrl) {
+                          <div class="mt-2 flex flex-wrap gap-3">
+                            @if (item.designFileUrl) {
+                              @if (isImage(item.designFileUrl)) {
+                                <button type="button" class="tni-thumb" (click)="openPreview(item.designFileUrl, 'Bản vẽ thiết kế · ' + item.itemName)">
+                                  <img [src]="item.designFileUrl" alt="Bản vẽ thiết kế" loading="lazy" />
+                                  <span>Bản vẽ của bạn</span>
+                                </button>
+                              } @else {
+                                <a class="tni-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener" style="cursor:pointer">
+                                  <span class="tni-thumb-file">{{ ext(item.designFileUrl) }}</span>
+                                  <span>Tải bản vẽ ↗</span>
+                                </a>
+                              }
+                            }
+                            @if (item.prototypeImageUrl) {
+                              <button type="button" class="tni-thumb" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
+                                <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế" loading="lazy" />
+                                <span>Ảnh mẫu xưởng</span>
+                              </button>
+                            }
+                          </div>
                         }
                       </td>
                       <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">{{ item.finalUnitPrice | vnd }}</td>
@@ -304,7 +340,33 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   }
                 </tbody>
               </table>
+              </div>
             </div>
+
+            @if (order()!.paymentTransactions.length) {
+              <div class="industrial-card overflow-hidden">
+                <div class="bg-surface-raised px-4 py-2.5 border-b border-border font-heading text-xs font-bold uppercase text-text-primary">
+                  Lịch sử thanh toán ({{ order()!.paymentTransactions.length }})
+                </div>
+                <ul class="divide-y divide-border">
+                  @for (tx of order()!.paymentTransactions; track tx.id) {
+                    <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+                      <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-text-primary text-sm">{{ phaseLabel(tx.paymentPhase) }}</div>
+                        <div class="text-xs text-text-secondary">{{ methodLabel(tx.paymentMethod) }}@if (tx.transactionRef) { · Mã GD: {{ tx.transactionRef }} } · {{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                      </div>
+                      @if (tx.proofImageUrl && isImage(tx.proofImageUrl)) {
+                        <button type="button" class="tni-thumb !w-14" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))" aria-label="Xem biên lai">
+                          <img [src]="tx.proofImageUrl" alt="Biên lai" class="!w-14 !h-10" loading="lazy" />
+                        </button>
+                      }
+                      <span class="font-mono tabular-nums font-bold text-text-primary">{{ tx.amount | vnd }}</span>
+                      <span class="tni-chip" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
           </div>
 
           <!-- Right 4 cols: Financials, VAT & Audit Log -->
@@ -324,7 +386,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                 </div>
               }
               <div class="flex justify-between">
-                <span class="text-text-secondary">Thuế VAT ({{ order()!.vatRate }}%):</span>
+                <span class="text-text-secondary">Thuế VAT ({{ vatPercent() }}%):</span>
                 <span class="font-mono tabular-nums text-text-primary">{{ order()!.vatAmount | vnd }}</span>
               </div>
               <div class="border-t border-border pt-2 flex justify-between font-bold text-sm">
@@ -339,18 +401,15 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                 <span>Còn lại:</span>
                 <span class="font-mono tabular-nums">{{ remainingAmount() | vnd }}</span>
               </div>
+              <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid()" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid()"></span></div>
+              <div class="text-right text-[11px] text-text-muted">Đã thanh toán {{ percentPaid() }}%</div>
 
-              @if (order()!.estimatedCompletionDate || order()!.productionWorkerNote) {
+              @if (order()!.estimatedCompletionDate) {
                 <div class="mt-3 pt-3 border-t border-border space-y-1 bg-bg border rounded-[6px] p-2.5">
                   @if (order()!.estimatedCompletionDate) {
                     <div class="flex justify-between">
                       <span class="text-text-secondary">Dự kiến hoàn thành:</span>
                       <span class="font-mono font-semibold text-text-primary">{{ order()!.estimatedCompletionDate | date:'dd/MM/yyyy' }}</span>
-                    </div>
-                  }
-                  @if (order()!.productionWorkerNote) {
-                    <div class="text-text-secondary">
-                      <strong class="text-text-primary">Ghi chú kỹ thuật xưởng:</strong> {{ order()!.productionWorkerNote }}
                     </div>
                   }
                 </div>
@@ -371,25 +430,48 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
             <!-- Status Audit Timeline -->
             <div class="industrial-card p-5 space-y-3 text-xs">
               <h2 class="font-heading font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5">
-                Nhật Ký Tiến Độ Xưởng
+                Nhật Ký Tiến Độ Đơn Hàng
               </h2>
-              <div class="space-y-3">
-                @for (log of order()!.statusLogs; track log.id) {
-                  <div class="border-l-2 border-steel pl-3 py-0.5">
-                    <div class="font-mono font-bold text-text-primary">{{ log.toStatus }}</div>
-                    @if (log.note) {
-                      <div class="text-text-secondary">{{ log.note }}</div>
-                    }
-                    <div class="font-mono text-[10px] text-text-muted">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
-                  </div>
+              <ol class="order-timeline">
+                @for (log of order()!.statusLogs; track log.id; let last = $last) {
+                  <li [class.is-last]="last">
+                    <div class="font-semibold text-text-primary text-sm">{{ statusLabel(log.toStatus) }}</div>
+                    @if (log.note) { <div class="text-text-secondary">{{ log.note }}</div> }
+                    <div class="text-[11px] text-text-muted tabular-nums">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                  </li>
                 }
-              </div>
+              </ol>
             </div>
           </div>
         </div>
       }
+      @if (preview(); as pv) {
+        <app-image-lightbox [url]="pv.url" [caption]="pv.caption" (closed)="preview.set(null)" />
+      }
     </div>
   `,
+  styles: [`
+    .order-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; list-style: none; margin: 0; padding: 0; }
+    .order-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; color: var(--color-text-muted); font-size: 0.8125rem; line-height: 1.25; padding: 0 0.25rem; }
+    .order-step::before { content: ''; position: absolute; top: 0.9rem; right: 50%; width: 100%; height: 2px; background: var(--color-border); z-index: 0; }
+    .order-step:first-child::before { display: none; }
+    .order-step-dot { position: relative; z-index: 1; width: 1.8rem; height: 1.8rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8125rem; background: var(--color-bg-elevated); border: 2px solid var(--color-border); }
+    .order-step.is-done { color: var(--color-text-secondary); }
+    .order-step.is-done::before, .order-step.is-current::before { background: var(--color-accent); }
+    .order-step.is-done .order-step-dot { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+    .order-step.is-current { color: var(--color-text-primary); font-weight: 700; }
+    .order-step.is-current .order-step-dot { border-color: var(--color-accent); color: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+    @media (max-width: 720px) {
+      .order-steps { grid-template-columns: 1fr; gap: 0.25rem; }
+      .order-step { flex-direction: row; text-align: left; gap: 0.75rem; padding: 0.25rem 0; }
+      .order-step::before { display: none; }
+    }
+    .order-timeline { list-style: none; margin: 0; padding: 0 0 0 0.25rem; display: flex; flex-direction: column; }
+    .order-timeline li { position: relative; padding: 0 0 1rem 1.25rem; border-left: 2px solid var(--color-border); }
+    .order-timeline li.is-last { border-left-color: transparent; padding-bottom: 0; }
+    .order-timeline li::before { content: ''; position: absolute; left: -0.4rem; top: 0.3rem; width: 0.7rem; height: 0.7rem; border-radius: 999px; background: var(--color-bg-elevated); border: 2px solid var(--color-accent); }
+    .order-timeline li.is-last::before { background: var(--color-accent); }
+  `],
 })
 export class OrderDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -404,6 +486,32 @@ export class OrderDetailComponent implements OnInit {
   readonly error = signal('');
   readonly prototypeImageLoadedIds = signal(new Set<string>());
   readonly prototypeImageErrorIds = signal(new Set<string>());
+
+  readonly preview = signal<{ url: string; caption: string } | null>(null);
+  readonly statusLabel = orderStatusLabel;
+  readonly statusTone = orderStatusTone;
+  readonly typeLabel = orderTypeLabel;
+  readonly payTone = paymentStatusTone;
+  readonly isImage = isImageUrl;
+  readonly ext = fileExtension;
+  phaseLabel = (p: keyof typeof PAYMENT_PHASE_LABEL) => PAYMENT_PHASE_LABEL[p] ?? p;
+  methodLabel = (m: keyof typeof PAYMENT_METHOD_LABEL) => PAYMENT_METHOD_LABEL[m] ?? m;
+  payLabel = (s: keyof typeof PAYMENT_STATUS_LABEL) => PAYMENT_STATUS_LABEL[s] ?? s;
+
+  percentPaid(): number {
+    const o = this.order();
+    return o ? paidPercent(o.paidAmount, o.totalAmount) : 0;
+  }
+
+  /** The API sends vatRate as a fraction (0.1); show it as a percentage (10). */
+  vatPercent(): number {
+    const rate = this.order()?.vatRate ?? 0;
+    return Math.round((rate <= 1 ? rate * 100 : rate) * 100) / 100;
+  }
+
+  openPreview(url: string | undefined, caption: string): void {
+    if (url) this.preview.set({ url, caption });
+  }
 
   bankRef = '';
   proofUrl = '';

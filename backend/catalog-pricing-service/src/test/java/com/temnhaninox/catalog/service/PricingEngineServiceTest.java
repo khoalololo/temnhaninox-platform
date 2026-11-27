@@ -76,7 +76,7 @@ class PricingEngineServiceTest {
                 .code("MICA_DECAL")
                 .name("Mica / Decal")
                 .isMetal(false)
-                .thinSheetRatePerM2(new BigDecimal("5000000.00"))
+                .thinSheetRatePerM2(new BigDecimal("2000000.00"))
                 .minThicknessMm(new BigDecimal("0.10"))
                 .maxThicknessMm(new BigDecimal("5.00"))
                 .isActive(true)
@@ -165,8 +165,28 @@ class PricingEngineServiceTest {
         QuoteCalculationResponse response = pricingEngineService.calculateQuote(request);
 
         assertThat(response.getPricingFormulaMode()).isEqualTo("THIN_SHEET_AREA");
-        assertThat(response.getUnitPrice()).isEqualByComparingTo("25000.00");
+        assertThat(response.getUnitPrice()).isEqualByComparingTo("10000.00");
         assertThat(response.getEstimatedLeadTimeDays()).isEqualTo(3);
+    }
+
+    @Test
+    void calculateQuote_nonMetalWithoutOwnRate_isRefusedInsteadOfUsingMetalRate() {
+        mica.setThinSheetRatePerM2(null);
+        mockCompatible(mica, etching, 3);
+
+        QuoteCalculationRequest request = QuoteCalculationRequest.builder()
+                .materialId(micaId)
+                .processingMethodId(etchingId)
+                .widthMm(new BigDecimal("100"))
+                .heightMm(new BigDecimal("50"))
+                .thicknessMm(new BigDecimal("3.00"))
+                .quantity(10)
+                .requiresVatInvoice(false)
+                .build();
+
+        assertThatThrownBy(() -> pricingEngineService.calculateQuote(request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("not configured");
     }
 
     @Test

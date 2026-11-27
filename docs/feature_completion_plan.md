@@ -1,6 +1,6 @@
 # TEM NHÃN INOX — UI/UX Overhaul & Feature Completion Plan
 **Document type:** Agent execution plan (phases A–D, follows completed Phase 1–3 backend and initial Phase 4 storefront work)
-**Status (2026-11-26, updated after review):** Phase C and D implementations exist in code; Phase E (hardening, below) was written on branch `hardening/phase5-prep` and is **uncompiled/untested until you run `mvn test` locally** (the authoring sandbox could not reach Maven Central); Google sign-in and forgot/reset-password flows remain intentionally excluded per owner request. Production frontend build and modified backend module tests pass. Manual Use-Case Checklist verification remains pending.
+**Status (2026-11-27):** Phases A–F are implemented. Owner-confirmed: `mvn test` passes on all modules (as of the merged Phase B/E/F work) and Google sign-in works end to end. Added on branch `feature/kanban-and-gaps` (Phase G, below): an admin Kanban board, a UI/UX polish pass over the admin cockpit and the customer order screens, in-app preview of uploaded images, and a pricing change for Mica/Decal that follows the uncle's answers. **The Phase G backend change (Flyway `V2` in catalog-pricing-service, `PricingEngineService`, `Material`, `MaterialRequest`, one new test) has not been compiled or run by the author — run `mvn test` before merging.** Manual Use-Case Checklist (Section 3), `scripts/e2e-smoke.mjs`, and a `docker compose up --build` run are still pending.
 
 > **How to use this document:** Execute ONE phase at a time. After each phase, stop and manually verify against the Use-Case Checklist (Section 3) before telling the agent to proceed to the next phase. Do not trust a "done" report from the agent without clicking through the actual running app yourself — this is the same rule as the Master Implementation Plan review: an agent's report of completion and the feature actually working are two different facts.
 
@@ -63,13 +63,13 @@ Resolved in recent updates:
 
 ## 2. Consolidated Feature Gap Tiers
 
-This audit combines the gaps in the original Phase 0–5 checklist with the Phase C/D completion plan. “Implemented” means code exists; it does not mean the runtime/manual acceptance check has passed. Google sign-in and forgot/reset-password are intentionally excluded by owner request.
+This audit combines the gaps in the original Phase 0–5 checklist with the Phase C/D completion plan. “Implemented” means code exists; it does not mean the runtime/manual acceptance check has passed. Google sign-in and forgot/reset-password are now implemented (Phase B); Google sign-in is verified by the owner, the reset-password flow still needs UC-01.
 
 ### Tier 1 — Verify or resolve before production/demo sign-off
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
 | 1 | Full cross-service order lifecycle is not verified end-to-end | Unit tests cover individual services and transitions; no cross-service integration test or recorded manual run covers custom quote → admin review → prototype → deposit → production → completion. | **Automated now:** `node scripts/e2e-smoke.mjs` (see Phase F) drives the whole lifecycle through the gateway and asserts every state, guard and price. Run it, then still do the visual UC walkthrough by hand. |
-| 2 | Storefront/admin acceptance checks are still pending | Pagination, product detail, admin catalog/pricing, order tracking, dashboard, loading/error states, and mobile navigation are implemented in code. The tracker explicitly says UC-03–UC-12 and 375px checks are pending. | Run and record UC-03–UC-12 on desktop and a 375px viewport. UC-01/UC-02 remain excluded, not outstanding work. |
+| 2 | Storefront/admin acceptance checks are still pending | Pagination, product detail, admin catalog/pricing, order tracking, dashboard, loading/error states, and mobile navigation are implemented in code. The tracker explicitly says UC-03–UC-12 and 375px checks are pending. | Run and record UC-01 and UC-03–UC-16 on desktop and a 375px viewport (UC-02 already verified by the owner). |
 | 3 | Production RBAC depends on trusted network boundaries | The gateway validates JWTs, strips spoofed identity headers, and has tests for 401/403 behavior. Downstream services accept `X-User-Id`/`X-User-Role`; no repository deployment config currently restricts direct access to their ports. JWT config also has a development fallback secret. | Before deployment, make services reachable only through the gateway (private network/bind/firewall) and require a strong shared `JWT_SECRET` with no production fallback. Verify gateway-mediated and direct-service denial. |
 
 ### Tier 2 — Align implementation with the Phase 0/3/5 architecture checklist
@@ -77,7 +77,7 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 |---|---|---|---|
 | 4 | Repeatable Docker/Nginx deployment setup (Dockerfiles for 4 services + frontend added, gateway routes parametrized via `*_SERVICE_URL`, compose env names fixed (S3_*), Mailpit added — **docker build not run yet**) | `docker-compose.yml` and `nginx/default.conf` were deleted by the UI overhaul commit and restored by the owner in `65ed853` (check they are pushed). `infra/.env.example` is new. In compose, publish ONLY the gateway/nginx port; keep 8081–8083, Postgres and S3 on the internal network. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
 | 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and allows `design-files` and `product-images` (two bucket names). The screenshot checklist refers to MinIO and three verified buckets, while the repository has no Compose setup to provision/verify them. | Confirm SeaweedFS vs. MinIO and define the intended third bucket/use before changing storage; then provision and verify the agreed buckets reproducibly. |
-| 6 | Admin order UI differs from the requested Phase 5 layout | `/admin` provides an orders tab/list and inspector in a tabbed cockpit. It does not provide the screenshot’s Kanban-plus-table `OrdersBoardComponent` / single-screen board layout. Core order operations exist. | Decide whether that exact layout is still required; if yes, build the board/table view and verify processing an order through completion without direct database access. |
+| 6 | Admin order UI differs from the requested Phase 5 layout | **Addressed in Phase G (2026-11-27):** `/admin/board` is a Kanban view (one column per status, drag simple steps, one-click next step, cancel by drag, search/type filter, 60 s refresh) next to the existing list + inspector at `/admin`. Steps that need data (quote price, prototype image, deposit verification) deliberately open the inspector. The list/inspector now also uses status chips, payment progress, and inline image previews. | Verify UC-13 in a real browser (drag-and-drop was only tested with synthetic events in the author's headless sandbox). |
 | 7 | Order-state logic is not factored into the named state-machine service | Transition validation and deposit gates exist in `AdminOrderService`/`OrderService`; there is no separate `OrderStateMachineService` as named in the Phase 3 checklist. | Extract a dedicated service only if the architecture requirement is retained; preserve and test the existing transition and deposit rules. |
 
 ### Tier 3 — Evidence and quality gates
@@ -89,10 +89,12 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 ### Tier 4 — Deferred or awaiting owner decision
 | # | Item | Status |
 |---|---|---|
-| 10 | Google sign-in and forgot/reset-password | Intentionally excluded per owner request; do not implement unless requested later. |
-| 11 | Meaning of “1 ly” for pricing threshold | Awaiting owner confirmation whether this means `1.0mm` or `0.1mm`. |
-| 12 | Mica/Decal pricing rate | Awaiting owner confirmation whether the thin-sheet rate applies uniformly or needs a separate material rate. |
+| 10 | Google sign-in and forgot/reset-password | Implemented (Phase B). Google sign-in verified by the owner; reset flow awaiting UC-01 (Mailpit). |
+| 11 | Meaning of “1 ly” | **Resolved 2026-11-27: 1 ly = 1 mm.** The existing threshold (`THIN_SHEET_THRESHOLD_MM = 1.0`, thin when thickness ≤ 1.0 mm) is therefore correct; no code change. The admin label now reads “Ngưỡng tấm mỏng (1 ly = 1 mm)”. |
+| 12 | Mica/Decal pricing rate | **Resolved in principle 2026-11-27: the 5,000,000 đ/m² rate does NOT apply to mica or decal.** Implemented: the rate is per material; a non-metal material with no rate configured is refused by the quote engine with a clear message instead of silently using the metal rate. **Still needed from the uncle: the actual đ/m² for mica/decal** (enter it in Admin → Định giá → “Giá theo vật liệu”). Until then, mica/decal quotes return a validation error. |
 | 13 | Official VAT invoice PDF | Current print-friendly order summary is not a tax invoice; a compliant invoice integration remains out of scope until specified. |
+| 14 | Customer-visible vs internal order notes | Open. `productionWorkerNote` is currently an internal/worker note that the API also returns to customers; as a stopgap the customer order page no longer displays it (it shows only the estimated completion date). Proper fix: add a separate customer-facing progress note (backend Flyway V2 in order-service + entity/DTO/mapper/tests, admin input, customer display). |
+| 15 | Image size/optimisation | Reframed by the owner: the need is that admin and customer can *see and preview* uploaded images (designs, prototypes, payment proofs). Done in Phase G (thumbnails + lightbox). Resizing/compressing the static asset folder remains optional and untracked in git. |
 
 ---
 
@@ -112,6 +114,10 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 | UC-10 | Any user | List error state | Stop backend, reload `/products` | Styled error state with retry button |
 | UC-11 | Customer | Session expiry | Expired JWT on authenticated request | Redirects to login with notification |
 | UC-12 | Admin | View dashboard | Open `/admin` | Live KPI widgets from `/api/v1/admin/dashboard/summary` |
+| UC-13 | Admin | Kanban board | Open `/admin/board` (tab “Bảng Kanban”); drag a card from “Đang sản xuất” to “Sẵn sàng giao”; try the “→ Sẵn sàng giao” button; drag a card to a column that is not allowed | Valid drag moves the card and writes a status log; invalid drop shows a toast telling you to open the order; “Hoàn tất” is refused until the balance is paid; cards open `/admin?order=<id>` |
+| UC-14 | Admin | Preview uploaded images | Open an order that has a customer design image, a prototype and a payment proof | Thumbnails render in the inspector; clicking opens a full-size preview (Esc closes); non-image designs (.cdr/.ai) show a download tile |
+| UC-15 | Admin | Mica/Decal pricing | Admin → Định giá → “Giá theo vật liệu”: enter a đ/m² for Mica / Decal, save; request a mica quote in `/quote-builder` | Before saving: the quote is refused with “Price per m2 is not configured yet…”; after saving: price = area (m²) × the mica rate; metals are unchanged |
+| UC-16 | Customer | Order screens | `/account/orders` and `/account/orders/:id` at desktop and 375px | List shows status chips, payment progress and a “Cần thao tác” hint for orders awaiting sample approval/deposit; detail shows a numbered stepper, Vietnamese timeline labels, VAT as “10%”, payment history, and previewable design/prototype/proof images; no internal worker note |
 
 ---
 
@@ -120,7 +126,9 @@ This audit combines the gaps in the original Phase 0–5 checklist with the Phas
 Run these as separate sessions, in order. **Stop after each and run the relevant Use-Case rows above before starting the next.**
 
 ### Manual Prerequisites
-Phase B is deferred and is not part of the current acceptance scope. If the owner reopens it, configure Google OAuth and a development email sink (for example Mailpit) before implementation and verification.
+- Google sign-in: the OAuth Client ID is set in `GOOGLE_CLIENT_ID` (backend) and `frontend/src/app/core/config/app-config.ts`; verified working by the owner.
+- Password reset needs Mailpit (`docker compose up mailpit`, UI at http://localhost:8025).
+- Mica/Decal quotes need a per-material rate entered in Admin → Định giá (see Tier 4 #12).
 
 ---
 
@@ -255,6 +263,43 @@ Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
 
 ---
 
-## 5. Open Business Rules Pending Owner Confirmation
-1. **"1 ly" unit:** Confirm whether "1 ly" means `1.0mm` or `0.1mm` (determines thin-sheet area pricing vs. thick-metal weight pricing).
-2. **Mica/Decal rate:** Confirm whether the `5,000,000 VND/m²` thin-sheet rate applies uniformly to Mica/Decal or requires a separate rate in `catalog_pricing_schema.materials` (configurable in Phase D without code changes).
+### Phase G — Admin Kanban, UI/UX polish, image previews & per-material pricing [IMPLEMENTED on branch `feature/kanban-and-gaps`; frontend built (`ng build`) and screenshot-checked in light/dark/375px with mocked API data; backend part NOT compiled]
+
+**G1 — Kanban board** (`frontend/src/app/features/admin/order-board/`, route `/admin/board`, guarded by `adminGuard`)
+- One column per status with counts, a dot on “needs action” columns, completed/cancelled hidden by default. Data via one `getOrders` request per status (`forkJoin`); search + type filter client-side; silent 60 s refresh (paused while dragging or when the tab is hidden).
+- Cards: order code, type chip, recipient, item count, total, paid-% bar, VAT chip, age chip (warning ≥ 3 days).
+- Moves allowed by drag or the card's button: `IN_PRODUCTION → READY_FOR_DELIVERY`, `READY_FOR_DELIVERY → COMPLETED` (blocked until paid ≥ total, mirroring the backend `BALANCE_NOT_SETTLED` guard), and cancel from any non-terminal status. Everything else opens the inspector (`/admin?order=<id>`) because it needs data. Optimistic update with rollback + toast.
+- Limitation: drag-and-drop is HTML5 DnD (no touch drag on phones — use the card buttons there). Counts for completed/cancelled show only the page size (15).
+
+**G2 — Shared UI primitives** (`frontend/src/styles.css` `.tni-*`, `shared/utils/order-ui.ts`, `shared/components/image-lightbox/`)
+- Status/type/payment chips, progress bars, switch, avatars, thumbnails, empty states, sticky-header tables, pill filters; one place for Vietnamese status/phase/method labels and tones; `app-image-lightbox` (Esc to close, “open original”).
+
+**G3 — Admin cockpit polish** (`admin-cockpit.component.ts`)
+- Orders: status pill filter, table with type/VAT chips, payment progress, selected-row accent, helpful empty state; inspector shows a localized status chip, thumbnails for the customer's design, the prototype and payment proofs (click to enlarge), payment phase/method/status in Vietnamese.
+- Pricing: new “Giá theo vật liệu” panel (per-material đ/m², saves through `PUT /api/v1/admin/catalog/materials/{id}`); labels clarify that 1 ly = 1 mm and that the global thin-sheet rate is for metals.
+- Products: thumbnail + name/SKU cell, type chip, price, stock chip (out / low / ok), on/off switch instead of a bare checkbox, row actions as buttons, better search bar and empty state. Customers: avatar, e-mail under the name, active/blocked chip.
+- Action columns keep clear of the floating contact buttons on wide screens.
+
+**G4 — Customer order screens** (`features/account/orders/`)
+- List → responsive cards with status/type chips, paid-% bar, a “Cần thao tác” banner and filters (Tất cả / Cần thao tác / Đang xử lý / Hoàn tất–Đã hủy), a contextual button (Duyệt mẫu / Đặt cọc / Theo dõi).
+- Detail → numbered stepper (vertical on phones), status chip in the header, VAT shown as a percentage (it showed `0.1%` before), payment history with chips and receipt thumbnails, previewable design/prototype images, timeline with Vietnamese labels instead of raw enum names, progress bar in the totals, cleaner bank-transfer form. The internal `productionWorkerNote` is no longer shown to customers (see Tier 4 #14).
+
+**G5 — Pricing change for Mica/Decal** (backend, `catalog-pricing-service`)
+- `V2__material_specific_thin_sheet_rate.sql`: `materials.thin_sheet_rate_per_m2` becomes nullable and is cleared for non-metal materials (Mica/Decal were seeded with the metal 5,000,000).
+- `PricingEngineService`: thin-sheet price uses the material's own rate; if it is null a *metal* falls back to the global `THIN_SHEET_RATE_M2`, a *non-metal* throws `VALIDATION_ERROR` (“Price per m2 is not configured yet for …”). `Material` no longer defaults the rate to 5,000,000; `MaterialRequest.thinSheetRatePerM2` is optional.
+- Tests: the mica test now uses an explicit 2,000,000 đ/m² test rate (100×50 mm → 10,000 đ/unit); new test `calculateQuote_nonMetalWithoutOwnRate_isRefusedInsteadOfUsingMetalRate`. **Not compiled — run `mvn test -pl catalog-pricing-service`.** The smoke script's pricing vector (INOX_304) is unaffected.
+
+**Verification for Phase G:** `cd backend && mvn test`; `cd frontend && npm run build`; UC-13 to UC-16; run `node scripts/e2e-smoke.mjs`.
+
+---
+
+## 5. Business Rules — Owner Answers & What Is Still Open
+**Resolved (2026-11-27)**
+1. **“1 ly” = 1 mm.** Thin-sheet rule applies to thickness ≤ 1.0 mm (unchanged in code).
+2. **5,000,000 đ/m² is for metals only.** It does not apply to Mica/Decal; those use their own per-material đ/m² rate.
+
+**Still open — ask the uncle**
+3. The actual đ/m² price for Mica and for Decal (they may need two different materials/rates; today “Mica / Decal Công Nghiệp” is one material).
+4. Whether the ×5 multiplier for thick metal (> 1 mm, price = weight × price/kg × 5) is the intended rule or a placeholder.
+5. Whether customers should see a production progress note (see Tier 4 #14) and, if so, who writes it.
+6. Bucket decision: SeaweedFS vs MinIO, and whether payment proofs get their own bucket (Tier 2 #5).

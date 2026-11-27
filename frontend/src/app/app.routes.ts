@@ -103,6 +103,12 @@ export const routes: Routes = [
       import('./features/account/orders/order-detail.component').then((m) => m.OrderDetailComponent),
   },
   {
+    path: 'admin/board',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/order-board/order-board.component').then((m) => m.AdminOrderBoardComponent),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { OrderApiService } from '../../../core/services/order-api.service';
 import { OrderStatus, OrderSummary } from '../../../core/models/order.models';
+import { orderStatusLabel, orderStatusTone, orderTypeLabel, paidPercent } from '../../../shared/utils/order-ui';
 import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
@@ -13,87 +14,103 @@ import { PaginatorComponent } from '../../../shared/components/paginator/paginat
   imports: [CommonModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
-      <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
+      <div class="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4 mb-5">
         <div>
-          <h1 class="font-heading text-xl font-bold text-text-primary">Lịch Sử Đơn Hàng & Tiến Độ Gia Công</h1>
-          <p class="text-xs text-text-secondary">Theo dõi duyệt mẫu thực tế, đặt cọc 50% và trạng thái xuất xưởng</p>
+          <h1 class="font-heading text-2xl font-bold text-text-primary">Đơn hàng của tôi</h1>
+          <p class="text-sm text-text-secondary mt-0.5">Theo dõi duyệt mẫu thực tế, đặt cọc 50% và trạng thái xuất xưởng.</p>
         </div>
-        <a
-          routerLink="/quote-builder"
-          appButton
-          variant="primary"
-          size="sm"
-        >
-          + Tạo Báo Giá Mới
-        </a>
+        <a routerLink="/quote-builder" appButton variant="primary" size="sm">+ Tạo báo giá mới</a>
       </div>
 
       @if (loading()) {
-        <div class="bg-surface border border-border rounded-[10px] h-64 animate-pulse"></div>
+        <div class="space-y-3" aria-label="Đang tải đơn hàng">
+          <div class="bg-surface border border-border rounded-[10px] h-28 animate-pulse"></div>
+          <div class="bg-surface border border-border rounded-[10px] h-28 animate-pulse"></div>
+          <div class="bg-surface border border-border rounded-[10px] h-28 animate-pulse"></div>
+        </div>
       } @else if (loadError()) {
         <div class="industrial-card p-8 text-center space-y-3">
           <p class="text-sm font-semibold text-danger">{{ loadError() }}</p>
           <button type="button" (click)="loadOrders()" appButton variant="primary" size="sm">Thử lại</button>
         </div>
       } @else if (orders().length === 0) {
-        <div class="industrial-card p-10 text-center space-y-2">
-          <div class="font-heading text-sm font-bold text-text-primary">Bạn chưa có đơn hàng nào</div>
-          <p class="text-xs text-text-secondary">Hãy mở công cụ báo giá 3D để cấu hình tem nhãn và gửi yêu cầu sản xuất.</p>
+        <div class="industrial-card tni-empty">
+          <span class="tni-empty-icon" aria-hidden="true">▤</span>
+          <strong class="text-text-primary">Bạn chưa có đơn hàng nào</strong>
+          <span>Mở công cụ báo giá 3D để cấu hình tem nhãn và gửi yêu cầu sản xuất.</span>
+          <a routerLink="/quote-builder" appButton variant="primary" size="sm" class="mt-2">Tạo báo giá đầu tiên</a>
         </div>
       } @else {
-        <div class="industrial-card overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left">
-              <thead class="bg-surface-raised border-b border-border text-text-secondary uppercase font-mono">
-                <tr>
-                  <th class="px-4 py-3">Mã đơn</th>
-                  <th class="px-3 py-3">Loại đơn</th>
-                  <th class="px-3 py-3">Trạng thái</th>
-                  <th class="px-3 py-3 text-right">Tổng tiền</th>
-                  <th class="px-3 py-3 text-right">Đã thanh toán</th>
-                  <th class="px-4 py-3 text-right">Chi tiết</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border">
-                @for (ord of orders(); track ord.id) {
-                  <tr class="hover:bg-surface-raised transition-colors">
-                    <td class="px-4 py-3.5 font-mono font-bold text-text-primary">{{ ord.orderCode }}</td>
-                    <td class="px-3 py-3.5">
-                      <span class="px-2 py-0.5 rounded-full border border-border text-[11px] font-mono text-text-secondary bg-bg">
-                        {{ ord.orderType === 'CUSTOM_QUOTE_ORDER' ? 'Gia công 3D' : 'Hàng có sẵn' }}
-                      </span>
-                    </td>
-                    <td class="px-3 py-3.5">
-                      <span class="px-2 py-0.5 rounded-full border text-[11px] font-medium" [class]="statusBadgeClass(ord.status)">
-                        {{ statusLabel(ord.status) }}
-                      </span>
-                    </td>
-                    <td class="px-3 py-3.5 text-right font-mono tabular-nums font-bold text-text-primary">
-                      {{ ord.totalAmount | vnd }}
-                    </td>
-                    <td class="px-3 py-3.5 text-right font-mono tabular-nums text-success font-semibold">
-                      {{ ord.paidAmount | vnd }}
-                    </td>
-                    <td class="px-4 py-3.5 text-right">
-                      <a
-                        [routerLink]="['/account/orders', ord.id]"
-                        appButton
-                        variant="secondary"
-                        size="xs"
-                      >
-                        Theo dõi →
-                      </a>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        @if (actionCount() > 0) {
+          <div class="mb-4 rounded-[10px] border border-accent/40 bg-accent/5 px-4 py-3 text-sm text-text-primary" role="status">
+            <strong>{{ actionCount() }} đơn đang chờ bạn thao tác</strong>
+            <span class="text-text-secondary"> — duyệt mẫu thực tế hoặc đặt cọc để xưởng tiếp tục sản xuất.</span>
           </div>
-          <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
+        }
+
+        <div class="mb-4 flex flex-wrap gap-2" role="group" aria-label="Lọc đơn hàng">
+          @for (f of filters; track f.key) {
+            <button type="button" class="tni-pill-filter" [attr.aria-pressed]="filter() === f.key" (click)="filter.set(f.key)">
+              {{ f.label }} <span class="opacity-70 tabular-nums">{{ countFor(f.key) }}</span>
+            </button>
+          }
         </div>
+
+        <ul class="space-y-3">
+          @for (ord of visibleOrders(); track ord.id) {
+            <li>
+              <a
+                [routerLink]="['/account/orders', ord.id]"
+                class="order-card block rounded-[10px] border bg-bg-elevated p-4 sm:p-5 transition-all"
+                [class.needs-action]="needsAction(ord.status)"
+              >
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-mono text-base font-bold text-text-primary">{{ ord.orderCode }}</span>
+                      <span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
+                      <span class="tni-chip no-dot" data-tone="muted">{{ typeLabel(ord.orderType) }}</span>
+                    </div>
+                    <div class="mt-1 text-xs text-text-muted">
+                      {{ ord.itemCount }} mặt hàng · đặt ngày {{ ord.createdAt | date:'dd/MM/yyyy' }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-mono tabular-nums text-lg font-bold text-text-primary">{{ ord.totalAmount | vnd }}</div>
+                    <div class="text-xs text-text-muted">Tổng thanh toán</div>
+                  </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-3">
+                  <div>
+                    <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percent(ord)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percent(ord)"></span></div>
+                    <div class="mt-1 flex justify-between text-xs text-text-secondary tabular-nums">
+                      <span>Đã thanh toán {{ ord.paidAmount | vnd }} ({{ percent(ord) }}%)</span>
+                    </div>
+                  </div>
+                  <span class="order-cta" [class.is-primary]="needsAction(ord.status)">{{ ctaLabel(ord.status) }} →</span>
+                </div>
+              </a>
+            </li>
+          } @empty {
+            <li class="tni-empty industrial-card">
+              <strong class="text-text-primary">Không có đơn nào ở mục này</strong>
+              <span>Chọn mục “Tất cả” để xem lại toàn bộ đơn hàng.</span>
+            </li>
+          }
+        </ul>
+        <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
       }
     </div>
   `,
+  styles: [`
+    .order-card { border-color: var(--color-border); }
+    .order-card:hover { border-color: var(--color-accent); box-shadow: var(--shadow-card-hover); }
+    .order-card.needs-action { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 4%, var(--color-bg-elevated)); }
+    .order-cta { display: inline-flex; justify-content: center; padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--color-border); font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary); white-space: nowrap; }
+    .order-card:hover .order-cta { border-color: var(--color-accent); color: var(--color-accent); }
+    .order-cta.is-primary { background: var(--color-accent); border-color: var(--color-accent); color: #fff !important; }
+  `],
 })
 export class OrderListComponent implements OnInit {
   private readonly orderApi = inject(OrderApiService);
@@ -133,34 +150,52 @@ export class OrderListComponent implements OnInit {
     this.loadOrders();
   }
 
-  statusLabel(status: OrderStatus): string {
-    const map: Record<OrderStatus, string> = {
-      QUOTE_PENDING: 'Chờ duyệt báo giá',
-      QUOTE_APPROVED: 'Đã duyệt giá',
-      PROTOTYPING: 'Đang làm mẫu thực tế',
-      AWAITING_DEPOSIT: 'Chờ đặt cọc 50%',
-      IN_PRODUCTION: 'Đang sản xuất hàng loạt',
-      READY_FOR_DELIVERY: 'Sẵn sàng giao hàng',
-      COMPLETED: 'Hoàn tất',
-      CANCELLED: 'Đã hủy',
-    };
-    return map[status] || status;
+  readonly filter = signal<'ALL' | 'ACTION' | 'ACTIVE' | 'DONE'>('ALL');
+  readonly filters: { key: 'ALL' | 'ACTION' | 'ACTIVE' | 'DONE'; label: string }[] = [
+    { key: 'ALL', label: 'Tất cả' },
+    { key: 'ACTION', label: 'Cần thao tác' },
+    { key: 'ACTIVE', label: 'Đang xử lý' },
+    { key: 'DONE', label: 'Hoàn tất / Đã hủy' },
+  ];
+
+  readonly statusLabel = orderStatusLabel;
+  readonly statusTone = orderStatusTone;
+  readonly typeLabel = orderTypeLabel;
+
+  percent(o: OrderSummary): number {
+    return paidPercent(o.paidAmount, o.totalAmount);
   }
 
-  statusBadgeClass(status: OrderStatus): string {
-    switch (status) {
-      case 'PROTOTYPING':
-      case 'AWAITING_DEPOSIT':
-        return 'bg-bg text-accent border-accent/70';
-      case 'IN_PRODUCTION':
-      case 'READY_FOR_DELIVERY':
-        return 'bg-bg text-steel border-steel/70';
-      case 'COMPLETED':
-        return 'bg-bg text-success border-success/70';
-      case 'CANCELLED':
-        return 'bg-bg text-danger border-danger/70';
-      default:
-        return 'bg-bg text-text-secondary border-border';
+  /** Statuses where the customer is the one who must act next. */
+  needsAction(status: OrderStatus): boolean {
+    return status === 'PROTOTYPING' || status === 'AWAITING_DEPOSIT';
+  }
+
+  ctaLabel(status: OrderStatus): string {
+    if (status === 'PROTOTYPING') return 'Duyệt mẫu';
+    if (status === 'AWAITING_DEPOSIT') return 'Đặt cọc';
+    if (status === 'READY_FOR_DELIVERY') return 'Xem chi tiết';
+    return 'Theo dõi';
+  }
+
+  private matches(o: OrderSummary, key: 'ALL' | 'ACTION' | 'ACTIVE' | 'DONE'): boolean {
+    switch (key) {
+      case 'ACTION': return this.needsAction(o.status);
+      case 'ACTIVE': return o.status !== 'COMPLETED' && o.status !== 'CANCELLED';
+      case 'DONE': return o.status === 'COMPLETED' || o.status === 'CANCELLED';
+      default: return true;
     }
+  }
+
+  countFor(key: 'ALL' | 'ACTION' | 'ACTIVE' | 'DONE'): number {
+    return this.orders().filter((o) => this.matches(o, key)).length;
+  }
+
+  visibleOrders(): OrderSummary[] {
+    return this.orders().filter((o) => this.matches(o, this.filter()));
+  }
+
+  actionCount(): number {
+    return this.countFor('ACTION');
   }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { QuoteApiService } from '../../core/services/quote-api.service';
@@ -18,11 +19,25 @@ import { VndCurrencyPipe } from '../../core/pipes/vnd-currency.pipe';
 import { ButtonDirective } from '../../shared/components/button/button.component';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { ToastService } from '../../shared/components/toast/toast.component';
+import { ImageLightboxComponent } from '../../shared/components/image-lightbox/image-lightbox.component';
+import {
+  PAYMENT_METHOD_LABEL,
+  PAYMENT_PHASE_LABEL,
+  PAYMENT_STATUS_LABEL,
+  fileExtension,
+  initials,
+  isImageUrl,
+  orderStatusLabel as statusLabelFn,
+  orderStatusTone,
+  orderTypeLabel,
+  paidPercent,
+  paymentStatusTone,
+} from '../../shared/utils/order-ui';
 
 @Component({
   selector: 'app-admin-cockpit',
   standalone: true,
-  imports: [CommonModule, FormsModule, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent, ImageLightboxComponent],
   template: `
     <div class="admin-page max-w-[1440px] mx-auto px-4 py-8 space-y-7">
       <!-- Header & Tabs -->
@@ -41,6 +56,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
         >
           Đơn hàng
         </button>
+        <a routerLink="/admin/board" class="admin-tab">Bảng Kanban</a>
         <button
           type="button"
           (click)="setActiveTab('pricing')"
@@ -124,80 +140,69 @@ import { ToastService } from '../../shared/components/toast/toast.component';
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <!-- Orders Queue -->
           <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="industrial-card overflow-hidden">
-            <div class="px-5 py-4 bg-surface-raised border-b border-border flex flex-wrap items-center gap-3">
-              <select
-                [(ngModel)]="statusFilter"
-                (ngModelChange)="resetOrdersPage()"
-                class="industrial-input min-w-48"
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="QUOTE_PENDING">Chờ duyệt giá</option>
-                <option value="QUOTE_APPROVED">Đã duyệt giá</option>
-                <option value="PROTOTYPING">Đang làm mẫu</option>
-                <option value="AWAITING_DEPOSIT">Chờ đặt cọc</option>
-                <option value="IN_PRODUCTION">Đang sản xuất</option>
-                <option value="READY_FOR_DELIVERY">Chờ giao hàng</option>
-                <option value="COMPLETED">Hoàn tất</option>
-              </select>
-
-              <input
-                type="text"
-                [(ngModel)]="searchFilter"
-                (keyup.enter)="resetOrdersPage()"
-                placeholder="Tìm mã đơn / tên khách..."
-                class="industrial-input flex-1 min-w-[220px]"
-              />
-              <button
-                type="button"
-                (click)="resetOrdersPage()"
-                appButton
-                variant="secondary"
-                size="sm"
-              >
-                Lọc
-              </button>
+            <div class="px-5 py-4 bg-surface border-b border-border space-y-3">
+              <div class="flex flex-wrap gap-2" role="group" aria-label="Lọc theo trạng thái">
+                @for (opt of statusOptions; track opt.value) {
+                  <button type="button" class="tni-pill-filter" [attr.aria-pressed]="statusFilter === opt.value" (click)="setStatusFilter(opt.value)">{{ opt.label }}</button>
+                }
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <input
+                  type="search"
+                  [(ngModel)]="searchFilter"
+                  (keyup.enter)="resetOrdersPage()"
+                  placeholder="Tìm mã đơn / tên khách..."
+                  class="industrial-input flex-1 min-w-[220px]"
+                />
+                <button type="button" (click)="resetOrdersPage()" appButton variant="secondary" size="sm">Tìm</button>
+              </div>
             </div>
 
             @if (ordersLoading()) {
               <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải đơn hàng"></div>
             } @else {
             <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left">
-                <thead class="bg-surface border-b border-border text-text-secondary">
-                <tr>
-                  <th class="px-5 py-3 font-medium">Mã đơn</th>
-                  <th class="px-4 py-3 font-medium">Khách hàng</th>
-                  <th class="px-4 py-3 font-medium">Trạng thái</th>
-                  <th class="px-4 py-3 text-right font-medium">Tổng tiền</th>
-                  <th class="px-5 py-3 text-right font-medium">Thao tác</th>
-                </tr>
+              <table class="tni-table">
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Trạng thái</th>
+                    @if (!selectedOrder()) { <th>Thanh toán</th> }
+                    <th class="!text-right">Tổng tiền</th>
+                    <th class="!text-right"></th>
+                  </tr>
                 </thead>
-                <tbody class="divide-y divide-border">
+                <tbody>
                   @for (ord of orders(); track ord.id) {
-                    <tr
-                      class="hover:bg-surface-raised cursor-pointer transition-colors"
-                      [class]="selectedOrder()?.id === ord.id ? 'bg-surface-raised' : ''"
-                      (click)="openOrder(ord.id)"
-                    >
-                      <td class="px-5 py-4 font-sans tabular-nums font-semibold text-text-primary">
-                        {{ ord.orderCode }}
-                        @if (ord.requiresVatInvoice) {
-                          <span class="ml-2 px-2 py-0.5 text-xs border border-danger/50 text-danger rounded-full">VAT</span>
-                        }
+                    <tr class="clickable" [class.is-selected]="selectedOrder()?.id === ord.id" (click)="openOrder(ord.id)">
+                      <td>
+                        <div class="font-mono font-semibold text-text-primary">{{ ord.orderCode }}</div>
+                        <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span class="tni-chip no-dot" data-tone="muted">{{ typeLabel(ord.orderType) }}</span>
+                          @if (ord.requiresVatInvoice) { <span class="tni-chip no-dot" data-tone="danger">VAT</span> }
+                        </div>
                       </td>
-                      <td class="px-4 py-4 text-text-primary">{{ ord.recipientName }}</td>
-                      <td class="px-4 py-4 text-text-secondary">{{ orderStatusLabel(ord.status) }}</td>
-                      <td class="px-4 py-4 text-right font-sans tabular-nums font-medium text-text-primary">{{ ord.totalAmount | vnd }}</td>
-                      <td class="px-5 py-4 text-right">
-                        <button type="button" class="font-medium text-accent hover:underline">Xử lý</button>
+                      <td class="text-text-primary">
+                        {{ ord.recipientName }}
+                        <div class="text-xs text-text-muted">{{ ord.itemCount }} mặt hàng · {{ ord.createdAt | date:'dd/MM/yyyy' }}</div>
                       </td>
+                      <td><span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span></td>
+                      @if (!selectedOrder()) {
+                        <td class="min-w-[9rem]">
+                          <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid(ord)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid(ord)"></span></div>
+                          <div class="mt-1 text-xs text-text-muted tabular-nums">{{ percentPaid(ord) }}% đã thu</div>
+                        </td>
+                      }
+                      <td class="text-right font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</td>
+                      <td class="text-right"><span class="tni-row-action">Xử lý</span></td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
             @if (!ordersLoading() && !orders().length) {
-              <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy đơn hàng phù hợp.</div>
+              <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">▤</span><strong class="text-text-primary">Không có đơn hàng phù hợp</strong><span>Thử đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm.</span></div>
             }
             <app-paginator
               [page]="ordersPage()"
@@ -213,9 +218,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
               <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-mono font-bold text-base text-text-primary">{{ ord.orderCode }}</span>
-                  <span class="px-2.5 py-1 rounded-full border border-accent/70 text-accent font-sans text-xs font-semibold">
-                    {{ ord.status }}
-                  </span>
+                  <span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
                 </div>
                 <button type="button" (click)="selectedOrder.set(null)" appButton variant="ghost" size="xs">
                   ✕ Đóng
@@ -265,18 +268,29 @@ import { ToastService } from '../../shared/components/toast/toast.component';
                         {{ item.materialNameSnapshot }} · {{ item.processingNameSnapshot }} · {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
                       </div>
                     }
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      @if (item.designFileUrl) {
-                        <a [href]="item.designFileUrl" target="_blank" class="text-sm font-medium text-steel hover:text-steel-hover underline">
-                          Tải bản vẽ khách ↗
-                        </a>
-                      }
-                      @if (item.prototypeImageUrl) {
-                        <a [href]="item.prototypeImageUrl" target="_blank" class="text-sm font-medium text-success underline">
-                          Ảnh mẫu đã gửi ✓
-                        </a>
-                      }
-                    </div>
+                    @if (item.designFileUrl || item.prototypeImageUrl) {
+                      <div class="flex flex-wrap gap-4">
+                        @if (item.designFileUrl) {
+                          @if (isImage(item.designFileUrl)) {
+                            <button type="button" class="tni-thumb" (click)="openPreview(item.designFileUrl, 'Bản vẽ khách gửi · ' + item.itemName)">
+                              <img [src]="item.designFileUrl" alt="Bản vẽ khách gửi" loading="lazy" />
+                              <span>Bản vẽ khách gửi</span>
+                            </button>
+                          } @else {
+                            <a class="tni-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener" style="cursor:pointer">
+                              <span class="tni-thumb-file">{{ ext(item.designFileUrl) }}</span>
+                              <span>Tải bản vẽ khách ↗</span>
+                            </a>
+                          }
+                        }
+                        @if (item.prototypeImageUrl) {
+                          <button type="button" class="tni-thumb" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
+                            <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế đã gửi" loading="lazy" />
+                            <span class="text-success">Ảnh mẫu đã gửi ✓</span>
+                          </button>
+                        }
+                      </div>
+                    }
 
                     @if (ord.status === 'QUOTE_APPROVED' || ord.status === 'PROTOTYPING') {
                       <!-- Upload physical prototype photo -->
@@ -347,10 +361,21 @@ import { ToastService } from '../../shared/components/toast/toast.component';
                   @for (tx of ord.paymentTransactions; track tx.id) {
                     <div class="border border-border rounded-[10px] p-4 flex flex-col gap-3 bg-surface-raised">
                       <div class="min-w-0 space-y-1">
-                        <div class="font-sans tabular-nums font-semibold text-sm text-text-primary">{{ tx.paymentPhase }} · {{ tx.amount | vnd }}</div>
-                        <div class="text-sm text-text-secondary break-words">{{ tx.paymentMethod }} · Ref: {{ tx.transactionRef || '—' }}</div>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                          <span class="font-semibold text-sm text-text-primary">{{ phaseLabel(tx.paymentPhase) }}</span>
+                          <span class="tni-chip" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
+                        </div>
+                        <div class="font-sans tabular-nums text-lg font-semibold text-text-primary">{{ tx.amount | vnd }}</div>
+                        <div class="text-sm text-text-secondary break-words">{{ methodLabel(tx.paymentMethod) }} · Mã GD: {{ tx.transactionRef || '—' }}</div>
                         @if (tx.proofImageUrl) {
-                          <a [href]="tx.proofImageUrl" target="_blank" class="inline-block text-sm text-steel hover:text-steel-hover underline">Xem biên lai ↗</a>
+                          @if (isImage(tx.proofImageUrl)) {
+                            <button type="button" class="tni-thumb mt-2" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))">
+                              <img [src]="tx.proofImageUrl" alt="Biên lai chuyển khoản" loading="lazy" />
+                              <span>Xem biên lai</span>
+                            </button>
+                          } @else {
+                            <a [href]="tx.proofImageUrl" target="_blank" rel="noopener" class="inline-block text-sm text-steel hover:text-steel-hover underline">Xem biên lai ↗</a>
+                          }
                         }
                       </div>
                       @if (tx.status === 'PENDING' && canVerifyPayment(ord, tx)) {
@@ -380,9 +405,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
                             Chưa đến bước thanh toán — chưa thể duyệt giao dịch
                           </span>
                         } @else {
-                          <span class="font-sans tabular-nums font-semibold text-sm" [class]="tx.status === 'VERIFIED' ? 'text-success' : 'text-danger'">
-                            {{ tx.status }}
-                          </span>
+                          <span class="text-xs text-text-muted">{{ tx.verifiedAt ? 'Xử lý lúc ' + (tx.verifiedAt | date:'dd/MM/yyyy HH:mm') : '' }}</span>
                         }
                       }
                     </div>
@@ -521,11 +544,58 @@ import { ToastService } from '../../shared/components/toast/toast.component';
               }
             </div>
             <div class="px-5 sm:px-7 py-4 bg-surface text-sm text-text-secondary">
-              Thay đổi chỉ áp dụng cho báo giá được tạo sau khi lưu.
+              Thay đổi chỉ áp dụng cho báo giá được tạo sau khi lưu. Ngưỡng "tấm mỏng" tính theo ly: 1 ly = 1 mm.
             </div>
           } @else {
             <p class="px-5 sm:px-7 py-8 text-center text-sm text-text-secondary">Chưa có tham số định giá.</p>
           }
+        </section>
+
+        <!-- Per-material rates: mica/decal do NOT use the metal 5,000,000 đ/m² rate -->
+        <section class="industrial-card overflow-hidden mt-6" aria-labelledby="materials-title">
+          <div class="px-5 sm:px-7 py-5 border-b border-border">
+            <h2 id="materials-title" class="font-heading text-xl font-semibold text-text-primary">Giá theo vật liệu</h2>
+            <p class="mt-1 text-sm text-text-secondary">
+              Kim loại tấm mỏng (≤ 1 ly) dùng đơn giá chung ở trên. <strong>Mica / Decal không dùng đơn giá này</strong> — nhập đơn giá/m² riêng cho từng loại. Chưa nhập thì khách chưa thể báo giá tự động vật liệu đó.
+            </p>
+          </div>
+          <div class="divide-y divide-border">
+            @for (m of adminMaterials(); track m.id) {
+              <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-3 md:gap-8 items-center px-5 sm:px-7 py-4">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium text-text-primary">{{ m.name }}</span>
+                    <span class="tni-chip no-dot" [attr.data-tone]="m.isMetal ? 'info' : 'muted'">{{ m.isMetal ? 'Kim loại' : 'Phi kim' }}</span>
+                    @if (!m.isMetal && !m.thinSheetRatePerM2) {
+                      <span class="tni-chip" data-tone="warning">Chưa có đơn giá</span>
+                    }
+                  </div>
+                  <p class="mt-1 text-sm text-text-secondary">
+                    Dày {{ m.minThicknessMm }}–{{ m.maxThicknessMm }} mm
+                    @if (m.isMetal) { · tấm mỏng: để trống = dùng đơn giá chung } @else { · tính theo diện tích (đ/m²) }
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number" min="0" step="1000"
+                    class="industrial-input pricing-value-input w-40 text-right font-sans tabular-nums"
+                    [attr.aria-label]="'Đơn giá theo m² của ' + m.name"
+                    [placeholder]="m.isMetal ? 'Dùng chung' : 'Nhập đơn giá'"
+                    [ngModel]="materialRates[m.id]"
+                    (ngModelChange)="materialRates[m.id] = $event"
+                  />
+                  <span class="text-sm text-text-secondary">đ/m²</span>
+                  <button type="button" appButton variant="secondary" size="sm"
+                    [disabled]="materialSavingId() === m.id || !materialRateChanged(m)"
+                    (click)="saveMaterialRate(m)">
+                    {{ materialSavingId() === m.id ? 'Đang lưu…' : 'Lưu' }}
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <p class="px-5 sm:px-7 py-6 text-sm text-text-secondary">Chưa tải được danh sách vật liệu.</p>
+            }
+          </div>
         </section>
       }
 
@@ -681,59 +751,73 @@ import { ToastService } from '../../shared/components/toast/toast.component';
           }
 
           <div class="industrial-card overflow-hidden">
-            <div class="p-3 bg-surface-raised border-b border-border flex flex-wrap gap-2">
-              <input [(ngModel)]="productSearch" (keyup.enter)="resetProductsPage()" placeholder="Tìm tên / SKU" class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[160px]" />
-              <select [(ngModel)]="productCategoryFilter" (ngModelChange)="resetProductsPage()" class="industrial-input px-2.5 py-1.5 text-xs">
+            <div class="px-5 py-4 bg-surface border-b border-border flex flex-wrap gap-3">
+              <input type="search" [(ngModel)]="productSearch" (keyup.enter)="resetProductsPage()" placeholder="Tìm tên / SKU" class="industrial-input flex-1 min-w-[200px]" />
+              <select [(ngModel)]="productCategoryFilter" (ngModelChange)="resetProductsPage()" class="industrial-input">
                 <option value="">Tất cả danh mục</option>
                 @for (c of adminCategories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
               </select>
-              <select [(ngModel)]="productTypeFilter" (ngModelChange)="resetProductsPage()" class="industrial-input px-2.5 py-1.5 text-xs">
+              <select [(ngModel)]="productTypeFilter" (ngModelChange)="resetProductsPage()" class="industrial-input">
                 <option value="">Tất cả loại</option>
                 <option value="STANDARD_ITEM">Hàng có sẵn</option>
                 <option value="CUSTOM_TEMPLATE">Gia công theo yêu cầu</option>
               </select>
-              <button type="button" (click)="resetProductsPage()" appButton variant="secondary" size="xs">Tìm</button>
+              <button type="button" (click)="resetProductsPage()" appButton variant="secondary" size="sm">Tìm</button>
             </div>
             @if (productsLoading()) {
               <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải sản phẩm"></div>
             } @else {
             <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-              <thead class="bg-surface border-b border-border text-text-secondary">
-              <tr>
-                <th class="px-4 py-3 font-medium">Ảnh</th>
-                <th class="px-4 py-3 font-medium">SKU</th>
-                <th class="px-4 py-3 font-medium">Tên sản phẩm</th>
-                <th class="px-4 py-3 font-medium">Danh mục</th>
-                <th class="px-4 py-3 font-medium">Loại</th>
-                <th class="px-4 py-3 text-right font-medium">Đơn giá / Tồn kho</th>
-                <th class="px-4 py-3 text-center font-medium">Hiển thị</th>
-                <th class="px-5 py-3 text-right font-medium">Thao tác</th>
-              </tr>
+            <table class="tni-table">
+              <thead>
+                <tr>
+                  <th>Sản phẩm</th>
+                  <th>Danh mục</th>
+                  <th>Loại</th>
+                  <th class="!text-right">Giá</th>
+                  <th>Tồn kho</th>
+                  <th class="!text-center">Hiển thị</th>
+                  <th class="!text-right"></th>
+                </tr>
               </thead>
-              <tbody class="divide-y divide-border">
+              <tbody>
                 @for (p of adminProducts(); track p.id) {
-                  <tr class="hover:bg-surface-raised transition-colors">
-                    <td class="px-4 py-3">
-                      @if (p.imageUrl || p.images?.[0]) {
-                        <img [src]="p.imageUrl || p.images?.[0]" [alt]="p.name" class="w-12 h-12 object-cover rounded-[6px] border border-border" />
-                      } @else {
-                        <span class="w-12 h-12 flex items-center justify-center rounded-[6px] border border-border text-[9px] text-text-muted">Chưa có ảnh</span>
-                      }
+                  <tr [class.opacity-60]="p.isActive === false">
+                    <td>
+                      <div class="flex items-center gap-3 min-w-[16rem]">
+                        @if (p.imageUrl || p.images?.[0]) {
+                          <img [src]="p.imageUrl || p.images?.[0]" [alt]="p.name" loading="lazy" class="h-12 w-12 shrink-0 rounded-lg border border-border object-cover" />
+                        } @else {
+                          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-surface text-text-muted" aria-label="Chưa có ảnh" title="Chưa có ảnh">▣</span>
+                        }
+                        <div class="min-w-0">
+                          <div class="font-medium text-text-primary leading-snug">{{ p.name }}</div>
+                          <div class="font-mono text-xs text-text-muted">{{ p.sku }}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td class="px-4 py-4 font-sans tabular-nums font-medium text-text-primary">{{ p.sku }}</td>
-                    <td class="px-4 py-4 font-medium text-text-primary">{{ p.name }}</td>
-                    <td class="px-4 py-4 text-text-secondary">{{ p.categoryName }}</td>
-                    <td class="px-4 py-4 text-text-secondary">{{ p.productType === 'STANDARD_ITEM' ? 'Hàng có sẵn' : 'Gia công theo yêu cầu' }}</td>
-                    <td class="px-4 py-4 text-right font-sans tabular-nums text-text-primary">
-                      {{ p.productType === 'STANDARD_ITEM' ? (p.basePrice | vnd) + ' · Kho: ' + (p.stockQuantity ?? 0) : 'Báo giá 3D' }}
+                    <td class="text-text-secondary">{{ p.categoryName || '—' }}</td>
+                    <td>
+                      <span class="tni-chip no-dot" [attr.data-tone]="p.productType === 'STANDARD_ITEM' ? 'muted' : 'info'">
+                        {{ p.productType === 'STANDARD_ITEM' ? 'Hàng có sẵn' : 'Gia công 3D' }}
+                      </span>
                     </td>
-                    <td class="px-4 py-4 text-center">
-                      <input type="checkbox" [checked]="p.isActive" (change)="toggleProductActive(p)" [attr.aria-label]="'Hiển thị ' + p.name" />
+                    <td class="text-right tabular-nums font-medium text-text-primary">
+                      @if (p.productType === 'STANDARD_ITEM') { {{ p.basePrice | vnd }} } @else { <span class="text-text-muted font-normal">Báo giá theo yêu cầu</span> }
                     </td>
-                    <td class="px-5 py-4 text-right whitespace-nowrap">
-                      <button type="button" (click)="editProduct(p)" class="text-accent hover:underline mr-4">Sửa</button>
-                      <button type="button" (click)="removeProduct(p.id)" class="text-danger hover:underline">Xóa</button>
+                    <td>
+                      @if (p.productType === 'STANDARD_ITEM') {
+                        <span class="tni-chip" [attr.data-tone]="(p.stockQuantity ?? 0) === 0 ? 'danger' : (p.stockQuantity ?? 0) < 10 ? 'warning' : 'success'">
+                          {{ (p.stockQuantity ?? 0) === 0 ? 'Hết hàng' : p.stockQuantity + ' cái' }}
+                        </span>
+                      } @else { <span class="text-text-muted">—</span> }
+                    </td>
+                    <td class="text-center">
+                      <button type="button" role="switch" class="tni-switch" [attr.aria-checked]="p.isActive !== false" (click)="toggleProductActive(p)" [attr.aria-label]="(p.isActive !== false ? 'Ẩn ' : 'Hiện ') + p.name"></button>
+                    </td>
+                    <td class="text-right whitespace-nowrap">
+                      <button type="button" (click)="editProduct(p)" class="tni-row-action mr-2">Sửa</button>
+                      <button type="button" (click)="removeProduct(p.id)" class="tni-row-action danger">Xóa</button>
                     </td>
                   </tr>
                 }
@@ -741,7 +825,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
             </table>
             </div>
             @if (!adminProducts().length) {
-              <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy sản phẩm.</div>
+              <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">▣</span><strong class="text-text-primary">Chưa có sản phẩm phù hợp</strong><span>Bấm “+ Thêm sản phẩm mới” hoặc đổi bộ lọc.</span></div>
             }
             <app-paginator
               [page]="productsPage()"
@@ -760,41 +844,53 @@ import { ToastService } from '../../shared/components/toast/toast.component';
             <p class="mt-1 text-sm text-text-secondary">Tra cứu thông tin khách hàng đã đăng ký.</p>
           </div>
           <div class="px-5 py-4 bg-surface-raised border-b border-border flex flex-wrap gap-3">
-            <input [(ngModel)]="customerSearch" (keyup.enter)="resetCustomersPage()" placeholder="Tìm tên, email, số điện thoại" class="industrial-input px-2.5 py-1.5 text-xs flex-1 min-w-[180px]" />
-            <button type="button" (click)="resetCustomersPage()" appButton variant="secondary" size="xs">Tìm khách hàng</button>
+            <input type="search" [(ngModel)]="customerSearch" (keyup.enter)="resetCustomersPage()" placeholder="Tìm tên, email, số điện thoại" class="industrial-input flex-1 min-w-[180px]" />
+            <button type="button" (click)="resetCustomersPage()" appButton variant="secondary" size="sm">Tìm khách hàng</button>
           </div>
           @if (customersLoading()) {
             <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải khách hàng"></div>
           } @else if (customers().length) {
             <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left">
-                <thead class="bg-bg border-b border-border text-text-secondary">
+              <table class="tni-table">
+                <thead>
                   <tr>
-                    <th class="px-5 py-3 font-medium">Khách hàng</th>
-                    <th class="px-4 py-3 font-medium">Email</th>
-                    <th class="px-4 py-3 font-medium">Điện thoại</th>
-                    <th class="px-4 py-3 font-medium">Địa chỉ mặc định</th>
-                    <th class="px-5 py-3 font-medium">Ngày tạo</th>
+                    <th>Khách hàng</th>
+                    <th>Điện thoại</th>
+                    <th>Địa chỉ mặc định</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-border">
+                <tbody>
                   @for (customer of customers(); track customer.id) {
                     <tr>
-                      <td class="px-5 py-4 font-medium text-text-primary">{{ customer.fullName }}</td>
-                      <td class="px-4 py-4 text-text-secondary">{{ customer.email }}</td>
-                      <td class="px-4 py-4 font-sans tabular-nums text-text-secondary">{{ customer.phone || '—' }}</td>
-                      <td class="px-4 py-4 text-text-secondary">{{ customer.defaultAddress || '—' }}</td>
-                      <td class="px-5 py-4 font-sans tabular-nums text-text-secondary">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
+                      <td>
+                        <div class="flex items-center gap-3 min-w-[14rem]">
+                          <span class="tni-avatar" aria-hidden="true">{{ initialsOf(customer.fullName) }}</span>
+                          <div class="min-w-0">
+                            <div class="font-medium text-text-primary">{{ customer.fullName }}</div>
+                            <div class="text-xs text-text-muted truncate">{{ customer.email }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="tabular-nums text-text-secondary">{{ customer.phone || '—' }}</td>
+                      <td class="text-text-secondary max-w-[22rem]">{{ customer.defaultAddress || '—' }}</td>
+                      <td><span class="tni-chip" [attr.data-tone]="customer.isActive ? 'success' : 'muted'">{{ customer.isActive ? 'Hoạt động' : 'Đã khóa' }}</span></td>
+                      <td class="tabular-nums text-text-secondary">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
           } @else {
-            <div class="p-8 text-center text-xs text-text-secondary">Không tìm thấy khách hàng.</div>
+            <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">☺</span><strong class="text-text-primary">Không tìm thấy khách hàng</strong><span>Thử tên, email hoặc số điện thoại khác.</span></div>
           }
           <app-paginator [page]="customersPage()" [totalPages]="customersTotalPages()" (pageChange)="goToCustomersPage($event)" />
         </section>
+      }
+
+      @if (preview(); as pv) {
+        <app-image-lightbox [url]="pv.url" [caption]="pv.caption" (closed)="preview.set(null)" />
       }
 
       @if (deleteProductId()) {
@@ -818,6 +914,7 @@ export class AdminCockpitComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   private readonly quoteApi = inject(QuoteApiService);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly activeTab = signal<'orders' | 'pricing' | 'products' | 'customers'>('orders');
   readonly summary = signal<AdminDashboardSummary | null>(null);
@@ -849,6 +946,87 @@ export class AdminCockpitComponent implements OnInit {
   readonly customersLoading = signal(false);
   readonly deleteProductId = signal<string | null>(null);
   readonly productSaving = signal(false);
+  readonly preview = signal<{ url: string; caption: string } | null>(null);
+  readonly materialSavingId = signal<string | null>(null);
+  materialRates: Record<string, number | null> = {};
+
+  readonly statusOptions: { value: OrderStatus | ''; label: string }[] = [
+    { value: '', label: 'Tất cả' },
+    { value: 'QUOTE_PENDING', label: 'Chờ duyệt giá' },
+    { value: 'QUOTE_APPROVED', label: 'Đã duyệt giá' },
+    { value: 'PROTOTYPING', label: 'Duyệt mẫu' },
+    { value: 'AWAITING_DEPOSIT', label: 'Chờ cọc' },
+    { value: 'IN_PRODUCTION', label: 'Đang sản xuất' },
+    { value: 'READY_FOR_DELIVERY', label: 'Chờ giao' },
+    { value: 'COMPLETED', label: 'Hoàn tất' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
+  ];
+
+  // Template helpers (shared with the customer screens)
+  readonly statusLabel = statusLabelFn;
+  readonly statusTone = orderStatusTone;
+  readonly typeLabel = orderTypeLabel;
+  readonly payTone = paymentStatusTone;
+  readonly isImage = isImageUrl;
+  readonly ext = fileExtension;
+  readonly initialsOf = initials;
+  phaseLabel = (p: keyof typeof PAYMENT_PHASE_LABEL) => PAYMENT_PHASE_LABEL[p] ?? p;
+  methodLabel = (m: keyof typeof PAYMENT_METHOD_LABEL) => PAYMENT_METHOD_LABEL[m] ?? m;
+  payLabel = (s: keyof typeof PAYMENT_STATUS_LABEL) => PAYMENT_STATUS_LABEL[s] ?? s;
+  percentPaid = (o: OrderSummary) => paidPercent(o.paidAmount, o.totalAmount);
+
+  setStatusFilter(value: OrderStatus | ''): void {
+    this.statusFilter = value;
+    this.resetOrdersPage();
+  }
+
+  openPreview(url: string | undefined, caption: string): void {
+    if (url) this.preview.set({ url, caption });
+  }
+
+  materialRateChanged(m: Material): boolean {
+    const draft = this.materialRates[m.id];
+    const current = m.thinSheetRatePerM2 ?? null;
+    const norm = (v: number | null | undefined) => (v === null || v === undefined || (v as unknown) === '' ? null : Number(v));
+    return norm(draft) !== norm(current);
+  }
+
+  saveMaterialRate(m: Material): void {
+    const raw = this.materialRates[m.id];
+    const rate = raw === null || raw === undefined || (raw as unknown) === '' ? null : Number(raw);
+    if (rate !== null && (!Number.isFinite(rate) || rate <= 0)) {
+      this.notifyError('Đơn giá phải lớn hơn 0.');
+      return;
+    }
+    this.materialSavingId.set(m.id);
+    this.adminApi.updateMaterial(m.id, {
+      code: m.code,
+      name: m.name,
+      isMetal: m.isMetal,
+      densityKgM3: m.densityKgM3 ?? null,
+      pricePerKg: m.pricePerKg ?? null,
+      thinSheetRatePerM2: rate,
+      minThicknessMm: m.minThicknessMm,
+      maxThicknessMm: m.maxThicknessMm,
+      pbrPreviewConfig: m.pbrPreviewConfig ?? null,
+      isActive: m.isActive ?? true,
+    }).subscribe({
+      next: (res) => {
+        this.materialSavingId.set(null);
+        if (res.success && res.data) {
+          this.adminMaterials.update((list) => list.map((x) => (x.id === m.id ? res.data : x)));
+          this.materialRates[m.id] = res.data.thinSheetRatePerM2 ?? null;
+          this.notify('Đã lưu đơn giá vật liệu.');
+        } else {
+          this.notifyError(res.message || 'Không thể lưu đơn giá vật liệu.');
+        }
+      },
+      error: (err) => {
+        this.materialSavingId.set(null);
+        this.notifyError(err?.error?.message || 'Không thể lưu đơn giá vật liệu.');
+      },
+    });
+  }
 
   statusFilter: OrderStatus | '' = '';
   searchFilter = '';
@@ -882,6 +1060,8 @@ export class AdminCockpitComponent implements OnInit {
   ngOnInit(): void {
     this.refreshDashboard();
     this.loadOrders();
+    const deepLinkedOrder = this.route.snapshot.queryParamMap.get('order');
+    if (deepLinkedOrder) this.openOrder(deepLinkedOrder); // coming from the Kanban board
     this.loadPricingRules();
     this.fetchAdminProducts();
     this.adminApi.getAdminCategories().subscribe({
@@ -898,6 +1078,7 @@ export class AdminCockpitComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data?.length) {
           this.adminMaterials.set(res.data);
+          res.data.forEach((m) => (this.materialRates[m.id] = m.thinSheetRatePerM2 ?? null));
           this.newProd.materialId = res.data[0].id;
         }
       },
@@ -1227,9 +1408,9 @@ export class AdminCockpitComponent implements OnInit {
 
   pricingRuleLabel(key: string): string {
     const labels: Record<string, string> = {
-      THIN_SHEET_RATE_M2: 'Đơn giá tấm mỏng',
+      THIN_SHEET_RATE_M2: 'Đơn giá tấm mỏng (kim loại)',
       THICK_METAL_MULTIPLIER: 'Hệ số kim loại dày',
-      THIN_SHEET_THRESHOLD_MM: 'Ngưỡng tấm mỏng',
+      THIN_SHEET_THRESHOLD_MM: 'Ngưỡng tấm mỏng (1 ly = 1 mm)',
       BULK_DISCOUNT_MIN_QTY: 'Số lượng chiết khấu',
       BULK_DISCOUNT_RATE: 'Tỷ lệ chiết khấu',
       VAT_RATE: 'Thuế VAT',
