@@ -109,6 +109,10 @@ export class AdminApiService {
     return this.http.get<ApiResponse<Material[]>>('/api/v1/admin/catalog/materials');
   }
 
+  updateMaterial(id: string, payload: Record<string, unknown>): Observable<ApiResponse<Material>> {
+    return this.http.put<ApiResponse<Material>>(`/api/v1/admin/catalog/materials/${id}`, payload);
+  }
+
   getAdminProcessingMethods(): Observable<ApiResponse<ProcessingMethod[]>> {
     return this.http.get<ApiResponse<ProcessingMethod[]>>('/api/v1/admin/catalog/processing-methods');
   }

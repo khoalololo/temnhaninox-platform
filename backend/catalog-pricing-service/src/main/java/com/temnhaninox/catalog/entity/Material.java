@@ -49,9 +49,9 @@ public class Material {
     @Column(name = "price_per_kg", precision = 12, scale = 2)
     private BigDecimal pricePerKg;
 
-    @Builder.Default
-    @Column(name = "thin_sheet_rate_per_m2", nullable = false, precision = 12, scale = 2)
-    private BigDecimal thinSheetRatePerM2 = new BigDecimal("5000000.00");
+    /** Per-material thin-sheet rate (VND/m2). Null for metals = use the global THIN_SHEET_RATE_M2 rule; null for non-metals = not configured yet. */
+    @Column(name = "thin_sheet_rate_per_m2", precision = 12, scale = 2)
+    private BigDecimal thinSheetRatePerM2;
 
     @Builder.Default
     @Column(name = "min_thickness_mm", nullable = false, precision = 5, scale = 2)
@@ -78,9 +78,6 @@ public class Material {
     protected void onCreate() {
         if (this.isMetal == null) {
             this.isMetal = Boolean.TRUE;
-        }
-        if (this.thinSheetRatePerM2 == null) {
-            this.thinSheetRatePerM2 = new BigDecimal("5000000.00");
         }
         if (this.minThicknessMm == null) {
             this.minThicknessMm = new BigDecimal("0.20");

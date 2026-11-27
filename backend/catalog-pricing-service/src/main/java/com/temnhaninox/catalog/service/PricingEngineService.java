@@ -101,9 +101,16 @@ public class PricingEngineService {
         if (useThinSheetFormula) {
             formulaMode = "THIN_SHEET_AREA";
             calculatedWeightKg = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
-            BigDecimal ratePerM2 = material.getThinSheetRatePerM2() != null
-                    ? material.getThinSheetRatePerM2()
-                    : thinSheetRateM2Rule;
+            // The global 5,000,000 VND/m2 rule is for thin METAL only; mica/decal must carry their own rate.
+            BigDecimal ratePerM2 = material.getThinSheetRatePerM2();
+            if (ratePerM2 == null) {
+                if (!Boolean.TRUE.equals(material.getIsMetal())) {
+                    throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                            "Price per m2 is not configured yet for " + material.getName()
+                                    + ". Please contact the workshop for a manual quote.");
+                }
+                ratePerM2 = thinSheetRateM2Rule;
+            }
             unitPrice = areaM2.multiply(ratePerM2).setScale(2, RoundingMode.HALF_UP);
         } else {
             formulaMode = "THICK_METAL_MASS";

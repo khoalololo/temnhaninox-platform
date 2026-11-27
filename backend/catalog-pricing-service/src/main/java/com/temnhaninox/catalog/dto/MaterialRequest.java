@@ -32,7 +32,7 @@ public class MaterialRequest {
     private BigDecimal densityKgM3;
     private BigDecimal pricePerKg;
 
-    @NotNull(message = "thinSheetRatePerM2 is required")
+    // Optional: metals fall back to the global rule; non-metals (mica/decal) need their own rate to be quotable.
     @DecimalMin(value = "0.01", message = "thinSheetRatePerM2 must be positive")
     private BigDecimal thinSheetRatePerM2;
 
