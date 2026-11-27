@@ -9,6 +9,7 @@ import {
   OrderDetail,
   OrderStatus,
   OrderSummary,
+  PaymentTransaction,
   PricingRule,
 } from '../../core/models/order.models';
 import { Category, Material, ProcessingMethod, Product, ProductType } from '../../core/models/catalog.models';
@@ -208,11 +209,11 @@ import { ToastService } from '../../shared/components/toast/toast.component';
 
           <!-- Right Detail Inspector Drawer -->
           @if (selectedOrder(); as ord) {
-            <div class="lg:col-span-5 industrial-card border-steel p-4 space-y-4 text-xs">
-              <div class="flex items-center justify-between border-b border-border pb-3">
-                <div>
+            <div class="lg:col-span-5 industrial-card border-steel p-6 pb-20 space-y-6 text-sm">
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+                <div class="flex flex-wrap items-center gap-2">
                   <span class="font-mono font-bold text-base text-text-primary">{{ ord.orderCode }}</span>
-                  <span class="ml-2 px-2 py-0.5 rounded-full border border-accent/70 text-accent font-mono text-[11px] font-medium">
+                  <span class="px-2.5 py-1 rounded-full border border-accent/70 text-accent font-sans text-xs font-semibold">
                     {{ ord.status }}
                   </span>
                 </div>
@@ -222,53 +223,75 @@ import { ToastService } from '../../shared/components/toast/toast.component';
               </div>
 
               <!-- Customer & Shipping Info -->
-              <div class="bg-bg border border-border rounded-[6px] p-3 space-y-1 text-text-secondary">
-                <div><strong class="text-text-primary">Khách nhận:</strong> {{ ord.recipientName }} · <span class="font-mono text-text-primary">{{ ord.recipientPhone }}</span></div>
+              <div class="bg-surface-raised border border-border rounded-[10px] p-4 space-y-2 text-sm text-text-secondary">
+                <div><strong class="text-text-primary">Khách nhận:</strong> {{ ord.recipientName }} · <span class="font-sans tabular-nums text-text-primary">{{ ord.recipientPhone }}</span></div>
                 <div><strong class="text-text-primary">Địa chỉ:</strong> {{ ord.shippingAddress }}</div>
                 @if (ord.customerNote) {
                   <div class="text-accent"><strong>Ghi chú khách:</strong> {{ ord.customerNote }}</div>
                 }
               </div>
 
+              @if (ord.status === 'QUOTE_APPROVED') {
+                <div class="rounded-[10px] border border-accent/40 bg-accent/5 p-4 space-y-1.5">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-accent">Bước tiếp theo · Xưởng làm mẫu thực tế</div>
+                  <p class="text-sm text-text-secondary">
+                    Tải ảnh mẫu cho từng hạng mục bên dưới. Sau khi gửi ảnh, khách hàng sẽ có thể duyệt mẫu và đặt cọc.
+                  </p>
+                </div>
+              } @else if (ord.status === 'PROTOTYPING') {
+                <div class="rounded-[10px] border border-steel/40 bg-steel/5 p-4 space-y-1.5">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-steel">Đang chờ khách duyệt mẫu</div>
+                  <p class="text-sm text-text-secondary">
+                    Ảnh mẫu đã được gửi cho khách. Khách hàng cần xác nhận duyệt mẫu trước khi có thể thanh toán đặt cọc.
+                  </p>
+                </div>
+              }
+
               <!-- Items + Quote Price Override + Prototype Upload -->
-              <div class="space-y-3">
-                <div class="font-heading font-bold uppercase text-text-primary">Hạng mục & Ảnh mẫu thực tế</div>
+              <div class="mt-6 border-t border-border pt-5 space-y-3">
+                <div class="font-heading text-xs font-bold tracking-wider uppercase text-text-secondary">Hạng mục & Ảnh mẫu thực tế</div>
                 @for (item of ord.items; track item.id) {
-                  <div class="border border-border rounded-[6px] p-3 space-y-2 bg-bg">
-                    <div class="flex justify-between font-semibold text-text-primary">
-                      <span>{{ item.itemName }} (×{{ item.quantity }})</span>
-                      <span class="font-mono">{{ item.lineTotal | vnd }}</span>
+                  <div class="border border-border rounded-[10px] p-4 space-y-3 bg-surface-raised">
+                    <div class="flex flex-col items-start gap-2.5">
+                      <span class="min-w-0 text-sm leading-5 font-semibold text-text-primary break-words">
+                        {{ item.itemName }} <span class="font-sans tabular-nums font-semibold text-text-secondary">(×{{ item.quantity }})</span>
+                      </span>
+                      <span class="shrink-0 self-start rounded-md border border-success/30 bg-success/10 px-3 py-1.5 font-sans tabular-nums text-sm font-semibold text-success">
+                        {{ item.lineTotal | vnd }}
+                      </span>
                     </div>
                     @if (item.widthMm) {
-                      <div class="font-mono text-[11px] text-text-secondary">
+                      <div class="font-sans tabular-nums text-sm text-text-secondary">
                         {{ item.materialNameSnapshot }} · {{ item.processingNameSnapshot }} · {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
                       </div>
                     }
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                       @if (item.designFileUrl) {
-                        <a [href]="item.designFileUrl" target="_blank" class="text-steel hover:text-steel-hover underline font-mono">
+                        <a [href]="item.designFileUrl" target="_blank" class="text-sm font-medium text-steel hover:text-steel-hover underline">
                           Tải bản vẽ khách ↗
                         </a>
                       }
                       @if (item.prototypeImageUrl) {
-                        <a [href]="item.prototypeImageUrl" target="_blank" class="text-success underline font-mono">
+                        <a [href]="item.prototypeImageUrl" target="_blank" class="text-sm font-medium text-success underline">
                           Ảnh mẫu đã gửi ✓
                         </a>
                       }
                     </div>
 
-                    <!-- Upload physical prototype photo -->
-                    <div class="pt-1 flex items-center gap-2">
-                      <label class="cursor-pointer px-2.5 py-1 bg-surface hover:bg-surface-raised border border-steel text-steel rounded-[6px] font-medium transition-colors">
-                        + Tải ảnh tem mẫu thực tế
-                        <input
-                          type="file"
-                          class="hidden"
-                          accept="image/*"
-                          (change)="uploadPrototype(ord.id, item.id, $event)"
-                        />
-                      </label>
-                    </div>
+                    @if (ord.status === 'QUOTE_APPROVED' || ord.status === 'PROTOTYPING') {
+                      <!-- Upload physical prototype photo -->
+                      <div class="border-t border-border pt-3">
+                        <label class="inline-flex cursor-pointer items-center px-4 py-2.5 bg-accent text-bg hover:bg-accent-hover rounded-[6px] text-sm font-semibold transition-colors">
+                          {{ item.prototypeImageUrl ? 'Cập nhật ảnh mẫu thực tế' : '＋ Tải ảnh mẫu để gửi khách duyệt' }}
+                          <input
+                            type="file"
+                            class="hidden"
+                            accept="image/*"
+                            (change)="uploadPrototype(ord.id, item.id, $event)"
+                          />
+                        </label>
+                      </div>
+                    }
                   </div>
                 }
 
@@ -276,36 +299,40 @@ import { ToastService } from '../../shared/components/toast/toast.component';
 
               <!-- Approve Quote Action + Per-Item Unit Price Override -->
               @if (ord.status === 'QUOTE_PENDING') {
-                <div class="border-t border-border pt-3 space-y-2.5">
-                  <div class="font-semibold text-text-primary">Điều chỉnh đơn giá & Duyệt báo giá</div>
-                  <div class="space-y-1.5">
+                <div class="mt-6 border-t border-border pt-5 space-y-3">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-text-secondary">Điều chỉnh đơn giá & Duyệt báo giá</div>
+                  <div class="space-y-3">
                     @for (item of ord.items; track item.id) {
-                      <div class="flex items-center justify-between gap-2 bg-bg border border-border rounded-[6px] px-2.5 py-1.5">
-                        <span class="truncate text-[11px] text-text-secondary flex-1">{{ item.itemName }}</span>
-                        <input
-                          type="number"
-                          [(ngModel)]="itemPriceOverrides[item.id]"
-                          min="0"
-                          step="1000"
-                          class="industrial-input w-28 px-2 py-1 text-xs font-mono text-right"
-                        />
-                        <span class="text-[10px] font-mono text-text-muted">đ/cái</span>
+                      <div class="space-y-3 bg-surface-raised border border-border rounded-[10px] p-4">
+                        <div class="text-sm leading-5 font-medium text-text-primary break-words">{{ item.itemName }}</div>
+                        <div class="flex items-center gap-3">
+                          <input
+                            type="number"
+                            [(ngModel)]="itemPriceOverrides[item.id]"
+                            min="0"
+                            step="1000"
+                            aria-label="Đơn giá chốt mỗi sản phẩm"
+                            class="industrial-input min-w-[140px] w-40 px-3.5 py-2.5 pr-8 font-sans tabular-nums text-base font-semibold text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                          <span class="shrink-0 text-sm font-medium text-text-secondary">đ / cái</span>
+                        </div>
                       </div>
                     }
                   </div>
-                  <div class="flex gap-2">
+                  <div class="grid grid-cols-1 gap-3">
                     <input
                       type="date"
                       [(ngModel)]="estimatedCompletionDate"
-                      class="industrial-input px-2.5 py-1.5 text-xs font-mono"
+                      aria-label="Ngày hoàn thành dự kiến"
+                      class="industrial-input w-full px-3.5 py-2.5 text-sm"
                     />
                     <button
                       type="button"
                       (click)="approveQuote(ord.id)"
                       appButton
                       variant="primary"
-                      size="xs"
-                      class="flex-1"
+                      size="sm"
+                      class="w-full"
                     >
                       Duyệt Báo Giá
                     </button>
@@ -315,19 +342,19 @@ import { ToastService } from '../../shared/components/toast/toast.component';
 
               <!-- Verify Pending Payments -->
               @if (ord.paymentTransactions.length > 0) {
-                <div class="border-t border-border pt-3 space-y-2">
-                  <div class="font-semibold text-text-primary">Giao dịch thanh toán ({{ ord.paymentTransactions.length }})</div>
+                <div class="mt-6 border-t border-border pt-5 space-y-3">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-text-secondary">Giao dịch thanh toán ({{ ord.paymentTransactions.length }})</div>
                   @for (tx of ord.paymentTransactions; track tx.id) {
-                    <div class="border border-border rounded-[6px] p-2.5 flex items-center justify-between gap-2 bg-bg">
-                      <div>
-                        <div class="font-mono font-bold text-text-primary">{{ tx.paymentPhase }} · {{ tx.amount | vnd }}</div>
-                        <div class="text-[11px] text-text-secondary">{{ tx.paymentMethod }} · Ref: {{ tx.transactionRef || '—' }}</div>
+                    <div class="border border-border rounded-[10px] p-4 flex flex-col gap-3 bg-surface-raised">
+                      <div class="min-w-0 space-y-1">
+                        <div class="font-sans tabular-nums font-semibold text-sm text-text-primary">{{ tx.paymentPhase }} · {{ tx.amount | vnd }}</div>
+                        <div class="text-sm text-text-secondary break-words">{{ tx.paymentMethod }} · Ref: {{ tx.transactionRef || '—' }}</div>
                         @if (tx.proofImageUrl) {
-                          <a [href]="tx.proofImageUrl" target="_blank" class="text-steel hover:text-steel-hover underline text-[11px]">Xem biên lai ↗</a>
+                          <a [href]="tx.proofImageUrl" target="_blank" class="inline-block text-sm text-steel hover:text-steel-hover underline">Xem biên lai ↗</a>
                         }
                       </div>
-                      @if (tx.status === 'PENDING') {
-                        <div class="flex gap-1.5">
+                      @if (tx.status === 'PENDING' && canVerifyPayment(ord, tx)) {
+                        <div class="flex flex-wrap gap-2">
                           <button
                             type="button"
                             (click)="verifyTx(tx.id, 'VERIFIED')"
@@ -348,62 +375,78 @@ import { ToastService } from '../../shared/components/toast/toast.component';
                           </button>
                         </div>
                       } @else {
-                        <span class="font-mono font-bold" [class]="tx.status === 'VERIFIED' ? 'text-success' : 'text-danger'">
-                          {{ tx.status }}
-                        </span>
+                        @if (tx.status === 'PENDING') {
+                          <span class="text-xs font-medium text-text-muted">
+                            Chưa đến bước thanh toán — chưa thể duyệt giao dịch
+                          </span>
+                        } @else {
+                          <span class="font-sans tabular-nums font-semibold text-sm" [class]="tx.status === 'VERIFIED' ? 'text-success' : 'text-danger'">
+                            {{ tx.status }}
+                          </span>
+                        }
                       }
                     </div>
                   }
                 </div>
               }
 
-              <!-- State Transition Controls -->
-              <div class="border-t border-border pt-3 space-y-2">
-                <div class="font-semibold text-text-primary">Chuyển trạng thái sản xuất</div>
-                <input
-                  type="text"
-                  [(ngModel)]="workerNote"
-                  placeholder="Ghi chú thợ đứng máy (VD: Khắc sâu 0.15mm, đổ sơn đen)..."
-                  class="industrial-input w-full px-2.5 py-1.5 text-xs"
-                />
-                <div class="flex gap-2">
-                  <select [(ngModel)]="nextStatus" class="industrial-input px-2.5 py-1.5 text-xs flex-1">
-                    <option value="PROTOTYPING">PROTOTYPING (Làm mẫu)</option>
-                    <option value="AWAITING_DEPOSIT">AWAITING_DEPOSIT (Chờ cọc)</option>
-                    <option value="IN_PRODUCTION">IN_PRODUCTION (Đang sản xuất)</option>
-                    <option value="READY_FOR_DELIVERY">READY_FOR_DELIVERY (Sẵn sàng giao)</option>
-                    <option value="COMPLETED">COMPLETED (Hoàn tất)</option>
-                    <option value="CANCELLED">CANCELLED (Hủy đơn)</option>
-                  </select>
-                  <button
-                    type="button"
-                    (click)="changeOrderStatus(ord.id)"
-                    appButton
-                    variant="secondary"
-                    size="xs"
-                  >
-                    Cập nhật
-                  </button>
+              @if (ord.status === 'IN_PRODUCTION' || ord.status === 'READY_FOR_DELIVERY') {
+                <div class="mt-6 border-t border-border pt-5 space-y-3">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-text-secondary">Bước tiếp theo</div>
+                  <input
+                    type="text"
+                    [(ngModel)]="workerNote"
+                    placeholder="Ghi chú sản xuất (không bắt buộc)"
+                    class="industrial-input w-full px-3.5 py-2.5 text-sm"
+                  />
+                  @if (ord.status === 'IN_PRODUCTION') {
+                    <button
+                      type="button"
+                      (click)="changeOrderStatus(ord.id, 'READY_FOR_DELIVERY')"
+                      appButton
+                      variant="primary"
+                      size="sm"
+                      class="w-full"
+                    >
+                      Hoàn tất sản xuất · Chuyển sang chờ giao
+                    </button>
+                  } @else if (ord.paidAmount >= ord.totalAmount) {
+                    <button
+                      type="button"
+                      (click)="changeOrderStatus(ord.id, 'COMPLETED')"
+                      appButton
+                      variant="primary"
+                      size="sm"
+                      class="w-full"
+                    >
+                      Xác nhận đã giao hàng · Hoàn tất đơn
+                    </button>
+                  } @else {
+                    <div class="rounded-[6px] border border-warning/40 bg-warning/10 p-3 text-sm text-text-secondary">
+                      Chờ khách thanh toán số dư còn lại {{ (ord.totalAmount - ord.paidAmount) | vnd }} trước khi hoàn tất đơn.
+                    </div>
+                  }
                 </div>
-              </div>
+              }
 
               <!-- Red VAT Invoice Number Input -->
               @if (ord.requiresVatInvoice) {
-                <div class="border-t border-border pt-3 space-y-2">
-                  <div class="font-semibold text-danger">Số hóa đơn VAT đỏ ({{ ord.vatTaxCode }} - {{ ord.vatCompanyName }})</div>
-                  <div class="flex gap-2">
+                <div class="mt-6 border-t border-border pt-5 space-y-3">
+                  <div class="font-heading text-xs font-bold tracking-wider uppercase text-danger">Số hóa đơn VAT đỏ ({{ ord.vatTaxCode }} - {{ ord.vatCompanyName }})</div>
+                  <div class="grid grid-cols-1 gap-3">
                     <input
                       type="text"
                       [(ngModel)]="vatInvoiceNumberInput"
                       placeholder="Nhập số HĐĐT (VD: 0000142)"
-                      class="industrial-input px-2.5 py-1.5 text-xs font-mono flex-1"
+                      class="industrial-input w-full px-3.5 py-2.5 text-sm font-sans tabular-nums"
                     />
                     <button
                       type="button"
                       (click)="saveVatNumber(ord.id)"
                       appButton
                       variant="primary"
-                      size="xs"
+                      size="sm"
+                      class="w-full"
                     >
                       Lưu số HĐ
                     </button>
@@ -815,7 +858,6 @@ export class AdminCockpitComponent implements OnInit {
   customerSearch = '';
   estimatedCompletionDate = '';
   workerNote = '';
-  nextStatus: OrderStatus = 'IN_PRODUCTION';
   vatInvoiceNumberInput = '';
   itemPriceOverrides: Record<string, number> = {};
 
@@ -1028,7 +1070,6 @@ export class AdminCockpitComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.selectedOrder.set(res.data);
-          this.nextStatus = res.data.status;
           this.workerNote = res.data.productionWorkerNote || '';
           this.vatInvoiceNumberInput = res.data.vatInvoiceNumber || '';
           this.itemPriceOverrides = {};
@@ -1114,17 +1155,25 @@ export class AdminCockpitComponent implements OnInit {
     });
   }
 
-  changeOrderStatus(orderId: string): void {
+  canVerifyPayment(order: OrderDetail, tx: PaymentTransaction): boolean {
+    if (order.orderType === 'DIRECT_STORE_ORDER') {
+      return order.status === 'AWAITING_DEPOSIT' && tx.paymentPhase === 'FULL_100';
+    }
+    return (order.status === 'AWAITING_DEPOSIT' && tx.paymentPhase === 'DEPOSIT_50')
+      || (order.status === 'READY_FOR_DELIVERY' && tx.paymentPhase === 'BALANCE_50');
+  }
+
+  changeOrderStatus(orderId: string, targetStatus: OrderStatus): void {
     this.adminApi
       .updateOrderStatus(orderId, {
-        targetStatus: this.nextStatus,
+        targetStatus,
         productionWorkerNote: this.workerNote.trim() || undefined,
       })
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
             this.selectedOrder.set(res.data);
-            this.notify(`Đã chuyển trạng thái sang ${this.nextStatus}.`);
+            this.notify(`Đã chuyển trạng thái sang ${targetStatus}.`);
             this.loadOrders();
             this.refreshDashboard();
           }

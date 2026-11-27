@@ -167,6 +167,9 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               accept=".cdr,.ai,.pdf,.dxf,.svg,.png,.jpg,.jpeg,.zip"
               class="block w-full text-xs text-text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-[6px] file:border file:border-steel file:text-xs file:font-medium file:bg-transparent file:text-steel hover:file:bg-steel/10"
             />
+            @if (fileUploadError()) {
+              <div class="text-[11px] text-danger mt-1">{{ fileUploadError() }}</div>
+            }
             @if (uploading()) {
               <div class="text-[11px] font-mono text-accent mt-1">Đang tải file lên máy chủ xưởng...</div>
             }
@@ -348,6 +351,7 @@ export class QuoteBuilderComponent implements OnInit {
   readonly addingToCart = signal(false);
   readonly addedSuccess = signal(false);
   readonly quoteError = signal('');
+  readonly fileUploadError = signal('');
 
   productId?: string;
   selectedMaterialId = '';
@@ -450,6 +454,8 @@ export class QuoteBuilderComponent implements OnInit {
     const file = input.files?.[0];
     if (!file) return;
 
+    this.fileUploadError.set('');
+
     if (/\.(png|jpe?g|svg|webp)$/i.test(file.name)) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -476,6 +482,11 @@ export class QuoteBuilderComponent implements OnInit {
   }
 
   addCustomItemToCart(): void {
+    if (!this.uploadedFile()) {
+      this.fileUploadError.set('Vui lòng tải lên bản vẽ thiết kế trước khi thêm cấu hình vào giỏ hàng.');
+      return;
+    }
+
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login'], { queryParams: { returnUrl: '/quote-builder' } });
       return;

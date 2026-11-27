@@ -59,6 +59,23 @@ class S3StorageServiceTest {
     }
 
     @Test
+    void uploadFile_acceptsWebpPrototypeImage() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "prototype.webp",
+                "image/webp",
+                "WEBP-CONTENT".getBytes()
+        );
+        when(s3Client.headBucket(any(HeadBucketRequest.class))).thenReturn(null);
+
+        FileUploadResponse response = s3StorageService.uploadFile(file, "prototypes");
+
+        verify(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        assertThat(response.getBucket()).isEqualTo("prototypes");
+        assertThat(response.getFileName()).isEqualTo("prototype.webp");
+    }
+
+    @Test
     void uploadFile_rejectsUnsupportedExtension() {
         MockMultipartFile file = new MockMultipartFile(
                 "file",

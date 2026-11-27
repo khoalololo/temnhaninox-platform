@@ -3,6 +3,7 @@ package com.temnhaninox.order.service;
 import com.temnhaninox.common.dto.PageResponse;
 import com.temnhaninox.common.enums.OrderStatus;
 import com.temnhaninox.common.enums.OrderType;
+import com.temnhaninox.common.enums.PaymentPhase;
 import com.temnhaninox.common.enums.PaymentStatus;
 import com.temnhaninox.common.exception.BusinessException;
 import com.temnhaninox.common.exception.ErrorCode;
@@ -280,6 +281,12 @@ public class AdminOrderService {
         }
 
         Order order = tx.getOrder();
+        if (request.getStatus() == PaymentStatus.VERIFIED && !isPaymentVerificationAllowed(order, tx)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "Payment cannot be verified for order status " + order.getStatus()
+                            + " and payment phase " + tx.getPaymentPhase());
+        }
+
         tx.setStatus(request.getStatus());
         tx.setVerifiedAt(Instant.now());
 
@@ -340,6 +347,17 @@ public class AdminOrderService {
                     || target == OrderStatus.CANCELLED;
             case COMPLETED, CANCELLED -> false;
         };
+    }
+
+    private boolean isPaymentVerificationAllowed(Order order, PaymentTransaction tx) {
+        if (order.getOrderType() == OrderType.DIRECT_STORE_ORDER) {
+            return order.getStatus() == OrderStatus.AWAITING_DEPOSIT
+                    && tx.getPaymentPhase() == PaymentPhase.FULL_100;
+        }
+        return (order.getStatus() == OrderStatus.AWAITING_DEPOSIT
+                    && tx.getPaymentPhase() == PaymentPhase.DEPOSIT_50)
+                || (order.getStatus() == OrderStatus.READY_FOR_DELIVERY
+                    && tx.getPaymentPhase() == PaymentPhase.BALANCE_50);
     }
 
     private boolean isBlank(String value) {

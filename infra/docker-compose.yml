@@ -9,6 +9,7 @@ services:
   minio:
     image: chrislusf/seaweedfs:latest
     container_name: tni-minio
+    restart: unless-stopped
     command: 'server -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=1024 -dir=/data'
     environment:
       AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minioadmin}

@@ -26,7 +26,9 @@ import java.util.UUID;
 public class S3StorageService {
 
     private static final long MAX_FILE_SIZE_BYTES = 50L * 1024 * 1024;
-    private static final Set<String> ALLOWED_BUCKETS = Set.of("design-files", "product-images");
+    private static final Set<String> ALLOWED_BUCKETS = Set.of(
+            "design-files", "product-images", "prototypes", "payment-proofs"
+    );
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "cdr", "ai", "pdf", "svg", "png", "jpg", "jpeg", "webp"
     );
@@ -40,7 +42,7 @@ public class S3StorageService {
         String normalizedBucket = bucket != null ? bucket.trim().toLowerCase() : "design-files";
         if (!ALLOWED_BUCKETS.contains(normalizedBucket)) {
             throw new BusinessException(ErrorCode.FILE_UPLOAD_ERROR,
-                    "Invalid bucket. Allowed buckets: design-files, product-images");
+                    "Invalid bucket. Allowed buckets: design-files, product-images, prototypes, payment-proofs");
         }
 
         if (file == null || file.isEmpty()) {

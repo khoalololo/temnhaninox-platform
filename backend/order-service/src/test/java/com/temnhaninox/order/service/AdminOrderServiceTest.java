@@ -259,6 +259,30 @@ class AdminOrderServiceTest {
     }
 
     @Test
+    void verifyPayment_rejectsDepositBeforeOrderReachesAwaitingDeposit() {
+        UUID paymentId = UUID.randomUUID();
+        Order order = baseOrder(OrderStatus.QUOTE_PENDING, OrderType.CUSTOM_QUOTE_ORDER, false);
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .id(paymentId)
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .paymentMethod(PaymentMethod.VNPAY_SANDBOX)
+                .amount(new BigDecimal("500000.00"))
+                .status(PaymentStatus.PENDING)
+                .build();
+        order.addPaymentTransaction(tx);
+        when(paymentTransactionRepository.findById(paymentId)).thenReturn(Optional.of(tx));
+
+        assertThatThrownBy(() -> adminOrderService.verifyPayment(
+                adminId, paymentId,
+                AdminVerifyPaymentRequest.builder().status(PaymentStatus.VERIFIED).build()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Payment cannot be verified");
+
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("0");
+        assertThat(tx.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    }
+
+    @Test
     void updateVatInvoice_whenNotRequired_throwsValidationError() {
         Order order = baseOrder(OrderStatus.COMPLETED, OrderType.DIRECT_STORE_ORDER, false);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));

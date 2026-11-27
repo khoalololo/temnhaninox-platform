@@ -5,5 +5,5 @@
  * The SAME id must be set as GOOGLE_CLIENT_ID for auth-service.
  */
 export const APP_CONFIG = {
-  googleClientId: '',
+  googleClientId: '428475028193-tr11jj2sfvtj18aqicni0h33ngtleksj.apps.googleusercontent.com',
 };

@@ -106,6 +106,34 @@ class PaymentServiceTest {
     }
 
     @Test
+    void submitPaymentProof_rejectsCustomOrderBeforeDepositStatus() {
+        Order order = Order.builder()
+                .id(orderId)
+                .orderCode("TNI-20261124-0001")
+                .customerId(customerId)
+                .orderType(OrderType.CUSTOM_QUOTE_ORDER)
+                .status(OrderStatus.QUOTE_PENDING)
+                .depositRequiredAmount(new BigDecimal("500000.00"))
+                .paidAmount(BigDecimal.ZERO)
+                .paymentTransactions(new ArrayList<>())
+                .statusLogs(new ArrayList<>())
+                .build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        SubmitPaymentProofRequest request = SubmitPaymentProofRequest.builder()
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .amount(new BigDecimal("500000.00"))
+                .proofImageUrl("https://s3.local/proofs/receipt.png")
+                .build();
+
+        assertThatThrownBy(() -> paymentService.submitPaymentProof(customerId, orderId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Payment is not available");
+        assertThat(order.getPaymentTransactions()).isEmpty();
+    }
+
+    @Test
     void createVnpayUrl_generatesValidSignedRedirectUrl() {
         Order order = Order.builder()
                 .id(orderId)
@@ -136,6 +164,33 @@ class PaymentServiceTest {
         assertThat(response.getPaymentUrl()).contains("vnp_TmnCode=" + TMN_CODE);
         assertThat(response.getPaymentUrl()).contains("vnp_Amount=50000000");
         assertThat(response.getPaymentUrl()).contains("&vnp_SecureHash=");
+    }
+
+    @Test
+    void createVnpayUrl_rejectsCustomOrderBeforeDepositStatus() {
+        Order order = Order.builder()
+                .id(orderId)
+                .orderCode("TNI-20261124-0002")
+                .customerId(customerId)
+                .orderType(OrderType.CUSTOM_QUOTE_ORDER)
+                .status(OrderStatus.QUOTE_PENDING)
+                .totalAmount(new BigDecimal("1000000.00"))
+                .depositRequiredAmount(new BigDecimal("500000.00"))
+                .paidAmount(BigDecimal.ZERO)
+                .paymentTransactions(new ArrayList<>())
+                .statusLogs(new ArrayList<>())
+                .build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        VnpayCreateUrlRequest request = VnpayCreateUrlRequest.builder()
+                .orderId(orderId)
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .build();
+
+        assertThatThrownBy(() -> paymentService.createVnpayUrl(customerId, request, "127.0.0.1"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Payment is not available");
+        assertThat(order.getPaymentTransactions()).isEmpty();
     }
 
     @Test

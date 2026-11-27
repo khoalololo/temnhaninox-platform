@@ -1,6 +1,7 @@
 package com.temnhaninox.order.service;
 
 import com.temnhaninox.common.enums.OrderStatus;
+import com.temnhaninox.common.enums.OrderType;
 import com.temnhaninox.common.enums.PaymentMethod;
 import com.temnhaninox.common.enums.PaymentPhase;
 import com.temnhaninox.common.enums.PaymentStatus;
@@ -79,14 +80,10 @@ public class PaymentService {
         if (!customerId.equals(order.getCustomerId())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "You do not have permission to submit payment for this order");
         }
-        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.COMPLETED) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                    "Cannot submit payment proof for order in status " + order.getStatus());
-        }
-
         PaymentMethod method = request.getPaymentMethod() != null
                 ? request.getPaymentMethod()
                 : PaymentMethod.BANK_TRANSFER;
+        validatePaymentAllowed(order, request.getPaymentPhase());
         if (method != PaymentMethod.BANK_TRANSFER && method != PaymentMethod.CASH) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                     "Manual payment proof only supports BANK_TRANSFER or CASH");
@@ -126,14 +123,14 @@ public class PaymentService {
         if (!customerId.equals(order.getCustomerId())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "You do not have permission to pay for this order");
         }
-        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.COMPLETED) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                    "Cannot initiate VNPAY payment for order in status " + order.getStatus());
-        }
-
         PaymentPhase phase = request.getPaymentPhase() != null
                 ? request.getPaymentPhase()
-                : PaymentPhase.DEPOSIT_50;
+                : order.getOrderType() == OrderType.DIRECT_STORE_ORDER
+                        ? PaymentPhase.FULL_100
+                        : order.getPaidAmount().compareTo(order.getDepositRequiredAmount()) < 0
+                                ? PaymentPhase.DEPOSIT_50
+                                : PaymentPhase.BALANCE_50;
+        validatePaymentAllowed(order, phase);
 
         BigDecimal amount = resolveVnpayAmount(order, phase, request.getAmount());
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -357,6 +354,26 @@ public class PaymentService {
         return order.getTotalAmount().subtract(order.getPaidAmount())
                 .max(BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void validatePaymentAllowed(Order order, PaymentPhase phase) {
+        boolean isDirectStore = order.getOrderType() == OrderType.DIRECT_STORE_ORDER;
+        boolean isCustomQuote = order.getOrderType() == OrderType.CUSTOM_QUOTE_ORDER;
+        boolean isDepositPayment = (isDirectStore
+                && order.getStatus() == OrderStatus.AWAITING_DEPOSIT
+                && phase == PaymentPhase.FULL_100)
+                || (isCustomQuote
+                && order.getStatus() == OrderStatus.AWAITING_DEPOSIT
+                && phase == PaymentPhase.DEPOSIT_50);
+        boolean isBalancePayment = isCustomQuote
+                && order.getStatus() == OrderStatus.READY_FOR_DELIVERY
+                && phase == PaymentPhase.BALANCE_50;
+
+        if (!isDepositPayment && !isBalancePayment) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "Payment is not available for order status " + order.getStatus()
+                            + " and payment phase " + phase);
+        }
     }
 
     private String trimOrNull(String value) {

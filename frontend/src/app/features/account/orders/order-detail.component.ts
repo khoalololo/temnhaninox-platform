@@ -136,7 +136,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                       YÊU CẦU DUYỆT MẪU THỰC TẾ TẠI XƯỞNG
                     </div>
                     <h2 class="font-heading text-base font-bold text-text-primary mt-0.5">
-                      Xưởng đã gia công xong tem mẫu — Vui lòng kiểm tra hình ảnh bên dưới
+                      Xưởng đã gia công xong tem mẫu. Vui lòng kiểm tra hình ảnh bên dưới.
                     </h2>
                   </div>
                 </div>
@@ -145,28 +145,60 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                   @for (item of order()!.items; track item.id) {
                     @if (item.prototypeImageUrl) {
                       <div class="bg-bg border border-border rounded-[6px] p-2.5">
-                        <img [src]="item.prototypeImageUrl" class="w-full h-48 object-cover rounded-[6px] mb-2" />
+                        <img
+                          [src]="item.prototypeImageUrl"
+                          [alt]="'Ảnh mẫu thực tế của ' + item.itemName"
+                          class="w-full h-48 object-cover rounded-[6px] mb-2"
+                          [class.hidden]="prototypeImageErrorIds().has(item.id)"
+                          (load)="onPrototypeImageLoad(item.id)"
+                          (error)="onPrototypeImageError(item.id)"
+                        />
+                        @if (prototypeImageErrorIds().has(item.id)) {
+                          <div class="w-full min-h-48 mb-2 rounded-[6px] border border-danger/30 bg-danger/5 p-4 flex items-center justify-center text-center text-sm text-danger">
+                            Không tải được ảnh mẫu. Vui lòng tải lại trang hoặc liên hệ xưởng.
+                          </div>
+                        }
                         <div class="text-xs font-semibold text-text-primary">{{ item.itemName }}</div>
                       </div>
                     }
                   }
                 </div>
 
+                @if (!canApprovePrototype()) {
+                  <p class="text-sm text-text-secondary">
+                    Bạn có thể xác nhận duyệt mẫu sau khi ảnh mẫu của tất cả hạng mục đã tải thành công.
+                  </p>
+                }
                 <button
                   type="button"
                   (click)="approvePrototype()"
-                  [disabled]="actionLoading()"
+                  [disabled]="actionLoading() || !canApprovePrototype()"
                   appButton
                   variant="primary"
                   size="lg"
                 >
-                  ✓ Xác Nhận Duyệt Mẫu Này & Chuyển Sang Đặt Cọc 50%
+                  Xác Nhận Duyệt Mẫu Và Chuyển Sang Đặt Cọc 50%
                 </button>
               </div>
             }
 
+            @if (isCustomOrderAwaitingWorkshopApproval()) {
+              <div class="industrial-card p-4 text-sm text-text-secondary">
+                @if (order()!.status === 'QUOTE_PENDING') {
+                  <strong class="text-text-primary">Đơn hàng đang chờ xưởng duyệt báo giá.</strong>
+                  <span> Sau khi chốt báo giá, xưởng sẽ làm mẫu thực tế và gửi ảnh để bạn duyệt. Bạn chưa cần thao tác hoặc thanh toán lúc này.</span>
+                } @else if (order()!.status === 'QUOTE_APPROVED') {
+                  <strong class="text-text-primary">Báo giá đã được xưởng duyệt.</strong>
+                  <span> Xưởng đang chuẩn bị mẫu thực tế. Nút duyệt mẫu sẽ xuất hiện tại đây sau khi xưởng gửi ảnh. Bạn chưa cần thanh toán lúc này.</span>
+                } @else {
+                  <strong class="text-text-primary">Đang chờ xưởng gửi ảnh mẫu thực tế.</strong>
+                  <span> Khi ảnh mẫu sẵn sàng, bạn có thể xem và xác nhận duyệt mẫu tại đây. Sau khi duyệt, bạn sẽ thanh toán đặt cọc 50%.</span>
+                }
+              </div>
+            }
+
             <!-- Payment Action Card -->
-            @if (remainingAmount() > 0 && order()!.status !== 'CANCELLED') {
+            @if (canPayNow()) {
               <div class="industrial-card p-5 space-y-4">
                 <div class="flex items-center justify-between border-b border-border pb-3">
                   <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-text-primary">
@@ -261,7 +293,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                         }
                         @if (item.designFileUrl) {
                           <a [href]="item.designFileUrl" target="_blank" class="text-[11px] text-steel hover:text-steel-hover underline font-mono">
-                            Bản vẽ thiết kế ↗
+                            Bản vẽ thiết kế
                           </a>
                         }
                       </td>
@@ -370,6 +402,8 @@ export class OrderDetailComponent implements OnInit {
   readonly actionLoading = signal(false);
   readonly notice = signal('');
   readonly error = signal('');
+  readonly prototypeImageLoadedIds = signal(new Set<string>());
+  readonly prototypeImageErrorIds = signal(new Set<string>());
 
   bankRef = '';
   proofUrl = '';
@@ -437,6 +471,45 @@ export class OrderDetailComponent implements OnInit {
     const o = this.order();
     if (!o) return 0;
     return Math.max(0, o.totalAmount - o.paidAmount);
+  }
+
+  onPrototypeImageLoad(itemId: string): void {
+    this.prototypeImageErrorIds.update((ids) => {
+      const next = new Set(ids);
+      next.delete(itemId);
+      return next;
+    });
+    this.prototypeImageLoadedIds.update((ids) => new Set(ids).add(itemId));
+  }
+
+  onPrototypeImageError(itemId: string): void {
+    this.prototypeImageLoadedIds.update((ids) => {
+      const next = new Set(ids);
+      next.delete(itemId);
+      return next;
+    });
+    this.prototypeImageErrorIds.update((ids) => new Set(ids).add(itemId));
+  }
+
+  canApprovePrototype(): boolean {
+    const order = this.order();
+    return !!order && order.items.length > 0
+      && order.items.every((item) =>
+        !!item.prototypeImageUrl && this.prototypeImageLoadedIds().has(item.id)
+      );
+  }
+
+  isCustomOrderAwaitingWorkshopApproval(): boolean {
+    const o = this.order();
+    return o?.orderType === 'CUSTOM_QUOTE_ORDER'
+      && (o.status === 'QUOTE_PENDING' || o.status === 'QUOTE_APPROVED' || o.status === 'PROTOTYPING');
+  }
+
+  canPayNow(): boolean {
+    const o = this.order();
+    if (!o || this.remainingAmount() <= 0) return false;
+    if (o.orderType === 'DIRECT_STORE_ORDER') return o.status === 'AWAITING_DEPOSIT';
+    return o.status === 'AWAITING_DEPOSIT' || o.status === 'READY_FOR_DELIVERY';
   }
 
   activePaymentPhase(): PaymentPhase {
