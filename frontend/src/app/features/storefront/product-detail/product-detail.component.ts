@@ -10,14 +10,16 @@ import { VndCurrencyPipe } from '../../../core/pipes/vnd-currency.pipe';
 import { LucideAngularModule, ChevronLeft, ChevronRight, Minus, Plus, X, ZoomIn } from 'lucide-angular';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
 import { ImagePlaceholderComponent } from '../../../shared/components/image-placeholder/image-placeholder.component';
+import { ToastService } from '../../../shared/components/toast/toast.component';
+import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, LucideAngularModule, ButtonDirective, ImagePlaceholderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, LucideAngularModule, ButtonDirective, ImagePlaceholderComponent, ProductCardComponent],
   template: `
-    <div class="max-w-6xl mx-auto px-4 py-8">
-      <div class="mb-4 text-xs text-text-muted flex items-center gap-2">
+    <div class="mx-auto max-w-7xl px-3 py-6 sm:px-4 sm:py-8">
+      <div class="mb-4 flex min-w-0 flex-wrap items-center gap-2 text-xs text-text-muted">
         <a routerLink="/" class="hover:text-steel-hover transition-colors">Trang chủ</a>
         <span>/</span>
         @if (product()) {
@@ -31,7 +33,7 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
         }
         @if (product()) {
           <span>/</span>
-          <span class="font-sans tabular-nums text-text-secondary">{{ product()!.name }}</span>
+          <span class="min-w-0 max-w-full truncate font-sans tabular-nums text-text-secondary">{{ product()!.name }}</span>
         }
       </div>
 
@@ -46,10 +48,144 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
         <div class="industrial-card p-8 text-center">
           <p class="font-heading text-sm font-bold text-text-primary mb-2">Không tìm thấy sản phẩm</p>
           <a routerLink="/products" class="text-xs font-medium text-steel hover:text-steel-hover hover:underline">
-            ← Quay lại danh mục
+            <span class="inline-flex items-center gap-1.5">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m0 0 6 6m-6-6 6-6" /></svg>
+              Quay lại danh mục
+            </span>
           </a>
         </div>
       } @else {
+        <section class="grid min-w-0 overflow-hidden rounded-[10px] border border-border bg-bg-elevated shadow-sm lg:grid-cols-12">
+          <div class="min-w-0 bg-bg-elevated p-4 sm:p-6 lg:col-span-7">
+            <div class="flex flex-col gap-3 md:flex-row">
+              @if (galleryImages().length > 1) {
+                <div class="no-scrollbar order-2 flex gap-2 overflow-x-auto md:order-1 md:w-20 md:shrink-0 md:flex-col md:overflow-y-auto">
+                  @for (img of galleryImages(); track img) {
+                    <button
+                      type="button"
+                      (click)="selectImage(img)"
+                      class="h-16 w-16 shrink-0 overflow-hidden rounded-[6px] border-2 bg-bg transition-colors sm:h-20 sm:w-20"
+                      [class]="activeImage() === img ? 'border-accent' : 'border-border hover:border-accent'"
+                      [attr.aria-label]="'Xem ảnh ' + product()!.name"
+                      [attr.aria-pressed]="activeImage() === img"
+                    >
+                      <img [src]="img" [alt]="product()!.name" class="h-full w-full object-cover" />
+                    </button>
+                  }
+                </div>
+              }
+              <div
+                class="relative order-1 flex min-h-[280px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[8px] border border-border bg-bg p-3 sm:min-h-[420px] sm:p-6"
+                (pointerdown)="startProductGalleryDrag($event)"
+                (pointermove)="moveProductGalleryDrag($event)"
+                (pointerup)="endProductGalleryDrag($event)"
+                (pointercancel)="endProductGalleryDrag($event)"
+              >
+                <span class="absolute right-3 top-3 z-10 rounded-full border border-border bg-bg-elevated px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-text-primary shadow-sm">
+                  {{ product()!.productType === 'CUSTOM_TEMPLATE' ? 'Gia công 3D' : 'Hàng có sẵn' }}
+                </span>
+                @if (activeImage() && !mainImageBroken()) {
+                  <img
+                    [src]="activeImage()!"
+                    [alt]="product()!.name"
+                    (error)="markGalleryImageBroken(activeImage()!)"
+                    (click)="openLightbox()"
+                    (keydown.enter)="openLightbox()"
+                    role="button"
+                    tabindex="0"
+                    draggable="false"
+                    class="max-h-[520px] w-full cursor-zoom-in select-none object-contain"
+                  />
+                } @else {
+                  <app-image-placeholder [sku]="product()!.sku" />
+                }
+                @if (galleryImages().length > 1) {
+                  <button type="button" (click)="navigateGallery(-1)" aria-label="Ảnh trước" class="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg-elevated/95 text-text-primary shadow hover:bg-surface-raised">
+                    <lucide-icon [img]="ChevronLeftIcon" [size]="18" />
+                  </button>
+                  <button type="button" (click)="navigateGallery(1)" aria-label="Ảnh tiếp theo" class="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg-elevated/95 text-text-primary shadow hover:bg-surface-raised">
+                    <lucide-icon [img]="ChevronRightIcon" [size]="18" />
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="flex min-w-0 flex-col bg-bg-elevated p-4 text-text-primary sm:p-8 lg:col-span-5 lg:rounded-none">
+            <p class="font-mono text-sm font-bold tracking-widest text-warning tabular-nums">{{ product()!.sku }}</p>
+            <h1 class="mt-2 break-words text-2xl font-bold leading-tight text-text-primary sm:text-3xl">{{ product()!.name }}</h1>
+            <p class="mt-2 text-sm text-text-secondary">{{ product()!.materialName || product()!.categoryName || 'Sản phẩm NVX' }}</p>
+            @if (product()!.shortDescription) {
+              <p class="mt-4 text-sm leading-6 text-text-secondary">{{ product()!.shortDescription }}</p>
+            }
+
+            <div class="mt-6 border-y border-border py-5">
+              @if (product()!.productType === 'STANDARD_ITEM') {
+                <div class="price-text break-words text-2xl font-bold tabular-nums sm:text-3xl">{{ product()!.basePrice | vnd }}</div>
+                <div class="mt-1 text-xs text-text-muted">Giá bán / cái</div>
+              } @else {
+                <div class="text-xl font-bold text-text-primary">Báo giá theo kích thước 3D</div>
+                <div class="mt-1 text-xs text-text-muted">Tùy chỉnh kích thước và vật liệu theo yêu cầu</div>
+              }
+            </div>
+
+            @if (product()!.productType === 'STANDARD_ITEM') {
+              <div class="mt-5">
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">Số lượng đặt nhanh</div>
+                <div class="flex flex-wrap items-center gap-2">
+                  @for (preset of [1, 5, 10]; track preset) {
+                    <button
+                      type="button"
+                      (click)="setQuantityPreset(preset)"
+                      class="rounded-[6px] border bg-bg-elevated px-3 py-2 text-sm text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:px-4"
+                      [class]="quantity === preset
+                        ? 'border-accent bg-accent font-semibold text-white hover:border-accent-hover hover:bg-accent-hover'
+                        : 'border-border bg-bg-elevated text-text-primary hover:border-accent hover:bg-accent hover:text-white'"
+                      [attr.aria-pressed]="quantity === preset"
+                    >{{ preset }} cái</button>
+                  }
+                  <div class="flex items-center overflow-hidden rounded-[6px] border border-border bg-bg-elevated">
+                    <button type="button" (click)="quantity = quantity > 1 ? quantity - 1 : 1" class="px-3 py-2 text-text-primary hover:bg-surface-raised" aria-label="Giảm số lượng">-</button>
+                    <input type="number" [(ngModel)]="quantity" min="1" class="w-14 border-x border-border bg-bg-elevated py-2 text-center text-sm text-text-primary focus:outline-none" aria-label="Số lượng" />
+                    <button type="button" (click)="quantity = quantity + 1" class="px-3 py-2 text-text-primary hover:bg-surface-raised" aria-label="Tăng số lượng">+</button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="mt-6 space-y-2 rounded-[8px] border border-border bg-surface p-3 text-sm sm:p-4">
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-3"><span class="text-text-secondary">Vật liệu</span><span class="break-words text-right text-text-primary">{{ product()!.materialName || 'Theo tùy chọn' }}</span></div>
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-3"><span class="text-text-secondary">Kích thước chuẩn</span><span class="break-words text-right font-mono tabular-nums text-text-primary">{{ product()!.defaultWidthMm || 80 }} × {{ product()!.defaultHeightMm || 40 }} × {{ product()!.defaultThicknessMm || 0.8 }} mm</span></div>
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-3"><span class="text-text-secondary">Gia công</span><span class="break-words text-right text-text-primary">{{ product()!.processingMethodName || 'Theo tùy chọn' }}</span></div>
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-3"><span class="text-text-secondary">Thời gian dự kiến</span><span class="break-words text-right text-text-primary">{{ product()!.productType === 'CUSTOM_TEMPLATE' ? '3–5 ngày làm việc' : 'Giao trong 24–48 giờ' }}</span></div>
+              @if (product()!.productType === 'STANDARD_ITEM') {
+                <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-3"><span class="text-text-secondary">Tình trạng kho</span><span class="break-words text-right text-text-primary">{{ (product()!.stockQuantity ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng' }}</span></div>
+              }
+            </div>
+
+            <div class="mt-6 space-y-3">
+              @if (authService.isAdmin()) {
+                <p class="text-sm text-text-secondary">Đang xem với tư cách quản trị viên</p>
+              } @else if (product()!.productType === 'CUSTOM_TEMPLATE') {
+                <a routerLink="/quote-builder" [queryParams]="quoteBuilderParams()" appButton variant="primary" size="lg" [fullWidth]="true">
+                  Mở trình thiết kế &amp; Báo giá 3D
+                </a>
+              } @else {
+                <button type="button" (click)="addToCart()" [disabled]="adding() || (product()!.stockQuantity ?? 0) <= 0" appButton variant="primary" size="lg" [fullWidth]="true">
+                  {{ adding() ? 'Đang thêm...' : 'Thêm vào giỏ hàng' }}
+                </button>
+              }
+              <div class="grid grid-cols-2 gap-3">
+                <button type="button" (click)="downloadSpecification()" class="min-h-10 rounded-[6px] border border-border px-3 text-center text-xs font-semibold text-text-primary transition-colors hover:border-accent hover:bg-surface-raised hover:text-accent">Tải bảng thông số</button>
+                <a href="tel:0989820101" class="flex min-h-10 items-center justify-center rounded-[6px] border border-border px-3 text-center text-xs font-semibold text-text-primary transition-colors hover:border-accent hover:bg-surface-raised hover:text-accent">Liên hệ tư vấn xưởng</a>
+              </div>
+              @if (addedNotice()) { <p class="text-sm font-medium text-success" role="status">Đã thêm vào giỏ hàng.</p> }
+              @if (actionError()) { <p class="text-sm text-danger" role="alert">{{ actionError() }}</p> }
+            </div>
+          </div>
+        </section>
+
+        <ng-template>
         <div class="industrial-card p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
           <!-- Gallery -->
           <div class="lg:col-span-6 space-y-3">
@@ -192,7 +328,7 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
                   @if (product()!.productType === 'STANDARD_ITEM') {
                     <tr>
                       <td class="px-3.5 py-2.5 text-text-secondary">Đơn giá niêm yết</td>
-                      <td class="px-3.5 py-2.5 font-sans tabular-nums text-base font-bold text-accent">
+                      <td class="price-text px-3.5 py-2.5 font-sans tabular-nums text-base font-bold text-accent">
                         {{ product()!.basePrice | vnd }}
                       </td>
                     </tr>
@@ -227,7 +363,8 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
                     variant="primary"
                     size="lg"
                   >
-                    Tùy chỉnh kích thước & Xem trước 3D →
+                    <span>Tùy chỉnh kích thước &amp; Xem trước 3D</span>
+                    <svg viewBox="0 0 24 24" class="ml-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
                   </a>
                 } @else {
                   <div class="flex flex-wrap items-center gap-3">
@@ -268,7 +405,12 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
 
                   @if (addedNotice()) {
                     <div class="mt-3 text-xs text-success font-medium">
-                      ✓ Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Xem giỏ hàng</a>
+                      <svg viewBox="0 0 24 24" class="mr-1 inline h-4 w-4 align-text-bottom" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h8.5a2 2 0 0 0 1.9-1.4L21 8H6" />
+                        <circle cx="10" cy="19" r="1.3" />
+                        <circle cx="18" cy="19" r="1.3" />
+                      </svg>
+                      Đã thêm vào giỏ hàng. <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Xem giỏ hàng</a>
                     </div>
                   }
                   @if (actionError()) {
@@ -289,6 +431,35 @@ import { ImagePlaceholderComponent } from '../../../shared/components/image-plac
               {{ product()!.description }}
             </div>
           </div>
+        }
+        </ng-template>
+
+        <section class="mt-8 rounded-[10px] border border-border bg-bg-elevated p-5 sm:p-7">
+          <h2 class="border-b border-border pb-3 text-lg font-bold text-text-primary">Thông số kỹ thuật chi tiết</h2>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">SKU</div><div class="mt-1 font-mono text-sm font-semibold text-text-primary">{{ product()!.sku }}</div></div>
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">Danh mục</div><div class="mt-1 text-sm font-semibold text-text-primary">{{ product()!.categoryName || 'Chưa phân loại' }}</div></div>
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">Vật liệu</div><div class="mt-1 text-sm font-semibold text-text-primary">{{ product()!.materialName || 'Theo tùy chọn' }}</div></div>
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">Kích thước chuẩn</div><div class="mt-1 font-mono text-sm font-semibold tabular-nums text-text-primary">{{ product()!.defaultWidthMm || 80 }} × {{ product()!.defaultHeightMm || 40 }} × {{ product()!.defaultThicknessMm || 0.8 }} mm</div></div>
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">Công nghệ gia công</div><div class="mt-1 text-sm font-semibold text-text-primary">{{ product()!.processingMethodName || 'Theo tùy chọn' }}</div></div>
+            <div class="rounded-[6px] bg-surface p-3"><div class="text-xs text-text-muted">Loại sản phẩm</div><div class="mt-1 text-sm font-semibold text-text-primary">{{ product()!.productType === 'CUSTOM_TEMPLATE' ? 'Gia công theo yêu cầu' : 'Hàng có sẵn' }}</div></div>
+          </div>
+          @if (product()!.description) {
+            <div class="mt-5 whitespace-pre-line text-sm leading-6 text-text-secondary">{{ product()!.description }}</div>
+          }
+        </section>
+
+        @if (relatedProducts().length) {
+          <section class="mt-10">
+            <h2 class="mb-5 text-lg font-bold text-text-primary">Sản phẩm cùng danh mục</h2>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              @for (related of relatedProducts(); track related.id) {
+                <app-product-card [product]="related" (addToCart)="addRelatedToCart($event)" />
+              }
+            </div>
+          </section>
+        } @else if (relatedError()) {
+          <p class="mt-6 text-sm text-text-secondary" role="status">{{ relatedError() }}</p>
         }
 
         @if (lightboxOpen() && activeImage() && !mainImageBroken()) {
@@ -364,6 +535,8 @@ export class ProductDetailComponent implements OnInit {
   readonly authService = inject(AuthService);
 
   readonly product = signal<Product | null>(null);
+  readonly relatedProducts = signal<Product[]>([]);
+  readonly relatedError = signal('');
   readonly galleryImages = computed(() => {
     const product = this.product();
     return [...new Set([product?.imageUrl, ...(product?.galleryUrls || []), ...(product?.images || [])]
@@ -384,6 +557,7 @@ export class ProductDetailComponent implements OnInit {
   readonly adding = signal(false);
   readonly addedNotice = signal(false);
   readonly actionError = signal('');
+  private readonly toast = inject(ToastService);
   quantity = 1;
   readonly ChevronLeftIcon = ChevronLeft;
   readonly ChevronRightIcon = ChevronRight;
@@ -407,6 +581,46 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  quoteBuilderParams(): Record<string, string | number | undefined> {
+    const p = this.product();
+    return {
+      productId: p?.id,
+      materialId: p?.materialId,
+      processingMethodId: p?.processingMethodId,
+      w: p?.defaultWidthMm || 80,
+      h: p?.defaultHeightMm || 40,
+      t: p?.defaultThicknessMm || 0.8,
+    };
+  }
+
+  setQuantityPreset(quantity: number): void {
+    const max = this.product()?.stockQuantity;
+    this.quantity = Math.min(quantity, max && max > 0 ? max : quantity);
+  }
+
+  downloadSpecification(): void {
+    const p = this.product();
+    if (!p) return;
+    const lines = [
+      `Tên sản phẩm: ${p.name}`,
+      `SKU: ${p.sku}`,
+      `Danh mục: ${p.categoryName || 'Chưa phân loại'}`,
+      `Vật liệu: ${p.materialName || 'Theo tùy chọn'}`,
+      `Kích thước chuẩn: ${p.defaultWidthMm || 80} x ${p.defaultHeightMm || 40} x ${p.defaultThicknessMm || 0.8} mm`,
+      `Công nghệ gia công: ${p.processingMethodName || 'Theo tùy chọn'}`,
+      `Thời gian dự kiến: ${p.productType === 'CUSTOM_TEMPLATE' ? '3-5 ngày làm việc' : 'Giao trong 24-48 giờ'}`,
+      `Giá: ${p.productType === 'STANDARD_ITEM' ? `${p.basePrice ?? 0} VND / cái` : 'Báo giá theo kích thước 3D'}`,
+      '',
+      p.description || p.shortDescription || '',
+    ];
+    const objectUrl = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `${p.sku}-thong-so.txt`;
+    link.click();
+    URL.revokeObjectURL(objectUrl);
+  }
+
   loadProduct(slug = this.route.snapshot.paramMap.get('slug') || ''): void {
     if (!slug) {
       this.loadError.set('Đường dẫn sản phẩm không hợp lệ.');
@@ -416,6 +630,8 @@ export class ProductDetailComponent implements OnInit {
       this.loading.set(true);
       this.loadError.set('');
       this.product.set(null);
+      this.relatedProducts.set([]);
+      this.relatedError.set('');
       this.activeImage.set(null);
       this.productCarouselPosition.set(0);
       this.lightboxOpen.set(false);
@@ -429,6 +645,18 @@ export class ProductDetailComponent implements OnInit {
             this.activeImage.set(this.galleryImages()[0] || null);
             this.productCarouselPosition.set(this.galleryImages().length > 1 ? 1 : 0);
             this.quantity = res.data.minOrderQuantity || 1;
+            if (res.data.categoryId) {
+              this.catalogApi.getProducts({ categoryId: res.data.categoryId, page: 0, size: 5 }).subscribe({
+                next: (relatedRes) => {
+                  if (relatedRes.success && relatedRes.data) {
+                    this.relatedProducts.set(relatedRes.data.content.filter((item) => item.id !== res.data!.id).slice(0, 4));
+                  } else {
+                    this.relatedError.set('Không thể tải sản phẩm cùng danh mục.');
+                  }
+                },
+                error: () => this.relatedError.set('Không thể tải sản phẩm cùng danh mục.'),
+              });
+            }
           } else {
             this.product.set(null);
             this.loadError.set('Không thể tải thông tin sản phẩm. Vui lòng thử lại.');
@@ -588,8 +816,11 @@ export class ProductDetailComponent implements OnInit {
     }
   }
 
-  addToCart(): void {
-    const p = this.product();
+  addRelatedToCart(product: Product): void {
+    this.addToCart(product, product.minOrderQuantity || 1);
+  }
+
+  addToCart(p = this.product(), quantity = this.quantity): void {
     if (!p || this.adding()) return;
     this.actionError.set('');
     if (!this.authService.isAuthenticated()) {
@@ -602,16 +833,25 @@ export class ProductDetailComponent implements OnInit {
       .addItem({
         itemType: 'STANDARD_ITEM',
         productId: p.id,
-        quantity: Math.max(1, Math.min(Number(this.quantity) || 1, p.stockQuantity ?? Number.MAX_SAFE_INTEGER)),
+        quantity: Math.max(1, Math.min(Number(quantity) || 1, p.stockQuantity ?? Number.MAX_SAFE_INTEGER)),
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.adding.set(false);
+          if (!res.success || !res.data) {
+            const message = res.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.';
+            this.actionError.set(message);
+            this.toast.show(message, 'error', 'Không thể thêm sản phẩm');
+            return;
+          }
           this.addedNotice.set(true);
+          this.toast.show(`"${p.name}" đã được thêm vào giỏ hàng của bạn.`, 'success', 'Đã thêm vào giỏ hàng', 'cart');
         },
-        error: () => {
+        error: (err) => {
           this.adding.set(false);
-          this.actionError.set('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
+          const message = err?.error?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.';
+          this.actionError.set(message);
+          this.toast.show(message, 'error', 'Không thể thêm sản phẩm');
         },
       });
   }

@@ -81,7 +81,7 @@ import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholde
             </a>
           } @else {
             <div class="flex items-baseline justify-between mb-3">
-              <span class="font-mono tabular-nums text-base font-bold text-accent">
+              <span class="price-text font-mono tabular-nums text-base font-bold text-accent">
                 {{ product.basePrice | vnd }}
               </span>
               <span class="text-xs font-mono tabular-nums text-text-muted">

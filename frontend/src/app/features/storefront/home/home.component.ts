@@ -10,6 +10,7 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
 import { ImagePlaceholderComponent } from '../../../shared/components/image-placeholder/image-placeholder.component';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
 import { ScrollRevealDirective } from '../../../shared/directives/scroll-reveal.directive';
+import { ToastService } from '../../../shared/components/toast/toast.component';
 
 interface VisualCategoryCard {
   title: string;
@@ -34,7 +35,7 @@ interface VisualCategoryCard {
   ],
   template: `
     <!-- SECTION 1: Full-Width Video Hero Banner (matches temnhaninox.com hero + 3D quote CTA) -->
-    <section class="relative w-full min-h-[460px] lg:min-h-[540px] flex items-center bg-[#142414] text-white overflow-hidden">
+    <section class="home-hero relative w-full min-h-[460px] lg:min-h-[540px] flex items-center bg-[#142414] text-white overflow-hidden">
       @if (!videoBroken()) {
         <video
           class="absolute inset-0 w-full h-full object-cover"
@@ -101,14 +102,8 @@ interface VisualCategoryCard {
     </section>
 
     <div class="max-w-7xl mx-auto px-4 py-12 space-y-16">
-      @if (toastMessage()) {
-        <div class="fixed bottom-4 left-4 z-50 bg-accent text-white px-5 py-3 rounded-[6px] text-sm font-semibold shadow-lg">
-          {{ toastMessage() }}
-        </div>
-      }
-
       <!-- SECTION 2: SẢN PHẨM CHÚNG TÔI (Exact OG 3-column + 2-column image gallery) -->
-      <section class="space-y-8" appScrollReveal>
+      <section class="home-reveal space-y-8" appScrollReveal>
         <h2 class="fs-section-title text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
           Sản Phẩm Chúng Tôi
         </h2>
@@ -117,7 +112,7 @@ interface VisualCategoryCard {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           @for (item of topVisualCategories; track item.title; let idx = $index) {
             <div
-              class="industrial-card group overflow-hidden flex flex-col hover:border-accent"
+              class="home-reveal industrial-card group overflow-hidden flex flex-col hover:border-accent"
               appScrollReveal
               [revealDelay]="idx * 80"
             >
@@ -165,7 +160,7 @@ interface VisualCategoryCard {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           @for (item of bottomVisualCategories; track item.title; let idx = $index) {
             <div
-              class="industrial-card group overflow-hidden flex flex-col hover:border-accent"
+              class="home-reveal industrial-card group overflow-hidden flex flex-col hover:border-accent"
               appScrollReveal
               [revealDelay]="idx * 90"
             >
@@ -211,7 +206,7 @@ interface VisualCategoryCard {
       </section>
 
       <!-- SECTION 3: VỀ CHÚNG TÔI (Exact OG 2-column rounded video + green heading split) -->
-      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center" appScrollReveal>
+      <section class="home-reveal grid grid-cols-1 lg:grid-cols-12 gap-8 items-center" appScrollReveal>
         <div class="lg:col-span-6">
           <div class="relative aspect-video rounded-[20px] overflow-hidden shadow-md border border-border bg-surface">
             @if (!videoBroken()) {
@@ -249,7 +244,7 @@ interface VisualCategoryCard {
           </h2>
           <div class="w-48 h-1.5 bg-steel rounded-full"></div>
           <p class="text-base text-text-secondary leading-relaxed">
-            KĨ NGHỆ NVX – SÀI GÒN hãnh diện là một trong những đơn vị tiên phong trong việc kết hợp giữa nghệ thuật thủ công truyền thống và công nghệ hiện đại. Chúng tôi không chỉ chú trọng đến việc sử dụng các phương pháp cổ điển như ăn mòn hoá chất và ăn mòn hoá lý để tạo ra những chi tiết tinh tế trên các chất liệu khác nhau, mà còn đầu tư mạnh mẽ vào các thiết bị tiên tiến như máy Laser Fiber, CNC, và công nghệ in UV lượng tử.
+            KĨ NGHỆ NVX - SÀI GÒN hãnh diện là một trong những đơn vị tiên phong trong việc kết hợp giữa nghệ thuật thủ công truyền thống và công nghệ hiện đại. Chúng tôi không chỉ chú trọng đến việc sử dụng các phương pháp cổ điển như ăn mòn hoá chất và ăn mòn hoá lý để tạo ra những chi tiết tinh tế trên các chất liệu khác nhau, mà còn đầu tư mạnh mẽ vào các thiết bị tiên tiến như máy Laser Fiber, CNC, và công nghệ in UV lượng tử.
           </p>
           <div class="pt-2">
             @if (authService.isAdmin()) {
@@ -331,7 +326,7 @@ interface VisualCategoryCard {
       </section>
 
       <!-- SECTION 5: LIVE CATALOG FEATURED PRODUCTS -->
-      <section class="space-y-6" appScrollReveal>
+      <section class="home-reveal space-y-6" appScrollReveal>
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
             <h2 class="text-2xl sm:text-3xl font-extrabold uppercase text-accent">
@@ -342,7 +337,8 @@ interface VisualCategoryCard {
             </p>
           </div>
           <a routerLink="/products" class="text-sm font-bold text-accent hover:text-accent-hover transition-colors">
-            Xem toàn bộ kho mẫu →
+            <span>Xem toàn bộ kho mẫu</span>
+            <svg viewBox="0 0 24 24" class="ml-1 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
           </a>
         </div>
 
@@ -381,7 +377,7 @@ interface VisualCategoryCard {
       <div class="absolute inset-0 bg-gradient-to-r from-bg/95 via-bg/85 to-bg/55"></div>
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 py-14 space-y-10">
-        <div class="max-w-2xl space-y-4">
+        <div class="home-reveal reveal-from-left max-w-2xl space-y-4" appScrollReveal [revealDelay]="100">
           <h2 class="text-2xl sm:text-3xl font-extrabold uppercase text-accent">
             DỰ ÁN CỦA CHÚNG TÔI
           </h2>
@@ -414,7 +410,7 @@ interface VisualCategoryCard {
         </div>
 
         <!-- 4 Big Green Counters -->
-        <div #statsGrid class="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-border">
+        <div #statsGrid class="home-reveal reveal-from-right grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-border" appScrollReveal [revealDelay]="260">
           @for (stat of workshopStats; track stat.label; let idx = $index) {
             <div>
               <div class="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-accent tabular-nums">
@@ -430,7 +426,7 @@ interface VisualCategoryCard {
     </section>
 
     <!-- SECTION 7: CHUẨN MỰC VỀ PHẨM CHẤT BANNER (matches OG bottom banner) -->
-    <section class="max-w-5xl mx-auto px-4 pt-12 text-center space-y-3" appScrollReveal>
+    <section class="home-reveal max-w-5xl mx-auto px-4 pt-12 text-center space-y-3" appScrollReveal>
       <h2 class="text-2xl sm:text-3xl font-extrabold uppercase text-accent">
         CHUẨN MỰC VỀ PHẨM CHẤT
       </h2>
@@ -475,7 +471,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly featuredProducts = signal<Product[]>([]);
   readonly loadingProducts = signal(true);
-  readonly toastMessage = signal('');
+  private readonly toast = inject(ToastService);
   readonly videoBroken = signal(false);
   readonly brokenImages = signal<Record<string, boolean>>({});
 
@@ -750,10 +746,18 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         quantity: 1,
       })
       .subscribe({
-        next: () => {
-          this.toastMessage.set(`Đã thêm "${product.name}" vào giỏ hàng.`);
-          setTimeout(() => this.toastMessage.set(''), 2500);
+        next: (res) => {
+          if (!res.success || !res.data) {
+            this.toast.show(res.message || 'Không thể thêm sản phẩm vào giỏ hàng.', 'error', 'Không thể thêm sản phẩm');
+            return;
+          }
+          this.toast.show(`"${product.name}" đã được thêm vào giỏ hàng của bạn.`, 'success', 'Đã thêm vào giỏ hàng', 'cart');
         },
+        error: (err) => this.toast.show(
+          err?.error?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.',
+          'error',
+          'Không thể thêm sản phẩm'
+        ),
       });
   }
 }

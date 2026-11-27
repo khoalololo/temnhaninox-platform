@@ -20,7 +20,10 @@ import { Component, HostListener, input, output } from '@angular/core';
       />
       <div class="flex items-center gap-3 text-sm text-white" (click)="$event.stopPropagation()">
         @if (caption()) { <span class="opacity-90">{{ caption() }}</span> }
-        <a [href]="url()" target="_blank" rel="noopener" class="rounded-md border border-white/40 px-3 py-1.5 hover:bg-white/10">Mở ảnh gốc ↗</a>
+        <a [href]="url()" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-md border border-white/40 px-3 py-1.5 hover:bg-white/10">
+          Mở ảnh gốc
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9" /><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" /></svg>
+        </a>
         <button type="button" (click)="closed.emit()" class="rounded-md border border-white/40 px-3 py-1.5 hover:bg-white/10">Đóng (Esc)</button>
       </div>
     </div>

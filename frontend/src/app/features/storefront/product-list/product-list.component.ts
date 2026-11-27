@@ -9,6 +9,7 @@ import { Category, Product, ProductType } from '../../../core/models/catalog.mod
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { ButtonDirective } from '../../../shared/components/button/button.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { ToastService } from '../../../shared/components/toast/toast.component';
 
 @Component({
   selector: 'app-product-list',
@@ -23,11 +24,6 @@ import { PaginatorComponent } from '../../../shared/components/paginator/paginat
             Hiển thị {{ products().length }} / {{ totalElements() }} mã sản phẩm
           </p>
         </div>
-        @if (toastMessage()) {
-          <div class="px-3 py-1.5 rounded-[6px] bg-surface border border-accent text-accent text-xs font-medium">
-            {{ toastMessage() }}
-          </div>
-        }
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -107,7 +103,10 @@ import { PaginatorComponent } from '../../../shared/components/paginator/paginat
                       class="w-full text-left pl-6 pr-2.5 py-1 rounded-[6px] transition-colors border text-[11px]"
                       [class]="selectedCategoryId === sub.id ? 'bg-surface-raised text-accent border-accent font-semibold' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-accent'"
                     >
-                      ↳ {{ sub.name }}
+                      <span class="mr-1 inline-flex align-middle text-text-muted" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 5v8a5 5 0 0 0 5 5h7m0 0-4-4m4 4-4 4" /></svg>
+                      </span>
+                      {{ sub.name }}
                     </button>
                   }
                 }
@@ -150,10 +149,9 @@ import { PaginatorComponent } from '../../../shared/components/paginator/paginat
             </div>
           } @else {
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              @for (product of products(); track product.id; let idx = $index) {
+              @for (product of products(); track product.id) {
                 <app-product-card
-                  class="product-grid-item block h-full"
-                  [style.animation-delay]="(idx < 6 ? idx : 5) * 40 + 'ms'"
+                  class="block h-full"
                   [product]="product"
                   (addToCart)="handleAddToCart($event)"
                 />
@@ -185,8 +183,7 @@ export class ProductListComponent implements OnInit {
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
-  readonly toastMessage = signal('');
-
+  private readonly toast = inject(ToastService);
   selectedCategoryId = '';
   selectedType: ProductType | '' = '';
   search = '';
@@ -276,10 +273,18 @@ export class ProductListComponent implements OnInit {
         quantity: 1,
       })
       .subscribe({
-        next: () => {
-          this.toastMessage.set(`Đã thêm "${product.name}" vào giỏ.`);
-          setTimeout(() => this.toastMessage.set(''), 2500);
+        next: (res) => {
+          if (!res.success || !res.data) {
+            this.toast.show(res.message || 'Không thể thêm sản phẩm vào giỏ hàng.', 'error', 'Không thể thêm sản phẩm');
+            return;
+          }
+          this.toast.show(`"${product.name}" đã được thêm vào giỏ hàng của bạn.`, 'success', 'Đã thêm vào giỏ hàng', 'cart');
         },
+        error: (err) => this.toast.show(
+          err?.error?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.',
+          'error',
+          'Không thể thêm sản phẩm'
+        ),
       });
   }
 }

@@ -18,7 +18,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (err.status === 401 && token) {
         authService.logout();
         router.navigate(['/login'], { queryParams: { expired: '1' } });
-      } else if (err.status >= 500 && router.url !== '/server-error') {
+      } else if (
+        err.status >= 500
+        && router.url !== '/server-error'
+        && !(req.url.includes('/api/v1/cart') && req.method !== 'GET')
+      ) {
         router.navigate(['/server-error'], { queryParams: { returnUrl: router.url } });
       }
       return throwError(() => err);

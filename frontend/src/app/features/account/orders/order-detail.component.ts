@@ -28,7 +28,10 @@ import {
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="mb-4 text-xs text-text-muted flex items-center gap-2">
-        <a routerLink="/account/orders" class="hover:text-steel-hover transition-colors">← Danh sách đơn hàng</a>
+        <a routerLink="/account/orders" class="inline-flex items-center gap-1.5 hover:text-steel-hover transition-colors">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m0 0 6 6m-6-6 6-6" /></svg>
+          Danh sách đơn hàng
+        </a>
         @if (order()) {
           <span>/</span>
           <span class="font-mono font-bold text-text-primary">{{ order()!.orderCode }}</span>
@@ -58,7 +61,7 @@ import {
         <div class="industrial-card p-5 mb-6">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-border">
             <div>
-              <div class="text-xs text-text-muted">Mã đơn hàng · đặt ngày {{ order()!.createdAt | date:'dd/MM/yyyy' }}</div>
+              <div class="text-[13px] text-text-secondary">Mã đơn hàng · đặt ngày {{ order()!.createdAt | date:'dd/MM/yyyy' }}</div>
               <div class="flex flex-wrap items-center gap-3">
                 <h1 class="font-heading text-2xl font-mono font-bold text-text-primary">{{ order()!.orderCode }}</h1>
                 <span class="tni-chip" [attr.data-tone]="statusTone(order()!.status)">{{ statusLabel(order()!.status) }}</span>
@@ -98,7 +101,13 @@ import {
                   [class.is-current]="isStepActive(step.key)"
                   [attr.aria-current]="isStepActive(step.key) ? 'step' : null"
                 >
-                  <span class="order-step-dot">{{ isStepCompleted(idx) ? '✓' : idx + 1 }}</span>
+                  <span class="order-step-dot">
+                    @if (isStepCompleted(idx)) {
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Đã hoàn thành"><path d="m5 12 4 4L19 6" /></svg>
+                    } @else {
+                      {{ idx + 1 }}
+                    }
+                  </span>
                   <span class="order-step-label">{{ step.label }}</span>
                 </li>
               }
@@ -126,15 +135,15 @@ import {
                   <tr>
                     <td>{{ item.itemName }}</td>
                     <td>{{ item.quantity }}</td>
-                    <td>{{ item.finalUnitPrice | vnd }}</td>
-                    <td>{{ item.lineTotal | vnd }}</td>
+                    <td class="price-text whitespace-nowrap">{{ item.finalUnitPrice | vnd }}</td>
+                    <td class="price-text whitespace-nowrap">{{ item.lineTotal | vnd }}</td>
                   </tr>
                 }
               </tbody>
             </table>
-            <p>Tạm tính: {{ order()!.subtotalAmount | vnd }}</p>
-            <p>VAT ({{ vatPercent() }}%): {{ order()!.vatAmount | vnd }}</p>
-            <h3>Tổng thanh toán: {{ order()!.totalAmount | vnd }}</h3>
+            <p>Tạm tính: <span class="price-text whitespace-nowrap">{{ order()!.subtotalAmount | vnd }}</span></p>
+            <p>VAT ({{ vatPercent() }}%): <span class="price-text whitespace-nowrap">{{ order()!.vatAmount | vnd }}</span></p>
+            <h3>Tổng thanh toán: <span class="price-text whitespace-nowrap">{{ order()!.totalAmount | vnd }}</span></h3>
             <p class="print-disclaimer">Bản tóm tắt này không thay thế hóa đơn điện tử do cơ quan thuế chấp thuận.</p>
           </section>
         }
@@ -163,14 +172,17 @@ import {
                         <img
                           [src]="item.prototypeImageUrl"
                           [alt]="'Ảnh mẫu thực tế của ' + item.itemName"
-                          class="w-full h-48 object-cover rounded-[6px] mb-2"
-                          [class.hidden]="prototypeImageErrorIds().has(item.id)"
-                          (load)="onPrototypeImageLoad(item.id)"
-                          (error)="onPrototypeImageError(item.id)"
+                          class="w-full h-48 object-contain rounded-[6px] mb-2"
+                          [class.hidden]="isPreviewBroken(item.prototypeImageUrl)"
+                          (load)="onPreviewImageLoad(item.prototypeImageUrl); onPrototypeImageLoad(item.id)"
+                          (error)="onPrototypeImageError(item.id, item.prototypeImageUrl)"
                         />
-                        @if (prototypeImageErrorIds().has(item.id)) {
-                          <div class="w-full min-h-48 mb-2 rounded-[6px] border border-danger/30 bg-danger/5 p-4 flex items-center justify-center text-center text-sm text-danger">
-                            Không tải được ảnh mẫu. Vui lòng tải lại trang hoặc liên hệ xưởng.
+                        @if (isPreviewBroken(item.prototypeImageUrl)) {
+                          <div class="mb-2 flex h-48 w-full items-center justify-center rounded-[6px] border border-border bg-surface text-text-muted" role="img" aria-label="Không tải được ảnh mẫu">
+                            <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                              <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                              <path d="M14 3.75v5h5M8.5 15l2.5-2.5 2 2 1.5-1.5 2.5 2.5" />
+                            </svg>
                           </div>
                         }
                         <div class="text-xs font-semibold text-text-primary">{{ item.itemName }}</div>
@@ -219,8 +231,8 @@ import {
                   <h2 class="font-heading text-sm font-bold uppercase tracking-wider text-text-primary">
                     Thanh Toán {{ paymentPhaseLabel() }}
                   </h2>
-                  <span class="font-mono tabular-nums text-base font-bold text-accent">
-                    Cần thanh toán: {{ payableNowAmount() | vnd }}
+                  <span class="whitespace-nowrap font-sans tabular-nums text-base font-bold text-accent">
+                    Cần thanh toán: <span class="price-text">{{ payableNowAmount() | vnd }}</span>
                   </span>
                 </div>
 
@@ -228,8 +240,8 @@ import {
                   <!-- Option 1: VNPAY Sandbox -->
                   <div class="border border-border rounded-[6px] p-4 flex flex-col justify-between bg-bg">
                     <div>
-                      <div class="text-xs font-semibold text-text-primary mb-1">Cổng thanh toán VNPAY / Thẻ ATM / QR</div>
-                      <p class="text-xs text-text-secondary mb-3">
+                      <div class="text-[13px] font-semibold text-text-primary mb-1">Cổng thanh toán VNPAY / Thẻ ATM / QR</div>
+                      <p class="text-[13px] text-text-secondary mb-3">
                         Xác nhận tự động ngay lập tức và chuyển trạng thái đơn hàng sang sản xuất.
                       </p>
                     </div>
@@ -242,14 +254,14 @@ import {
                       size="md"
                       [fullWidth]="true"
                     >
-                      Thanh toán qua VNPAY ({{ payableNowAmount() | vnd }})
+                      Thanh toán qua VNPAY (<span class="price-text whitespace-nowrap font-sans tabular-nums">{{ payableNowAmount() | vnd }}</span>)
                     </button>
                   </div>
 
                   <!-- Option 2: Bank Transfer Proof Upload -->
                   <div class="border border-border rounded-[6px] p-4 space-y-2.5 bg-bg">
-                    <div class="text-xs font-semibold text-text-primary">Chuyển khoản ngân hàng (Ủy nhiệm chi)</div>
-                    <div class="text-xs font-mono bg-surface border border-border p-2.5 rounded-[6px] text-text-secondary leading-relaxed">
+                    <div class="text-[13px] font-semibold text-text-primary">Chuyển khoản ngân hàng (Ủy nhiệm chi)</div>
+                    <div class="text-[13px] font-mono bg-surface border border-border p-2.5 rounded-[6px] text-text-secondary leading-relaxed">
                       ACB · STK: 88830468 · CTY TEM NHÃN INOX<br />
                       Nội dung: <span class="text-text-primary">{{ order()!.orderCode }}</span>
                     </div>
@@ -259,7 +271,7 @@ import {
                       placeholder="Mã giao dịch / Nội dung CK"
                       class="industrial-input w-full px-2.5 py-2 text-sm"
                     />
-                    <label class="block text-xs text-text-secondary" for="proof-file">Ảnh/PDF biên lai chuyển khoản</label>
+                    <label class="block text-[13px] text-text-secondary" for="proof-file">Ảnh/PDF biên lai chuyển khoản</label>
                     <input
                       id="proof-file"
                       type="file"
@@ -288,7 +300,7 @@ import {
               <div class="bg-surface-raised px-4 py-2.5 border-b border-border font-heading text-xs font-bold uppercase text-text-primary">
                 Chi Tiết Hạng Mục Gia Công ({{ order()!.items.length }})
               </div>
-              <div class="overflow-x-auto">
+              <div class="hidden overflow-x-auto sm:block">
               <table class="w-full text-sm text-left">
                 <thead class="border-b border-border text-text-muted text-xs uppercase tracking-wide">
                   <tr>
@@ -304,7 +316,7 @@ import {
                       <td class="px-4 py-3">
                         <div class="font-semibold text-text-primary">{{ item.itemName }}</div>
                         @if (item.widthMm) {
-                          <div class="font-mono text-[11px] text-text-secondary">
+                          <div class="font-sans tabular-nums text-[13px] text-text-secondary">
                             {{ item.materialNameSnapshot }} · {{ item.processingNameSnapshot }} ·
                             {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
                           </div>
@@ -313,33 +325,119 @@ import {
                           <div class="mt-2 flex flex-wrap gap-3">
                             @if (item.designFileUrl) {
                               @if (isImage(item.designFileUrl)) {
-                                <button type="button" class="tni-thumb" (click)="openPreview(item.designFileUrl, 'Bản vẽ thiết kế · ' + item.itemName)">
-                                  <img [src]="item.designFileUrl" alt="Bản vẽ thiết kế" loading="lazy" />
+                                <button type="button" class="tni-thumb order-file-thumb" [disabled]="isPreviewBroken(item.designFileUrl)" (click)="openPreview(item.designFileUrl, 'Bản vẽ thiết kế · ' + item.itemName)">
+                                  @if (!isPreviewBroken(item.designFileUrl)) {
+                                    <img [src]="item.designFileUrl" alt="Bản vẽ thiết kế" class="!h-16 !w-16 !rounded-md" loading="lazy" (load)="onPreviewImageLoad(item.designFileUrl)" (error)="onPreviewImageError(item.designFileUrl)" />
+                                  } @else {
+                                    <span class="tni-thumb-file !h-16 !w-16 !rounded-md" aria-label="Không tải được bản vẽ">
+                                      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                        <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                        <path d="M14 3.75v5h5M8.5 15l2.5-2.5 2 2 1.5-1.5 2.5 2.5" />
+                                      </svg>
+                                    </span>
+                                  }
                                   <span>Bản vẽ của bạn</span>
                                 </button>
                               } @else {
-                                <a class="tni-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener" style="cursor:pointer">
-                                  <span class="tni-thumb-file">{{ ext(item.designFileUrl) }}</span>
-                                  <span>Tải bản vẽ ↗</span>
+                                <a class="tni-thumb order-file-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener" style="cursor:pointer">
+                                  <span class="tni-thumb-file !h-16 !w-16 !rounded-md">
+                                    <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                      <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                      <path d="M14 3.75v5h5M8.5 13h7M8.5 16h7" />
+                                    </svg>
+                                  </span>
+                                  <span>Tải bản vẽ</span>
                                 </a>
                               }
                             }
                             @if (item.prototypeImageUrl) {
-                              <button type="button" class="tni-thumb" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
-                                <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế" loading="lazy" />
+                              <button type="button" class="tni-thumb order-file-thumb" [disabled]="isPreviewBroken(item.prototypeImageUrl)" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
+                                @if (!isPreviewBroken(item.prototypeImageUrl)) {
+                                  <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế" class="!h-16 !w-16 !rounded-md" loading="lazy" (load)="onPreviewImageLoad(item.prototypeImageUrl); onPrototypeImageLoad(item.id)" (error)="onPrototypeImageError(item.id, item.prototypeImageUrl)" />
+                                } @else {
+                                  <span class="tni-thumb-file !h-16 !w-16 !rounded-md" aria-label="Không tải được ảnh mẫu">
+                                    <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                      <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                      <path d="M14 3.75v5h5M8.5 15l2.5-2.5 2 2 1.5-1.5 2.5 2.5" />
+                                    </svg>
+                                  </span>
+                                }
                                 <span>Ảnh mẫu xưởng</span>
                               </button>
                             }
                           </div>
                         }
                       </td>
-                      <td class="px-3 py-3 text-right font-mono tabular-nums text-text-primary">{{ item.finalUnitPrice | vnd }}</td>
+                      <td class="price-text whitespace-nowrap px-3 py-3 text-right font-sans tabular-nums text-text-primary">{{ item.finalUnitPrice | vnd }}</td>
                       <td class="px-3 py-3 text-center font-mono tabular-nums text-text-primary">{{ item.quantity }}</td>
-                      <td class="px-4 py-3 text-right font-mono tabular-nums font-bold text-text-primary">{{ item.lineTotal | vnd }}</td>
+                      <td class="price-text whitespace-nowrap px-4 py-3 text-right font-sans tabular-nums font-bold text-text-primary">{{ item.lineTotal | vnd }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
+              </div>
+              <div class="divide-y divide-border sm:hidden">
+                @for (item of order()!.items; track item.id) {
+                  <article class="space-y-3 p-4">
+                    <div class="font-semibold text-text-primary">{{ item.itemName }}</div>
+                    @if (item.widthMm) {
+                      <div class="font-sans tabular-nums text-[13px] text-text-secondary">
+                        {{ item.materialNameSnapshot }} · {{ item.processingNameSnapshot }} · {{ item.widthMm }}×{{ item.heightMm }}×{{ item.thicknessMm }}mm
+                      </div>
+                    }
+                    <div class="flex flex-wrap gap-3">
+                      @if (item.designFileUrl) {
+                        @if (isImage(item.designFileUrl)) {
+                          <button type="button" class="tni-thumb order-file-thumb" [disabled]="isPreviewBroken(item.designFileUrl)" (click)="openPreview(item.designFileUrl, 'Bản vẽ thiết kế · ' + item.itemName)">
+                            @if (!isPreviewBroken(item.designFileUrl)) {
+                              <img [src]="item.designFileUrl" alt="Bản vẽ thiết kế" class="!h-16 !w-16 !rounded-md" loading="lazy" (load)="onPreviewImageLoad(item.designFileUrl)" (error)="onPreviewImageError(item.designFileUrl)" />
+                            } @else {
+                              <span class="tni-thumb-file !h-16 !w-16 !rounded-md" aria-label="Không tải được bản vẽ">
+                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                  <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                  <path d="M14 3.75v5h5M8.5 13h7M8.5 16h7" />
+                                </svg>
+                              </span>
+                            }
+                            <span>Bản vẽ của bạn</span>
+                          </button>
+                        } @else {
+                          <a class="tni-thumb order-file-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener">
+                            <span class="tni-thumb-file !h-16 !w-16 !rounded-md">
+                              <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                <path d="M14 3.75v5h5M8.5 13h7M8.5 16h7" />
+                              </svg>
+                            </span>
+                            <span>Bản vẽ của bạn</span>
+                          </a>
+                        }
+                      }
+                      @if (item.prototypeImageUrl) {
+                        <button type="button" class="tni-thumb order-file-thumb" [disabled]="isPreviewBroken(item.prototypeImageUrl)" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
+                          @if (!isPreviewBroken(item.prototypeImageUrl)) {
+                            <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế" class="!h-16 !w-16 !rounded-md" loading="lazy" (load)="onPreviewImageLoad(item.prototypeImageUrl); onPrototypeImageLoad(item.id)" (error)="onPrototypeImageError(item.id, item.prototypeImageUrl)" />
+                          } @else {
+                            <span class="tni-thumb-file !h-16 !w-16 !rounded-md">
+                              <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                <path d="M14 3.75v5h5M8.5 15l2.5-2.5 2 2 1.5-1.5 2.5 2.5" />
+                              </svg>
+                            </span>
+                          }
+                          <span>Ảnh mẫu xưởng</span>
+                        </button>
+                      }
+                    </div>
+                    <div class="flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface-raised p-3 text-[13px]">
+                      <span class="min-w-0 text-text-secondary">
+                        <span class="price-text whitespace-nowrap font-sans tabular-nums font-semibold text-text-primary">{{ item.finalUnitPrice | vnd }}</span>
+                        × {{ item.quantity }} =
+                      </span>
+                      <span class="price-text whitespace-nowrap font-sans tabular-nums font-bold text-text-primary">{{ item.lineTotal | vnd }}</span>
+                    </div>
+                  </article>
+                }
               </div>
             </div>
 
@@ -353,14 +451,23 @@ import {
                     <li class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
                       <div class="min-w-0 flex-1">
                         <div class="font-semibold text-text-primary text-sm">{{ phaseLabel(tx.paymentPhase) }}</div>
-                        <div class="text-xs text-text-secondary">{{ methodLabel(tx.paymentMethod) }}@if (tx.transactionRef) { · Mã GD: {{ tx.transactionRef }} } · {{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                        <div class="text-[13px] text-text-secondary break-words">{{ methodLabel(tx.paymentMethod) }}@if (tx.transactionRef) { · Mã GD: {{ tx.transactionRef }} } · {{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
                       </div>
                       @if (tx.proofImageUrl && isImage(tx.proofImageUrl)) {
-                        <button type="button" class="tni-thumb !w-14" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))" aria-label="Xem biên lai">
-                          <img [src]="tx.proofImageUrl" alt="Biên lai" class="!w-14 !h-10" loading="lazy" />
+                        <button type="button" class="tni-thumb order-file-thumb !w-16" [disabled]="isPreviewBroken(tx.proofImageUrl)" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))" aria-label="Xem biên lai">
+                          @if (!isPreviewBroken(tx.proofImageUrl)) {
+                            <img [src]="tx.proofImageUrl" alt="Biên lai" class="!h-16 !w-16 !rounded-md" loading="lazy" (error)="onPreviewImageError(tx.proofImageUrl)" />
+                          } @else {
+                            <span class="tni-thumb-file !h-16 !w-16 !rounded-md" aria-label="Không tải được biên lai">
+                              <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                                <path d="M14 3.75v5h5M8.5 13h7M8.5 16h7" />
+                              </svg>
+                            </span>
+                          }
                         </button>
                       }
-                      <span class="font-mono tabular-nums font-bold text-text-primary">{{ tx.amount | vnd }}</span>
+                      <span class="price-text whitespace-nowrap font-sans tabular-nums font-bold text-text-primary">{{ tx.amount | vnd }}</span>
                       <span class="tni-chip" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
                     </li>
                   }
@@ -371,38 +478,38 @@ import {
 
           <!-- Right 4 cols: Financials, VAT & Audit Log -->
           <div class="lg:col-span-4 space-y-6">
-            <div class="industrial-card p-5 space-y-3 text-xs">
+            <div class="industrial-card p-5 space-y-3 text-[13px]">
               <h2 class="font-heading font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5">
                 Tổng Kết Thanh Toán & VAT
               </h2>
               <div class="flex justify-between">
                 <span class="text-text-secondary">Tạm tính:</span>
-                <span class="font-mono tabular-nums text-text-primary">{{ order()!.subtotalAmount | vnd }}</span>
+                <span class="price-text whitespace-nowrap font-sans tabular-nums text-text-primary">{{ order()!.subtotalAmount | vnd }}</span>
               </div>
               @if (order()!.discountAmount > 0) {
                 <div class="flex justify-between text-success">
                   <span>Chiết khấu:</span>
-                  <span class="font-mono tabular-nums">-{{ order()!.discountAmount | vnd }}</span>
+                  <span class="price-text whitespace-nowrap font-sans tabular-nums">-{{ order()!.discountAmount | vnd }}</span>
                 </div>
               }
               <div class="flex justify-between">
                 <span class="text-text-secondary">Thuế VAT ({{ vatPercent() }}%):</span>
-                <span class="font-mono tabular-nums text-text-primary">{{ order()!.vatAmount | vnd }}</span>
+                <span class="price-text whitespace-nowrap font-sans tabular-nums text-text-primary">{{ order()!.vatAmount | vnd }}</span>
               </div>
               <div class="border-t border-border pt-2 flex justify-between font-bold text-sm">
                 <span class="text-text-primary">Tổng cộng:</span>
-                <span class="font-mono tabular-nums text-text-primary">{{ order()!.totalAmount | vnd }}</span>
+                <span class="price-text whitespace-nowrap font-sans tabular-nums text-text-primary">{{ order()!.totalAmount | vnd }}</span>
               </div>
               <div class="flex justify-between text-success font-semibold">
                 <span>Đã thanh toán:</span>
-                <span class="font-mono tabular-nums">{{ order()!.paidAmount | vnd }}</span>
+                <span class="price-text whitespace-nowrap font-sans tabular-nums">{{ order()!.paidAmount | vnd }}</span>
               </div>
               <div class="flex justify-between text-accent font-bold">
                 <span>Còn lại:</span>
-                <span class="font-mono tabular-nums">{{ remainingAmount() | vnd }}</span>
+                <span class="price-text whitespace-nowrap font-sans tabular-nums">{{ remainingAmount() | vnd }}</span>
               </div>
               <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid()" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid()"></span></div>
-              <div class="text-right text-[11px] text-text-muted">Đã thanh toán {{ percentPaid() }}%</div>
+              <div class="text-right text-[13px] text-text-secondary">Đã thanh toán {{ percentPaid() }}%</div>
 
               @if (order()!.estimatedCompletionDate) {
                 <div class="mt-3 pt-3 border-t border-border space-y-1 bg-bg border rounded-[6px] p-2.5">
@@ -428,7 +535,7 @@ import {
             </div>
 
             <!-- Status Audit Timeline -->
-            <div class="industrial-card p-5 space-y-3 text-xs">
+            <div class="industrial-card p-5 space-y-3 text-[13px]">
               <h2 class="font-heading font-bold uppercase tracking-wider text-text-primary border-b border-border pb-2.5">
                 Nhật Ký Tiến Độ Đơn Hàng
               </h2>
@@ -436,8 +543,8 @@ import {
                 @for (log of order()!.statusLogs; track log.id; let last = $last) {
                   <li [class.is-last]="last">
                     <div class="font-semibold text-text-primary text-sm">{{ statusLabel(log.toStatus) }}</div>
-                    @if (log.note) { <div class="text-text-secondary">{{ log.note }}</div> }
-                    <div class="text-[11px] text-text-muted tabular-nums">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                    @if (log.note) { <div class="text-[13px] text-text-secondary">{{ log.note }}</div> }
+                    <div class="text-[13px] text-text-secondary tabular-nums">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
                   </li>
                 }
               </ol>
@@ -485,7 +592,7 @@ export class OrderDetailComponent implements OnInit {
   readonly notice = signal('');
   readonly error = signal('');
   readonly prototypeImageLoadedIds = signal(new Set<string>());
-  readonly prototypeImageErrorIds = signal(new Set<string>());
+  readonly failedPreviewUrls = signal(new Set<string>());
 
   readonly preview = signal<{ url: string; caption: string } | null>(null);
   readonly statusLabel = orderStatusLabel;
@@ -510,7 +617,24 @@ export class OrderDetailComponent implements OnInit {
   }
 
   openPreview(url: string | undefined, caption: string): void {
-    if (url) this.preview.set({ url, caption });
+    if (url && !this.isPreviewBroken(url)) this.preview.set({ url, caption });
+  }
+
+  isPreviewBroken(url: string | undefined): boolean {
+    return !!url && this.failedPreviewUrls().has(url);
+  }
+
+  onPreviewImageLoad(url: string | undefined): void {
+    if (!url) return;
+    this.failedPreviewUrls.update((urls) => {
+      const next = new Set(urls);
+      next.delete(url);
+      return next;
+    });
+  }
+
+  onPreviewImageError(url: string | undefined): void {
+    if (url) this.failedPreviewUrls.update((urls) => new Set(urls).add(url));
   }
 
   bankRef = '';
@@ -582,21 +706,16 @@ export class OrderDetailComponent implements OnInit {
   }
 
   onPrototypeImageLoad(itemId: string): void {
-    this.prototypeImageErrorIds.update((ids) => {
-      const next = new Set(ids);
-      next.delete(itemId);
-      return next;
-    });
     this.prototypeImageLoadedIds.update((ids) => new Set(ids).add(itemId));
   }
 
-  onPrototypeImageError(itemId: string): void {
+  onPrototypeImageError(itemId: string, url?: string): void {
+    this.onPreviewImageError(url);
     this.prototypeImageLoadedIds.update((ids) => {
       const next = new Set(ids);
       next.delete(itemId);
       return next;
     });
-    this.prototypeImageErrorIds.update((ids) => new Set(ids).add(itemId));
   }
 
   canApprovePrototype(): boolean {

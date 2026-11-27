@@ -1,4 +1,4 @@
-# Tem Nhãn Inox Platform — Engineering & Agent Guidelines
+# Tem Nhãn Inox Platform - Engineering & Agent Guidelines
 
 ## 1. Tech Stack & Local Infrastructure
 - **Backend**: Java 17, Spring Boot 3.3.5, Spring Cloud 2023.0.3, Maven multi-module (`backend/pom.xml`).
@@ -8,7 +8,7 @@
   - Schema DDL is already initialized via `infra/postgres/init.sql`. Always set `spring.jpa.hibernate.ddl-auto=validate`. Never use `create` or `update`.
 - **Object Storage**: S3-compatible SeaweedFS running in Docker on `http://localhost:9000` (credentials in `infra/.env`). Configure AWS SDK v2 `S3Client` with `forcePathStyle(true)`.
 - **Service Ports**:
-  - `api-gateway`: `8080` (Spring Cloud Gateway WebFlux — never add `spring-boot-starter-web` here)
+  - `api-gateway`: `8080` (Spring Cloud Gateway WebFlux - never add `spring-boot-starter-web` here)
   - `auth-service`: `8081`
   - `catalog-pricing-service`: `8082`
   - `order-service`: `8083`
@@ -19,6 +19,7 @@
 - **Cross-Schema Isolation**: Never create JPA `@ManyToOne` / `@OneToMany` relationships or DB foreign keys across different PostgreSQL schemas. Store cross-service IDs as plain `UUID` columns alongside immutable snapshot fields (e.g., `materialNameSnapshot`, `finalUnitPrice`).
 - **Spring Conventions**: Use constructor injection (`@RequiredArgsConstructor`), Jakarta validation (`@Valid`), `BigDecimal` for all currency/weight/dimension math (`RoundingMode.HALF_UP`), and a `@RestControllerAdvice` returning `ApiResponse` on every service.
 - **Security Headers**: `api-gateway` validates JWTs and injects `X-User-Id` and `X-User-Role` headers downstream. Downstream services trust those headers for authenticated endpoints.
+- **UI Iconography and Punctuation**: Do not render arrows, checkmarks, crosses, emoji, or decorative icon glyphs as text on any page. Use inline SVG artwork for visual icons, with accessible labels where the icon conveys meaning. Use plain words for transitions and navigation copy. Do not use em dashes as UI punctuation; use commas, periods, colons, or a regular hyphen where grammatically appropriate. Preserve meaningful mathematical notation and normal language punctuation.
 - **No Unsolicited Git Commits**: Never run `git commit` or `git push`. Leave changes staged or unstaged for manual review.
 
 ## 3. Mandatory Task Execution & Tracking Protocol

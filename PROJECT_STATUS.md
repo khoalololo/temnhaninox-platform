@@ -1,10 +1,10 @@
-# Tem Nhãn Inox — Implementation Progress Tracker
+# Tem Nhãn Inox - Implementation Progress Tracker
 
-## Current Phase: Phase 5 (End-to-End Integration & Verification) — all feature phases written; verification in progress
+## Current Phase: Phase 5 (End-to-End Integration & Verification) - all feature phases written; verification in progress
 
-**Last updated: 2026-11-27.** Owner-confirmed: `mvn test` passes on all modules (through Phases B/E/F) and Google sign-in works. Not yet done: `node scripts/e2e-smoke.mjs`, `docker compose up --build`, manual UC-01 and UC-03–UC-16, and `mvn test` for the newest backend change (Phase G5, uncompiled by the author). See `docs/feature_completion_plan.md` for the detailed spec, use-case table and open questions.
+**Last updated: 2026-11-27.** Owner-confirmed: `mvn test` passes on all modules (through Phases B/E/F) and Google sign-in works. Not yet done: `node scripts/e2e-smoke.mjs`, `docker compose up --build`, manual UC-01 and UC-03-UC-16, and `mvn test` for the newest backend change (Phase G5, uncompiled by the author). See `docs/feature_completion_plan.md` for the detailed spec, use-case table and open questions.
 
-**Owner decisions recorded 2026-11-27:** 1 ly = 1 mm; the 5,000,000 đ/m² thin-sheet rate applies to metals only (Mica/Decal need their own rate — value still to be provided); this project is the previous SE project, not the capstone.
+**Owner decisions recorded 2026-11-27:** 1 ly = 1 mm; the 5,000,000 đ/m² thin-sheet rate applies to metals only (Mica/Decal need their own rate - value still to be provided); this project is the previous SE project, not the capstone.
 
 ### Phase 0: Infrastructure & Workspace Setup [COMPLETED]
 - [x] Monorepo structure (`infra/`, `backend/`, `frontend/`) & `.gitignore`
@@ -25,31 +25,31 @@
 - [x] Entities & repositories (`Category`, `Material`, `ProcessingMethod`, `MaterialProcessingRule`, `Product`, `PricingRule`) mapped to `catalog_pricing_schema` with `ddl-auto=validate`
 - [x] Deterministic `PricingEngineService` (thin metal `<= 1mm` area × rate vs. thick metal `> 1mm` mass x price/kg x 5 formula; non-metal materials (Mica/Decal) use their own per-material đ/m² rate and are refused until one is configured; `1,000+` bulk discount, `10%` VAT, `50%` deposit)
 - [x] Public catalog (`GET /api/v1/catalog/categories`, `/materials`, `/products`, `/products/{slug}`), quote (`POST /api/v1/quotes/calculate`), S3 upload (`POST /api/v1/files/upload` with `forcePathStyle(true)` and auto-bucket creation), and Admin CRUD endpoints (`/api/v1/admin/catalog/**`, `GET/PUT /api/v1/admin/pricing/rules`)
-- [x] JUnit 5 pricing formula & S3 upload tests passing (`mvn test -pl catalog-pricing-service`: 10/10 passed — 7 `PricingEngineServiceTest`, 3 `S3StorageServiceTest`)
+- [x] JUnit 5 pricing formula & S3 upload tests passing (`mvn test -pl catalog-pricing-service`: 10/10 passed - 7 `PricingEngineServiceTest`, 3 `S3StorageServiceTest`)
 
-### Phase 3A: `order-service` (8083) — Cart & Checkout Core [COMPLETED]
+### Phase 3A: `order-service` (8083) - Cart & Checkout Core [COMPLETED]
 - [x] `pom.xml`, `application.yml` (`order_schema`, `ddl-auto=validate`, `app.services.catalog-url`), and `OrderServiceApplication`
 - [x] JPA entities & repositories (`Cart`, `CartItem`, `Order`, `OrderItem`, `PaymentTransaction`, `OrderStatusLog`) mapped to `order_schema`
 - [x] `CatalogPricingClient` using Spring `RestClient` (`POST /api/v1/quotes/calculate`, `GET /api/v1/catalog/products`, `GET /api/v1/catalog/materials`)
 - [x] Persistent cart service & controller (`GET /api/v1/cart`, `POST /api/v1/cart/items`, `PUT /api/v1/cart/items/{itemId}` with `1,000+` bulk recalculation, `DELETE /api/v1/cart/items/{itemId}`, `DELETE /api/v1/cart`)
 - [x] Checkout & customer order query endpoints (`POST /api/v1/orders/checkout` with snapshot freezing, `TNI-YYYYMMDD-XXXX` order code, VAT validation, 50% vs. 100% deposit logic; `GET /api/v1/orders`, `GET /api/v1/orders/{id}`) and `GlobalExceptionHandler`
-- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 12/12 passed — 5 `CartServiceTest`, 4 `OrderServiceTest`, 3 `OrderControllerTest`)
+- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 12/12 passed - 5 `CartServiceTest`, 4 `OrderServiceTest`, 3 `OrderControllerTest`)
 
-### Phase 3B: `order-service` (8083) — State Machine, Payments & Notifications [COMPLETED]
+### Phase 3B: `order-service` (8083) - State Machine, Payments & Notifications [COMPLETED]
 - [x] Customer workflow & payment endpoints (`POST /api/v1/orders/{id}/approve-prototype`, `POST /api/v1/orders/{id}/cancel`, `POST /api/v1/orders/{id}/payments/proof`) with immutable `OrderStatusLog` audit entries
 - [x] Admin order cockpit (`AdminOrderController`, `AdminOrderService`) enforcing `X-User-Role: ADMIN`: `GET /api/v1/admin/orders` (filterable by `status`, `orderType`, `search`), `GET /api/v1/admin/orders/{id}`, `PATCH /api/v1/admin/orders/{id}/quote` (item price override + total/VAT/50% deposit recalculation), `POST /api/v1/admin/orders/{id}/items/{itemId}/prototype`, `PATCH /api/v1/admin/orders/{id}/status` (7-step state machine + deposit gate before `IN_PRODUCTION` + `productionWorkerNote`), `PATCH /api/v1/admin/orders/{id}/vat-invoice`, `PATCH /api/v1/admin/payments/{paymentId}/verify`
 - [x] VNPAY sandbox integration (`POST /api/v1/payments/vnpay/create-url`, `GET /api/v1/payments/vnpay-return` with `HMAC-SHA512` signature verification and auto-advance to `IN_PRODUCTION`)
 - [x] Async `TelegramNotificationService` (`@Async` + `RestClient`, no-ops safely when credentials are blank) for new custom quotes & payment proofs
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
-- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 39/39 passed — includes admin/customer role-separation controller tests)
+- [x] JUnit 5 tests passing (`mvn test -pl order-service`: 39/39 passed - includes admin/customer role-separation controller tests)
 
-### Phase 4A: Angular 18+ — Core App Shell & Auth [COMPLETE]
+### Phase 4A: Angular 18+ - Core App Shell & Auth [COMPLETE]
 - [x] Top header/navbar layout with search bar, category quick-links, cart button, theme toggle, and login trigger
 - [x] `AuthService` (signals/localStorage), HTTP JWT interceptor & route guards (`authGuard`, `adminGuard`)
 - [x] Login/Register pages and Customer Profile / Saved VAT Profiles
-- [x] Forgot/Reset password flow & Google OAuth sign-in (implemented in Phase B; Google verified working by the owner, reset flow still to be checked with Mailpit — UC-01)
+- [x] Forgot/Reset password flow & Google OAuth sign-in (implemented in Phase B; Google verified working by the owner, reset flow still to be checked with Mailpit - UC-01)
 
-### Phase 4B: Angular 18+ — Storefront & Cart [IMPLEMENTED; MANUAL UC CHECKS PENDING]
+### Phase 4B: Angular 18+ - Storefront & Cart [IMPLEMENTED; MANUAL UC CHECKS PENDING]
 - [x] Landing page hero + category grid + workshop gallery
 - [x] `/products` filterable catalog (search by keyword/SKU, filter by `STANDARD_ITEM` vs `CUSTOM_TEMPLATE`, nested category tree sidebar, `CatalogApiService` `images[]` normalization with `(error)` placeholder fallback, `font-sans tabular-nums` readability styling on prices/dimensions)
 - [x] `/products` pagination, data-driven category mega-menu, responsive mobile drawer, and `/products/:slug` gallery/specification/CTA page
@@ -57,11 +57,11 @@
 - [x] Shopping cart view
 - [x] Consistent list/detail loading, empty, retry/error states; search autocomplete; shared toast notifications; static About/Contact and custom 404/500 views
 
-### Phase 4C: Angular 18+ — 3-Panel 3D Quote Builder [COMPLETED]
+### Phase 4C: Angular 18+ - 3-Panel 3D Quote Builder [COMPLETED]
 - [x] Standalone `Nameplate3dViewerComponent` (Three.js WebGL canvas, dynamic width/height/thickness scaling, metallic PBR shaders for Inox/Nhôm/Đồng/Mica, logo `artworkDataUrl` texture mapping, `.cdr`/CAD filename badge, camera presets, corner rivets)
 - [x] Live pricing receipt wired to `/api/v1/quotes/calculate`, SeaweedFS file upload, and Add-to-Cart (`QuoteBuilderComponent`)
 
-### Phase 4D: Angular 18+ — Checkout, Order Tracker & Admin Cockpit [COMPLETED]
+### Phase 4D: Angular 18+ - Checkout, Order Tracker & Admin Cockpit [COMPLETED]
 - [x] Streamlined checkout (`/checkout`) with cart item summary, 50% deposit vs. 100% payment breakdown, saved VAT profile auto-fill, and VAT 10% accordion
 - [x] Customer 7-step timeline (`/account/orders/:id`) with `CANCELLED` state banner, `estimatedCompletionDate`, sample approval, VNPAY redirect, and bank transfer receipt upload
 - [x] Admin cockpit (`/admin` dashboard KPIs, order management queue & inspector drawer with per-item unit price override, prototype upload, deposit-gated status transitions, VAT invoice number, pricing rule editor, and paginated/filterable product create/edit/delete/image upload)
@@ -77,16 +77,16 @@
 - [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`
 - [x] Admin/customer separation: backend denies ADMIN access to cart, customer order, and VNPAY create-url routes; customer route flows remain enabled. `mvn test -pl order-service` passed (39/39), and frontend `npm run build` passed.
 
-### Phase E: Hardening [MERGED — `mvn test` passes (owner-run); stack start-up on an empty DB not yet verified]
+### Phase E: Hardening [MERGED - `mvn test` passes (owner-run); stack start-up on an empty DB not yet verified]
 - [x] VNPAY IPN endpoint + amount verification + idempotent processing (+4 unit tests)
 - [x] Secret fallbacks removed from main config; dev defaults moved to `application-dev.yml`; admin seed from `ADMIN_EMAIL`/`ADMIN_PASSWORD`
 - [x] Flyway baselines per service; `init.sql` made non-destructive; `infra/postgres/dev-reset.sql` added; `infra/.env.example` added
-- [x] Run `mvn test` (all modules) — passed (owner)
+- [x] Run `mvn test` (all modules) - passed (owner)
 - [ ] Start every service on the existing DB and on an empty DB
 - [x] Gateway-only network exposure written in `infra/docker-compose.yml` (not yet run)
-- [ ] Manual UC-03..UC-12 and the full quote → deposit → production → completion run (Phase 5)
+- [ ] Manual UC-03..UC-12 and the full quote to deposit to production to completion run (Phase 5)
 
-### Phase B + Docker wiring [MERGED — Google sign-in verified; reset flow and Docker not yet run]
+### Phase B + Docker wiring [MERGED - Google sign-in verified; reset flow and Docker not yet run]
 - [x] Forgot/reset password + Google sign-in (backend, Flyway V2, frontend pages, Mailpit)
 - [x] Dockerfiles for api-gateway/auth/catalog/order/frontend; gateway route URLs from env; compose S3_* names fixed
 - [x] `mvn test` passed (owner)
@@ -94,21 +94,22 @@
 - [ ] UC-01 (Mailpit)
 - [x] UC-02 Google sign-in works (owner, 2026-11-27)
 
-### Phase F: Automated verification [MERGED — unit tests pass; smoke script not run yet]
+### Phase F: Automated verification [MERGED - unit tests pass; smoke script not run yet]
 - [x] Fix: COMPLETED now requires the full balance verified (+2 tests); JaCoCo + pricing boundary tests (+2)
 - [x] `scripts/e2e-smoke.mjs` end-to-end lifecycle + guards + IPN
 - [x] `mvn test` passed (owner)
 - [ ] Start the stack, run `node scripts/e2e-smoke.mjs`, fix whatever it reports
 
 ### Phase G: Admin Kanban, UI/UX polish, image previews, per-material pricing (branch `feature/kanban-and-gaps`) [FRONTEND BUILT + SCREENSHOT-CHECKED; BACKEND PART NOT COMPILED]
-- [x] Admin Kanban board at `/admin/board` — columns per status, drag simple steps (`IN_PRODUCTION → READY_FOR_DELIVERY → COMPLETED`), cancel by drag, one-click next-step buttons, search/type filter, 60 s refresh, balance guard mirrored for `COMPLETED`; steps that need data open the inspector
+- [x] Site-wide UI glyph cleanup: replaced visible text arrows and status marks with inline SVGs or plain text; the iconography rule is recorded in `.junie/guidelines.md` and `docs/feature_completion_plan.md`
+- [x] Admin Kanban board at `/admin/board` - columns per status, drag simple steps (`IN_PRODUCTION to READY_FOR_DELIVERY to COMPLETED`), cancel by drag, one-click next-step buttons, search/type filter, 60 s refresh, balance guard mirrored for `COMPLETED`; steps that need data open the inspector
 - [x] Shared UI primitives (`.tni-*` classes, `shared/utils/order-ui.ts`, `app-image-lightbox`): status/type/payment chips, progress bars, switches, avatars, thumbnails, empty states, sticky tables
 - [x] Admin cockpit polish: orders (status pills, chips, payment progress, previews of customer design / prototype / payment proof), pricing (new “Giá theo vật liệu” panel), products (thumbnails, stock chips, on/off switch, button actions), customers (avatars, status chips)
 - [x] Customer order screens: card list with “cần thao tác” hints and filters; detail with numbered stepper, localized timeline, correct VAT %, payment history, previewable images; the internal `productionWorkerNote` is no longer shown to customers
 - [x] Bug fixes found during review: VAT rate displayed as `0.1%` instead of `10%`; raw enum names in the customer timeline and admin inspector; native checkbox for product visibility
-- [x] Pricing: 5,000,000 đ/m² is metal-only; per-material rate for Mica/Decal (Flyway `V2__material_specific_thin_sheet_rate.sql`, `PricingEngineService`, +1 test, 1 test updated) — **uncompiled; run `mvn test -pl catalog-pricing-service`**
+- [x] Pricing: 5,000,000 đ/m² is metal-only; per-material rate for Mica/Decal (Flyway `V2__material_specific_thin_sheet_rate.sql`, `PricingEngineService`, +1 test, 1 test updated) - **uncompiled; run `mvn test -pl catalog-pricing-service`**
 - [x] `ng build` passes; screenshots reviewed at 1440 px light, 1440 px dark and 390 px dark using mocked API responses
 - [ ] Run `mvn test` for catalog-pricing-service; apply the V2 migration to your DB (Flyway does this on start)
-- [ ] Enter the Mica/Decal đ/m² in Admin → Định giá (needs the uncle's number) — until then mica quotes return a validation error
+- [ ] Enter the Mica/Decal đ/m² in Admin to Định giá (needs the uncle's number) - until then mica quotes return a validation error
 - [ ] Verify UC-13 (Kanban drag-and-drop in a real browser), UC-14, UC-15, UC-16
 - [ ] Open: customer-visible progress note separate from the internal worker note (backend change in order-service); Kanban has no touch drag (use buttons on phones)

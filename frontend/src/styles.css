@@ -314,6 +314,20 @@ html[data-theme="dark"] {
     border-color: var(--color-border);
   }
 
+  .admin-page .tni-table thead th {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+  }
+
+  .admin-page .tni-table tbody td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
   .pagination-bar {
     border-top: 1px solid var(--color-border);
     background: var(--color-bg-elevated);
@@ -426,43 +440,130 @@ html[data-theme="dark"] {
 
   .group:hover .fs-img-zoom,
   .fs-img-zoom-container:hover .fs-img-zoom {
-    transform: scale(1.06);
+    transform: scale(1.12);
   }
 
-  @keyframes fadeInUp {
+  .fs-img-zoom {
+    transition: transform 2200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeSlideLeft {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateX(-120px) scale(0.96);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes fadeSlideRight {
+    from {
+      opacity: 0;
+      transform: translateX(120px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(120px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   }
 
   .product-grid-item {
     opacity: 0;
-    animation: fadeInUp 300ms ease-out forwards;
+    animation: fadeSlideLeft 2200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .product-grid-item:nth-child(4n + 2) {
+    animation-name: fadeSlideRight;
+  }
+
+  .product-grid-item:nth-child(4n + 3) {
+    animation-name: fadeSlideUp;
+  }
+
+  .product-grid-item:nth-child(4n + 4) {
+    animation-name: fadeSlideUp;
   }
 
   .hero-stagger {
     opacity: 0;
-    animation: fadeInUp 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: fadeSlideLeft 2500ms cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: var(--hero-delay, 0ms);
+  }
+
+  .hero-stagger:nth-child(4n + 2) {
+    animation-name: fadeSlideRight;
+  }
+
+  .hero-stagger:nth-child(4n + 3) {
+    animation-name: fadeSlideUp;
+  }
+
+  .hero-stagger:nth-child(4n + 4) {
+    animation-name: fadeSlideUp;
   }
 
   .reveal-on-scroll {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(120px) scale(0.97);
     transition:
-      opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+      opacity 1500ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 1500ms cubic-bezier(0.16, 1, 0.3, 1);
     transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .reveal-on-scroll:nth-child(4n + 2) {
+    transform: translateX(-120px) scale(0.97);
+  }
+
+  .reveal-on-scroll:nth-child(4n + 3) {
+    transform: translateX(120px) scale(0.97);
+  }
+
+  .reveal-on-scroll:nth-child(4n + 4) {
+    transform: translateY(120px) scale(0.97);
   }
 
   .reveal-on-scroll.is-revealed {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(0) scale(1);
+  }
+
+  .home-hero .hero-stagger {
+    animation-duration: 2500ms;
+  }
+
+  .home-reveal .fs-img-zoom {
+    transition-duration: 2200ms;
+  }
+
+  .home-reveal.reveal-on-scroll {
+    transition-duration: 2500ms;
+  }
+
+  .home-reveal.reveal-from-left {
+    transform: translateX(-180px) scale(0.97);
+  }
+
+  .home-reveal.reveal-from-right {
+    transform: translateX(180px) scale(0.97);
+  }
+
+  .home-reveal.reveal-from-left.is-revealed,
+  .home-reveal.reveal-from-right.is-revealed {
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -475,7 +576,7 @@ html[data-theme="dark"] {
   scrollbar-width: none;
 }
 
-/* ───────── Shared UI primitives (admin + customer order screens) ───────── */
+/* Shared UI primitives (admin + customer order screens) */
 @layer components {
   .tni-chip {
     --tone: var(--color-text-secondary);
@@ -581,8 +682,10 @@ html[data-theme="dark"] {
     text-align: left;
     cursor: zoom-in;
     color: var(--color-text-secondary);
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
+  .order-file-thumb { width: 4rem; }
+  .order-file-thumb:disabled { cursor: default; opacity: 0.75; }
   .tni-thumb img,
   .tni-thumb .tni-thumb-file {
     width: 6.5rem;
@@ -685,6 +788,39 @@ html[data-theme="dark"] {
 /* keep row actions clear of the floating contact buttons on wide screens */
 @media (min-width: 1100px) {
   .tni-table tbody td:last-child, .tni-table thead th:last-child { padding-right: 4.25rem; }
+  .admin-page .tni-table tbody td:last-child,
+  .admin-page .tni-table thead th:last-child { padding-right: 1rem; }
 }
 
 .tni-table tbody td:first-child { min-width: 9.5rem; }
+
+.price-text {
+  color: #ff0000;
+}
+
+/* Remove subtle horizontal separators while preserving vertical and full-box borders. */
+.border-t,
+.border-b,
+.border-y {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+.divide-y > :not(:first-child) {
+  border-top-color: transparent !important;
+}
+
+hr,
+.pagination-bar,
+.tni-table thead th,
+.tni-table tbody td,
+.admin-page table tbody tr {
+  border-color: transparent;
+}
+
+.pagination-bar,
+.tni-table thead th,
+.tni-table tbody td {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+}

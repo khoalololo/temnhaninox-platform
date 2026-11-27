@@ -15,7 +15,10 @@ import { AuthService } from '../../core/services/auth.service';
         <div class="industrial-card mt-6 space-y-4 p-6 text-sm leading-relaxed text-text-secondary">
           <p>Kĩ Nghệ NVX chuyên gia công tem nhãn và sản phẩm theo yêu cầu trên chất liệu Inox, Nhôm, Đồng, Mica và Decal.</p>
           <p>Xưởng kết hợp kỹ thuật gia công chính xác với quy trình duyệt mẫu thực tế, báo giá minh bạch và hỗ trợ xuất hóa đơn điện tử theo thông tin đơn hàng.</p>
-          <a routerLink="/products" class="font-semibold text-steel hover:underline">Khám phá sản phẩm →</a>
+          <a routerLink="/products" class="inline-flex items-center gap-1 font-semibold text-steel hover:underline">
+            Khám phá sản phẩm
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
+          </a>
         </div>
       </main>
     } @else if (page === 'contact') {
@@ -29,7 +32,10 @@ import { AuthService } from '../../core/services/auth.service';
           @if (authService.isAdmin()) {
             <p class="text-sm text-text-muted">Đang xem với tư cách quản trị viên</p>
           } @else {
-            <a routerLink="/quote-builder" class="inline-flex font-semibold text-steel hover:underline">Tạo yêu cầu báo giá →</a>
+            <a routerLink="/quote-builder" class="inline-flex items-center gap-1 font-semibold text-steel hover:underline">
+              Tạo yêu cầu báo giá
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
+            </a>
           }
         </div>
       </main>

@@ -111,7 +111,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                       (change)="onSelectSavedVat($event)"
                       class="industrial-input w-full px-2.5 py-1.5 text-xs"
                     >
-                      <option value="">-- Nhập thủ công hoặc chọn hồ sơ --</option>
+                      <option value="">Nhập thủ công hoặc chọn hồ sơ</option>
                       @for (vp of vatProfiles(); track vp.id) {
                         <option [value]="vp.id">{{ vp.taxCode }} - {{ vp.companyName }}</option>
                       }
@@ -180,7 +180,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                         </div>
                       }
                     </div>
-                    <div class="font-mono tabular-nums font-semibold text-text-primary shrink-0">
+                    <div class="price-text font-mono tabular-nums font-semibold text-text-primary shrink-0">
                       {{ item.lineTotal | vnd }}
                     </div>
                   </div>
@@ -197,28 +197,28 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               </div>
               <div class="flex justify-between text-text-secondary">
                 <span>Tạm tính:</span>
-                <span class="font-mono tabular-nums font-medium text-text-primary">
+                <span class="price-text font-mono tabular-nums font-medium text-text-primary">
                   {{ cartService.cart()!.estimatedSubtotal | vnd }}
                 </span>
               </div>
               @if (requiresVatInvoice) {
                 <div class="flex justify-between text-text-secondary">
                   <span>Thuế VAT (10%):</span>
-                  <span class="font-mono tabular-nums text-text-primary">
+                  <span class="price-text font-mono tabular-nums text-text-primary">
                     {{ cartService.cart()!.estimatedSubtotal * 0.1 | vnd }}
                   </span>
                 </div>
               }
               <div class="border-t border-border pt-3 flex justify-between items-baseline">
                 <span class="font-semibold text-text-primary">Tổng thanh toán dự kiến:</span>
-                <span class="font-mono tabular-nums text-lg font-bold text-accent">
+                <span class="price-text font-mono tabular-nums text-lg font-bold text-accent">
                   {{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1)) | vnd }}
                 </span>
               </div>
 
               <div class="p-2.5 rounded-[6px] bg-surface-raised border border-border text-[11px] text-text-secondary">
                 @if (hasCustomItems()) {
-                  Đơn có hạng mục gia công 3D: Cần <strong class="text-accent">cọc 50%</strong> ({{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1) * 0.5) | vnd }}) sau khi duyệt mẫu thực tế.
+                  Đơn có hạng mục gia công 3D: Cần <strong class="text-accent">cọc 50%</strong> (<span class="price-text">{{ (cartService.cart()!.estimatedSubtotal * (requiresVatInvoice ? 1.1 : 1) * 0.5) | vnd }}</span>) sau khi duyệt mẫu thực tế.
                 } @else {
                   Đơn hàng kho có sẵn: Thanh toán <strong class="text-accent">100%</strong> trước khi giao hàng.
                 }
@@ -238,7 +238,10 @@ import { ButtonDirective } from '../../shared/components/button/button.component
           </button>
 
           <a routerLink="/cart" class="block text-center text-xs text-steel hover:text-steel-hover transition-colors">
-            ← Quay lại chỉnh sửa giỏ hàng
+            <span class="inline-flex items-center gap-1.5">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m0 0 6 6m-6-6 6-6" /></svg>
+              Quay lại chỉnh sửa giỏ hàng
+            </span>
           </a>
         </div>
       </form>

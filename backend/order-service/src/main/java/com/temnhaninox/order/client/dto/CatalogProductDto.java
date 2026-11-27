@@ -1,6 +1,8 @@
 package com.temnhaninox.order.client.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,5 +31,7 @@ public class CatalogProductDto {
     private BigDecimal widthMm;
     private BigDecimal heightMm;
     private BigDecimal thicknessMm;
+    @JsonProperty("isActive")
+    @JsonAlias("active")
     private boolean active;
 }

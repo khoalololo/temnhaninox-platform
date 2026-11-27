@@ -39,7 +39,10 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
         }
 
         <div class="mt-5 pt-4 border-t border-border text-xs">
-          <a routerLink="/login" class="font-semibold text-steel hover:text-steel-hover hover:underline">← Quay lại đăng nhập</a>
+          <a routerLink="/login" class="inline-flex items-center gap-1.5 font-semibold text-steel hover:text-steel-hover hover:underline">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m0 0 6 6m-6-6 6-6" /></svg>
+            Quay lại đăng nhập
+          </a>
         </div>
       </div>
     </div>

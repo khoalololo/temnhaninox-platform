@@ -86,7 +86,7 @@ class CartServiceTest {
                 .stockQuantity(50)
                 .active(true)
                 .build();
-        when(catalogPricingClient.findProductById(productId)).thenReturn(Optional.of(product));
+        when(catalogPricingClient.findActiveProductById(productId)).thenReturn(Optional.of(product));
 
         AddCartItemRequest request = AddCartItemRequest.builder()
                 .itemType(ItemType.STANDARD_ITEM)
@@ -115,7 +115,7 @@ class CartServiceTest {
                 .stockQuantity(2)
                 .active(true)
                 .build();
-        when(catalogPricingClient.findProductById(productId)).thenReturn(Optional.of(product));
+        when(catalogPricingClient.findActiveProductById(productId)).thenReturn(Optional.of(product));
 
         AddCartItemRequest request = AddCartItemRequest.builder()
                 .itemType(ItemType.STANDARD_ITEM)

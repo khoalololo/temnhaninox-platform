@@ -30,9 +30,9 @@ const CANCELLABLE: OrderStatus[] = [
   'QUOTE_PENDING', 'QUOTE_APPROVED', 'PROTOTYPING', 'AWAITING_DEPOSIT', 'IN_PRODUCTION', 'READY_FOR_DELIVERY',
 ];
 const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
-  QUOTE_APPROVED: 'Cần đính kèm ảnh mẫu hoặc chờ khách — mở đơn để xử lý.',
-  PROTOTYPING: 'Khách phải duyệt mẫu — mở đơn để xem.',
-  AWAITING_DEPOSIT: 'Đơn tự chuyển sang sản xuất khi xác nhận đủ tiền cọc — mở đơn để xác nhận thanh toán.',
+  QUOTE_APPROVED: 'Cần đính kèm ảnh mẫu hoặc chờ khách. Mở đơn để xử lý.',
+  PROTOTYPING: 'Khách phải duyệt mẫu. Mở đơn để xem.',
+  AWAITING_DEPOSIT: 'Đơn tự chuyển sang sản xuất khi xác nhận đủ tiền cọc. Mở đơn để xác nhận thanh toán.',
   IN_PRODUCTION: 'Đơn chỉ vào sản xuất sau khi xác nhận cọc.',
 };
 
@@ -50,7 +50,7 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
       transition: border-color 160ms ease, background-color 160ms ease, opacity 160ms ease;
     }
     .col { border-top: 3px solid var(--stage, var(--color-border)); }
-    .col-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--color-border); position: sticky; top: 0; }
+    .col-head { padding: 12px 14px 10px; position: sticky; top: 0; }
     .col-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
     .col.drop-ok { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface)); }
     .col.drop-ok .col-body { outline: 2px dashed var(--color-accent); outline-offset: -6px; border-radius: 8px; }
@@ -97,7 +97,7 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
           <div class="text-sm text-text-muted mb-1">Quản trị</div>
           <h1 class="font-heading text-2xl sm:text-3xl font-semibold text-text-primary">Bảng tiến độ đơn hàng</h1>
           <p class="text-sm text-text-secondary mt-1">
-            Kéo thả để chuyển bước đơn giản (sản xuất → sẵn sàng giao → hoàn tất). Các bước cần dữ liệu sẽ mở chi tiết đơn.
+            Kéo thả để chuyển bước đơn giản: sản xuất, sẵn sàng giao, hoàn tất. Các bước cần dữ liệu sẽ mở chi tiết đơn.
           </p>
         </div>
         <nav class="flex flex-wrap gap-2" aria-label="Chế độ xem đơn hàng">
@@ -193,7 +193,7 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
                     <div class="mt-0.5 text-xs text-text-muted">{{ o.itemCount }} mặt hàng</div>
 
                     <div class="mt-3 flex items-baseline justify-between">
-                      <span class="font-semibold tabular-nums text-text-primary">{{ o.totalAmount | vnd }}</span>
+                      <span class="price-text font-semibold tabular-nums text-text-primary">{{ o.totalAmount | vnd }}</span>
                       <span class="text-xs tabular-nums text-text-muted">{{ paidPercent(o) }}% đã thu</span>
                     </div>
                     <div class="bar mt-1.5" [class.full]="paidPercent(o) >= 100" role="progressbar"
@@ -226,7 +226,7 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
                 }
                 @if (hiddenCount(col) > 0) {
                   <a routerLink="/admin" class="text-center text-xs font-medium text-accent hover:underline py-1">
-                    +{{ hiddenCount(col) }} đơn khác — xem trong danh sách
+                    +{{ hiddenCount(col) }} đơn khác. Xem trong danh sách
                   </a>
                 }
               }
@@ -383,9 +383,9 @@ export class AdminOrderBoardComponent implements OnInit {
     if (!to) return null;
     if (to === 'COMPLETED') {
       const unpaid = Number(o.paidAmount) < Number(o.totalAmount);
-      return { to, label: '→ Hoàn tất', blocked: unpaid ? 'Chưa thu đủ tiền' : undefined };
+      return { to, label: 'Hoàn tất', blocked: unpaid ? 'Chưa thu đủ tiền' : undefined };
     }
-    return { to, label: '→ Sẵn sàng giao' };
+    return { to, label: 'Sẵn sàng giao' };
   }
 
   isDraggable(o: OrderSummary): boolean {
@@ -450,7 +450,7 @@ export class AdminOrderBoardComponent implements OnInit {
 
   move(o: OrderSummary, to: OrderStatus): void {
     if (to === 'COMPLETED' && Number(o.paidAmount) < Number(o.totalAmount)) {
-      this.toast.show('Chưa thu đủ tiền — không thể hoàn tất đơn.', 'error');
+      this.toast.show('Chưa thu đủ tiền. Không thể hoàn tất đơn.', 'error');
       return;
     }
     if (to === 'CANCELLED' && !confirm(`Hủy đơn ${o.orderCode}? Thao tác này không hoàn tác được.`)) return;
@@ -462,7 +462,7 @@ export class AdminOrderBoardComponent implements OnInit {
       next: (res) => {
         this.moving.set(null);
         if (res.success) {
-          this.toast.show(`Đơn ${o.orderCode} → ${this.label(to)}`, 'success');
+          this.toast.show(`Đơn ${o.orderCode} đã chuyển sang ${this.label(to)}.`, 'success');
           this.load(true);
         } else {
           this.applyLocal({ ...o, status: to }, from);

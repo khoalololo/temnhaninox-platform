@@ -88,7 +88,7 @@ public class CatalogPricingClient {
         }
     }
 
-    public Optional<CatalogProductDto> findProductById(UUID productId) {
+    public Optional<CatalogProductDto> findActiveProductById(UUID productId) {
         if (productId == null) {
             return Optional.empty();
         }

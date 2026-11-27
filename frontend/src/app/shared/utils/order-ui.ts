@@ -25,7 +25,7 @@ const STATUS_TONE: Record<OrderStatus, ChipTone> = {
 };
 
 export function orderStatusLabel(status: string | undefined | null): string {
-  return (status && ORDER_STATUS_LABEL[status as OrderStatus]) || status || '—';
+  return (status && ORDER_STATUS_LABEL[status as OrderStatus]) || status || 'Chưa xác định';
 }
 
 export function orderStatusTone(status: string | undefined | null): ChipTone {

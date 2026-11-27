@@ -1,7 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, Phone, MessageCircle, MapPin, Mail, Globe } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth.service';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-footer',
@@ -114,38 +116,42 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
     </footer>
 
-    <!-- Floating Contact Dock (Maps, WhatsApp/Zalo, Phone — matching OG right-side dock) -->
-    <div class="fixed bottom-4 right-4 z-40 flex flex-col gap-2.5">
+    <!-- Floating contact links -->
+    @if (!hideContactDock()) {
+    <div class="fixed bottom-5 right-5 z-40 flex flex-col gap-3 sm:bottom-6 sm:right-6 sm:gap-3.5">
       <a
         [href]="googleMapsUrl"
         target="_blank"
         rel="noopener noreferrer"
         title="Mở bản đồ Google Maps"
-        class="w-11 h-11 rounded-full bg-[#187115] text-white hover:bg-[#1e8a1b] flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-[#187115] text-white shadow-lg transition-transform hover:scale-110 hover:bg-[#1e8a1b] sm:h-16 sm:w-16"
       >
-        <lucide-icon [img]="MapPinIcon" [size]="20" />
+        <lucide-icon [img]="MapPinIcon" [size]="25" />
       </a>
       <a
         href="https://wa.me/84989820101"
         target="_blank"
         rel="noopener noreferrer"
         title="Chat WhatsApp / Zalo: 098 98 20 101"
-        class="w-11 h-11 rounded-full bg-[#25D366] text-white hover:opacity-95 flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 hover:opacity-95 sm:h-16 sm:w-16"
       >
-        <lucide-icon [img]="MessageIcon" [size]="20" />
+        <lucide-icon [img]="MessageIcon" [size]="25" />
       </a>
       <a
         href="tel:0989820101"
         title="Gọi Hotline: 098 98 20 101"
-        class="w-11 h-11 rounded-full bg-[#d32f2f] text-white hover:opacity-95 flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-[#d32f2f] text-white shadow-lg transition-transform hover:scale-110 hover:opacity-95 sm:h-16 sm:w-16"
       >
-        <lucide-icon [img]="PhoneIcon" [size]="20" />
+        <lucide-icon [img]="PhoneIcon" [size]="25" />
       </a>
     </div>
+    }
   `,
 })
 export class FooterComponent {
   readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  readonly hideContactDock = signal(this.shouldHideContactDock());
   readonly googleMapsUrl = 'https://maps.app.goo.gl/UVxYp5FyTrhiHvpL7';
   readonly PhoneIcon = Phone;
   readonly MessageIcon = MessageCircle;
@@ -154,4 +160,18 @@ export class FooterComponent {
   readonly GlobeIcon = Globe;
 
   readonly logoBroken = signal(false);
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => this.hideContactDock.set(this.shouldHideContactDock()));
+  }
+
+  private shouldHideContactDock(): boolean {
+    return this.router.url.startsWith('/admin')
+      || (this.router.url.startsWith('/account') && this.authService.isAuthenticated());
+  }
 }

@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
         class="pagination-bar flex items-center justify-between gap-3 px-4 py-4 text-sm font-sans tabular-nums"
       >
         <button type="button" class="pagination-step" [disabled]="page <= 0" (click)="selectPage(page - 1)">
-          <span aria-hidden="true">←</span><span class="hidden sm:inline">Trước</span>
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m0 0 6 6m-6-6 6-6" /></svg><span class="hidden sm:inline">Trước</span>
         </button>
         <ol class="flex items-center justify-center gap-1.5 overflow-x-auto px-1" aria-label="Trang">
           @for (p of visiblePages(); track $index) {
@@ -35,7 +35,7 @@ import { CommonModule } from '@angular/common';
           }
         </ol>
         <button type="button" class="pagination-step" [disabled]="page + 1 >= totalPages" (click)="selectPage(page + 1)">
-          <span class="hidden sm:inline">Sau</span><span aria-hidden="true">→</span>
+          <span class="hidden sm:inline">Sau</span><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
         </button>
       </nav>
     }

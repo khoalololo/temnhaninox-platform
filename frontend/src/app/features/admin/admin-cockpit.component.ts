@@ -39,7 +39,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent, ImageLightboxComponent],
   template: `
-    <div class="admin-page max-w-[1440px] mx-auto px-4 py-8 space-y-7">
+    <div class="admin-page mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-7">
       <!-- Header & Tabs -->
       <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 border-b border-border pb-5">
         <div>
@@ -125,7 +125,7 @@ import {
               </div>
               <div class="px-5 py-4 col-span-2 md:col-span-1">
                 <dt class="text-sm text-text-secondary">Doanh thu tháng này</dt>
-                <dd class="mt-1 text-xl font-semibold tabular-nums text-text-primary">{{ stats.monthlyRevenue | vnd }}</dd>
+                <dd class="price-text mt-1 text-xl font-semibold tabular-nums text-text-primary">{{ stats.monthlyRevenue | vnd }}</dd>
               </div>
             </dl>
             @if (!stats.pendingQuotesCount && !stats.awaitingDepositCount && !stats.inProductionCount && !stats.vatPendingCount) {
@@ -140,28 +140,33 @@ import {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <!-- Orders Queue -->
           <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="industrial-card overflow-hidden">
-            <div class="px-5 py-4 bg-surface border-b border-border space-y-3">
-              <div class="flex flex-wrap gap-2" role="group" aria-label="Lọc theo trạng thái">
-                @for (opt of statusOptions; track opt.value) {
-                  <button type="button" class="tni-pill-filter" [attr.aria-pressed]="statusFilter === opt.value" (click)="setStatusFilter(opt.value)">{{ opt.label }}</button>
-                }
-              </div>
-              <div class="flex flex-wrap items-center gap-3">
+            <div class="px-3 py-3 bg-surface border-b border-border sm:px-5 sm:py-4">
+              <div class="flex flex-nowrap items-center gap-2">
+                <select
+                  [ngModel]="statusFilter"
+                  (ngModelChange)="setStatusFilter($event)"
+                  aria-label="Lọc theo trạng thái đơn hàng"
+                  class="industrial-input w-[9.5rem] shrink-0 text-sm"
+                >
+                  @for (opt of statusOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
                 <input
                   type="search"
                   [(ngModel)]="searchFilter"
                   (keyup.enter)="resetOrdersPage()"
                   placeholder="Tìm mã đơn / tên khách..."
-                  class="industrial-input flex-1 min-w-[220px]"
+                  class="industrial-input min-w-0 flex-1 text-sm"
                 />
-                <button type="button" (click)="resetOrdersPage()" appButton variant="secondary" size="sm">Tìm</button>
+                <button type="button" (click)="resetOrdersPage()" appButton variant="secondary" size="sm" class="shrink-0">Tìm</button>
               </div>
             </div>
 
             @if (ordersLoading()) {
               <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải đơn hàng"></div>
             } @else {
-            <div class="overflow-x-auto">
+            <div class="hidden overflow-x-auto md:block">
               <table class="tni-table">
                 <thead>
                   <tr>
@@ -177,32 +182,61 @@ import {
                   @for (ord of orders(); track ord.id) {
                     <tr class="clickable" [class.is-selected]="selectedOrder()?.id === ord.id" (click)="openOrder(ord.id)">
                       <td>
-                        <div class="font-mono font-semibold text-text-primary">{{ ord.orderCode }}</div>
+                        <div class="font-sans text-sm font-semibold tabular-nums text-text-primary">{{ ord.orderCode }}</div>
                         <div class="mt-1 flex flex-wrap items-center gap-1.5">
                           <span class="tni-chip no-dot" data-tone="muted">{{ typeLabel(ord.orderType) }}</span>
                           @if (ord.requiresVatInvoice) { <span class="tni-chip no-dot" data-tone="danger">VAT</span> }
                         </div>
                       </td>
                       <td class="text-text-primary">
-                        {{ ord.recipientName }}
-                        <div class="text-xs text-text-muted">{{ ord.itemCount }} mặt hàng · {{ ord.createdAt | date:'dd/MM/yyyy' }}</div>
+                        <span class="text-sm font-semibold text-text-primary">{{ ord.recipientName }}</span>
+                        <div class="text-[13px] text-text-secondary">{{ ord.itemCount }} mặt hàng · {{ ord.createdAt | date:'dd/MM/yyyy' }}</div>
                       </td>
                       <td><span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span></td>
                       @if (!selectedOrder()) {
                         <td class="min-w-[9rem]">
                           <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid(ord)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid(ord)"></span></div>
-                          <div class="mt-1 text-xs text-text-muted tabular-nums">{{ percentPaid(ord) }}% đã thu</div>
+                          <div class="mt-1 text-[13px] font-sans font-medium tabular-nums text-text-secondary">{{ percentPaid(ord) }}% đã thu</div>
                         </td>
                       }
-                      <td class="text-right font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</td>
+                      <td class="price-text text-right font-sans font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</td>
                       <td class="text-right"><span class="tni-row-action">Xử lý</span></td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
+            <div class="space-y-3 p-3 md:hidden">
+              @for (ord of orders(); track ord.id) {
+                <button
+                  type="button"
+                  (click)="openOrder(ord.id)"
+                  [attr.aria-label]="'Xử lý đơn hàng ' + ord.orderCode"
+                  class="block w-full rounded-[8px] border border-border bg-bg-elevated p-4 text-left transition-colors hover:border-accent"
+                  [class.border-accent]="selectedOrder()?.id === ord.id"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="break-words font-sans text-sm font-semibold tabular-nums text-text-primary">{{ ord.orderCode }}</div>
+                      <div class="mt-1 truncate text-sm text-text-secondary">{{ ord.recipientName }}</div>
+                    </div>
+                    <span class="tni-chip shrink-0" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
+                  </div>
+                  <div class="mt-3 flex items-end justify-between gap-3 border-t border-border pt-3">
+                    <div class="min-w-0">
+                      <div class="text-[13px] text-text-secondary">{{ ord.itemCount }} mặt hàng · {{ ord.createdAt | date:'dd/MM/yyyy' }}</div>
+                      <div class="price-text mt-1 text-sm font-sans font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</div>
+                    </div>
+                    <span class="shrink-0 text-sm font-semibold text-accent">Xử lý</span>
+                  </div>
+                </button>
+              }
+            </div>
             @if (!ordersLoading() && !orders().length) {
-              <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">▤</span><strong class="text-text-primary">Không có đơn hàng phù hợp</strong><span>Thử đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm.</span></div>
+              <div class="tni-empty">
+                <svg viewBox="0 0 24 24" class="tni-empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3.75h7l5 5v11.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" /><path d="M14 3.75v5h5M8.5 13h7M8.5 16h7" /></svg>
+                <strong class="text-text-primary">Không có đơn hàng phù hợp</strong><span>Thử đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm.</span>
+              </div>
             }
             <app-paginator
               [page]="ordersPage()"
@@ -221,7 +255,10 @@ import {
                   <span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
                 </div>
                 <button type="button" (click)="selectedOrder.set(null)" appButton variant="ghost" size="xs">
-                  ✕ Đóng
+                  <span class="inline-flex items-center gap-1">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
+                    Đóng
+                  </span>
                 </button>
               </div>
 
@@ -259,7 +296,7 @@ import {
                       <span class="min-w-0 text-sm leading-5 font-semibold text-text-primary break-words">
                         {{ item.itemName }} <span class="font-sans tabular-nums font-semibold text-text-secondary">(×{{ item.quantity }})</span>
                       </span>
-                      <span class="shrink-0 self-start rounded-md border border-success/30 bg-success/10 px-3 py-1.5 font-sans tabular-nums text-sm font-semibold text-success">
+                      <span class="price-text shrink-0 self-start rounded-md border border-success/30 bg-success/10 px-3 py-1.5 font-sans tabular-nums text-sm font-semibold text-success">
                         {{ item.lineTotal | vnd }}
                       </span>
                     </div>
@@ -279,14 +316,17 @@ import {
                           } @else {
                             <a class="tni-thumb" [href]="item.designFileUrl" target="_blank" rel="noopener" style="cursor:pointer">
                               <span class="tni-thumb-file">{{ ext(item.designFileUrl) }}</span>
-                              <span>Tải bản vẽ khách ↗</span>
+                              <span class="inline-flex items-center gap-1">Tải bản vẽ khách <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9" /><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" /></svg></span>
                             </a>
                           }
                         }
                         @if (item.prototypeImageUrl) {
                           <button type="button" class="tni-thumb" (click)="openPreview(item.prototypeImageUrl, 'Ảnh mẫu thực tế · ' + item.itemName)">
                             <img [src]="item.prototypeImageUrl" alt="Ảnh mẫu thực tế đã gửi" loading="lazy" />
-                            <span class="text-success">Ảnh mẫu đã gửi ✓</span>
+                            <span class="inline-flex items-center gap-1 text-success">
+                              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                              Ảnh mẫu đã gửi
+                            </span>
                           </button>
                         }
                       </div>
@@ -365,8 +405,8 @@ import {
                           <span class="font-semibold text-sm text-text-primary">{{ phaseLabel(tx.paymentPhase) }}</span>
                           <span class="tni-chip" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
                         </div>
-                        <div class="font-sans tabular-nums text-lg font-semibold text-text-primary">{{ tx.amount | vnd }}</div>
-                        <div class="text-sm text-text-secondary break-words">{{ methodLabel(tx.paymentMethod) }} · Mã GD: {{ tx.transactionRef || '—' }}</div>
+                        <div class="price-text font-sans tabular-nums text-lg font-semibold text-text-primary">{{ tx.amount | vnd }}</div>
+                        <div class="text-sm text-text-secondary break-words">{{ methodLabel(tx.paymentMethod) }} · Mã GD: {{ tx.transactionRef || 'Chưa cập nhật' }}</div>
                         @if (tx.proofImageUrl) {
                           @if (isImage(tx.proofImageUrl)) {
                             <button type="button" class="tni-thumb mt-2" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))">
@@ -374,7 +414,10 @@ import {
                               <span>Xem biên lai</span>
                             </button>
                           } @else {
-                            <a [href]="tx.proofImageUrl" target="_blank" rel="noopener" class="inline-block text-sm text-steel hover:text-steel-hover underline">Xem biên lai ↗</a>
+                            <a [href]="tx.proofImageUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-steel hover:text-steel-hover underline">
+                              Xem biên lai
+                              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9" /><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" /></svg>
+                            </a>
                           }
                         }
                       </div>
@@ -402,7 +445,7 @@ import {
                       } @else {
                         @if (tx.status === 'PENDING') {
                           <span class="text-xs font-medium text-text-muted">
-                            Chưa đến bước thanh toán — chưa thể duyệt giao dịch
+                            Chưa đến bước thanh toán. Chưa thể duyệt giao dịch.
                           </span>
                         } @else {
                           <span class="text-xs text-text-muted">{{ tx.verifiedAt ? 'Xử lý lúc ' + (tx.verifiedAt | date:'dd/MM/yyyy HH:mm') : '' }}</span>
@@ -446,7 +489,7 @@ import {
                     </button>
                   } @else {
                     <div class="rounded-[6px] border border-warning/40 bg-warning/10 p-3 text-sm text-text-secondary">
-                      Chờ khách thanh toán số dư còn lại {{ (ord.totalAmount - ord.paidAmount) | vnd }} trước khi hoàn tất đơn.
+                      Chờ khách thanh toán số dư còn lại <span class="price-text">{{ (ord.totalAmount - ord.paidAmount) | vnd }}</span> trước khi hoàn tất đơn.
                     </div>
                   }
                 </div>
@@ -556,7 +599,7 @@ import {
           <div class="px-5 sm:px-7 py-5 border-b border-border">
             <h2 id="materials-title" class="font-heading text-xl font-semibold text-text-primary">Giá theo vật liệu</h2>
             <p class="mt-1 text-sm text-text-secondary">
-              Kim loại tấm mỏng (≤ 1 ly) dùng đơn giá chung ở trên. <strong>Mica / Decal không dùng đơn giá này</strong> — nhập đơn giá/m² riêng cho từng loại. Chưa nhập thì khách chưa thể báo giá tự động vật liệu đó.
+              Kim loại tấm mỏng (≤ 1 ly) dùng đơn giá chung ở trên. <strong>Mica / Decal không dùng đơn giá này</strong>. Nhập đơn giá/m² riêng cho từng loại. Chưa nhập thì khách chưa thể báo giá tự động vật liệu đó.
             </p>
           </div>
           <div class="divide-y divide-border">
@@ -731,9 +774,13 @@ import {
                           <div class="flex items-center justify-between gap-1 border-t border-border px-2 py-1.5 text-xs">
                             <span class="truncate text-text-secondary">{{ idx === 0 ? 'Ảnh đại diện' : 'Ảnh ' + (idx + 1) }}</span>
                             <div class="flex shrink-0 gap-1">
-                              <button type="button" (click)="moveProductImage(idx, -1)" [disabled]="idx === 0" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' lên trước'">←</button>
+                              <button type="button" (click)="moveProductImage(idx, -1)" [disabled]="idx === 0" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' lên trước'">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" /></svg>
+                              </button>
                               <button type="button" (click)="removeProductImage(idx)" class="image-action image-action-remove" [attr.aria-label]="'Xóa ảnh ' + (idx + 1)">×</button>
-                              <button type="button" (click)="moveProductImage(idx, 1)" [disabled]="idx === newProd.images.length - 1" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' xuống sau'">→</button>
+                              <button type="button" (click)="moveProductImage(idx, 1)" [disabled]="idx === newProd.images.length - 1" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' xuống sau'">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14m0 0 6-6m-6 6-6-6" /></svg>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -751,23 +798,23 @@ import {
           }
 
           <div class="industrial-card overflow-hidden">
-            <div class="px-5 py-4 bg-surface border-b border-border flex flex-wrap gap-3">
-              <input type="search" [(ngModel)]="productSearch" (keyup.enter)="resetProductsPage()" placeholder="Tìm tên / SKU" class="industrial-input flex-1 min-w-[200px]" />
-              <select [(ngModel)]="productCategoryFilter" (ngModelChange)="resetProductsPage()" class="industrial-input">
+            <div class="grid grid-cols-1 gap-2 bg-surface border-b border-border p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-[minmax(12rem,1fr)_minmax(10rem,auto)_minmax(10rem,auto)_auto]">
+              <input type="search" [(ngModel)]="productSearch" (keyup.enter)="resetProductsPage()" placeholder="Tìm tên / SKU" class="industrial-input min-w-0 w-full text-sm" />
+              <select [(ngModel)]="productCategoryFilter" (ngModelChange)="resetProductsPage()" class="industrial-input min-w-0 w-full text-sm">
                 <option value="">Tất cả danh mục</option>
                 @for (c of adminCategories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
               </select>
-              <select [(ngModel)]="productTypeFilter" (ngModelChange)="resetProductsPage()" class="industrial-input">
+              <select [(ngModel)]="productTypeFilter" (ngModelChange)="resetProductsPage()" class="industrial-input min-w-0 w-full text-sm">
                 <option value="">Tất cả loại</option>
                 <option value="STANDARD_ITEM">Hàng có sẵn</option>
                 <option value="CUSTOM_TEMPLATE">Gia công theo yêu cầu</option>
               </select>
-              <button type="button" (click)="resetProductsPage()" appButton variant="secondary" size="sm">Tìm</button>
+              <button type="button" (click)="resetProductsPage()" appButton variant="secondary" size="sm" class="w-full xl:w-auto">Tìm</button>
             </div>
             @if (productsLoading()) {
               <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải sản phẩm"></div>
             } @else {
-            <div class="overflow-x-auto">
+            <div class="hidden overflow-x-auto md:block">
             <table class="tni-table">
               <thead>
                 <tr>
@@ -788,21 +835,21 @@ import {
                         @if (p.imageUrl || p.images?.[0]) {
                           <img [src]="p.imageUrl || p.images?.[0]" [alt]="p.name" loading="lazy" class="h-12 w-12 shrink-0 rounded-lg border border-border object-cover" />
                         } @else {
-                          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-surface text-text-muted" aria-label="Chưa có ảnh" title="Chưa có ảnh">▣</span>
+                          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-surface text-text-muted" aria-label="Chưa có ảnh" title="Chưa có ảnh"><svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.75" y="4.75" width="16.5" height="14.5" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m5 17 4-4 3 3 2-2 5 4" /></svg></span>
                         }
                         <div class="min-w-0">
-                          <div class="font-medium text-text-primary leading-snug">{{ p.name }}</div>
-                          <div class="font-mono text-xs text-text-muted">{{ p.sku }}</div>
+                          <div class="text-sm font-semibold text-text-primary leading-snug">{{ p.name }}</div>
+                          <div class="font-sans text-[13px] font-medium tabular-nums text-text-secondary">{{ p.sku }}</div>
                         </div>
                       </div>
                     </td>
-                    <td class="text-text-secondary">{{ p.categoryName || '—' }}</td>
+                    <td class="text-text-secondary">{{ p.categoryName || 'Chưa phân loại' }}</td>
                     <td>
                       <span class="tni-chip no-dot" [attr.data-tone]="p.productType === 'STANDARD_ITEM' ? 'muted' : 'info'">
                         {{ p.productType === 'STANDARD_ITEM' ? 'Hàng có sẵn' : 'Gia công 3D' }}
                       </span>
                     </td>
-                    <td class="text-right tabular-nums font-medium text-text-primary">
+                    <td class="price-text text-right font-sans tabular-nums font-semibold text-text-primary">
                       @if (p.productType === 'STANDARD_ITEM') { {{ p.basePrice | vnd }} } @else { <span class="text-text-muted font-normal">Báo giá theo yêu cầu</span> }
                     </td>
                     <td>
@@ -810,7 +857,7 @@ import {
                         <span class="tni-chip" [attr.data-tone]="(p.stockQuantity ?? 0) === 0 ? 'danger' : (p.stockQuantity ?? 0) < 10 ? 'warning' : 'success'">
                           {{ (p.stockQuantity ?? 0) === 0 ? 'Hết hàng' : p.stockQuantity + ' cái' }}
                         </span>
-                      } @else { <span class="text-text-muted">—</span> }
+                      } @else { <span class="text-text-muted">Không áp dụng</span> }
                     </td>
                     <td class="text-center">
                       <button type="button" role="switch" class="tni-switch" [attr.aria-checked]="p.isActive !== false" (click)="toggleProductActive(p)" [attr.aria-label]="(p.isActive !== false ? 'Ẩn ' : 'Hiện ') + p.name"></button>
@@ -824,8 +871,49 @@ import {
               </tbody>
             </table>
             </div>
+            <div class="space-y-3 p-3 md:hidden">
+              @for (p of adminProducts(); track p.id) {
+                <article class="rounded-[8px] border border-border bg-bg-elevated p-4" [class.opacity-60]="p.isActive === false">
+                  <div class="flex items-start gap-3">
+                    @if (p.imageUrl || p.images?.[0]) {
+                      <img [src]="p.imageUrl || p.images?.[0]" [alt]="p.name" loading="lazy" class="h-14 w-14 shrink-0 rounded-[6px] border border-border object-cover" />
+                    } @else {
+                      <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[6px] border border-dashed border-border bg-surface text-lg text-text-muted" aria-label="Chưa có ảnh"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.75" y="4.75" width="16.5" height="14.5" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m5 17 4-4 3 3 2-2 5 4" /></svg></span>
+                    }
+                    <div class="min-w-0 flex-1">
+                      <h3 class="break-words text-sm font-semibold leading-snug text-text-primary">{{ p.name }}</h3>
+                      <p class="mt-1 text-[13px] font-sans font-medium tabular-nums text-text-secondary">{{ p.sku }}</p>
+                      <p class="mt-1 text-[13px] text-text-secondary">{{ p.categoryName || 'Chưa phân loại' }}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      class="tni-switch shrink-0"
+                      [attr.aria-checked]="p.isActive !== false"
+                      (click)="toggleProductActive(p)"
+                      [attr.aria-label]="(p.isActive !== false ? 'Ẩn ' : 'Hiện ') + p.name"
+                    ></button>
+                  </div>
+                  <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                    <span class="tni-chip no-dot" [attr.data-tone]="p.productType === 'STANDARD_ITEM' ? 'muted' : 'info'">
+                      {{ p.productType === 'STANDARD_ITEM' ? 'Hàng có sẵn' : 'Gia công 3D' }}
+                    </span>
+                    @if (p.productType === 'STANDARD_ITEM') {
+                      <span class="price-text text-sm font-sans font-semibold tabular-nums text-text-primary">{{ p.basePrice | vnd }}</span>
+                      <span class="text-[13px] text-text-secondary">{{ (p.stockQuantity ?? 0) === 0 ? 'Hết hàng' : (p.stockQuantity ?? 0) + ' cái' }}</span>
+                    } @else {
+                      <span class="text-[13px] text-text-secondary">Báo giá theo yêu cầu</span>
+                    }
+                  </div>
+                  <div class="mt-3 flex gap-2">
+                    <button type="button" (click)="editProduct(p)" class="tni-row-action flex-1">Sửa sản phẩm</button>
+                    <button type="button" (click)="removeProduct(p.id)" class="tni-row-action danger flex-1">Xóa</button>
+                  </div>
+                </article>
+              }
+            </div>
             @if (!adminProducts().length) {
-              <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">▣</span><strong class="text-text-primary">Chưa có sản phẩm phù hợp</strong><span>Bấm “+ Thêm sản phẩm mới” hoặc đổi bộ lọc.</span></div>
+              <div class="tni-empty"><svg viewBox="0 0 24 24" class="tni-empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.75" y="4.75" width="16.5" height="14.5" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m5 17 4-4 3 3 2-2 5 4" /></svg><strong class="text-text-primary">Chưa có sản phẩm phù hợp</strong><span>Bấm “+ Thêm sản phẩm mới” hoặc đổi bộ lọc.</span></div>
             }
             <app-paginator
               [page]="productsPage()"
@@ -873,8 +961,8 @@ import {
                           </div>
                         </div>
                       </td>
-                      <td class="tabular-nums text-text-secondary">{{ customer.phone || '—' }}</td>
-                      <td class="text-text-secondary max-w-[22rem]">{{ customer.defaultAddress || '—' }}</td>
+                      <td class="tabular-nums text-text-secondary">{{ customer.phone || 'Chưa cập nhật' }}</td>
+                      <td class="text-text-secondary max-w-[22rem]">{{ customer.defaultAddress || 'Chưa cập nhật' }}</td>
                       <td><span class="tni-chip" [attr.data-tone]="customer.isActive ? 'success' : 'muted'">{{ customer.isActive ? 'Hoạt động' : 'Đã khóa' }}</span></td>
                       <td class="tabular-nums text-text-secondary">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
                     </tr>
@@ -883,7 +971,7 @@ import {
               </table>
             </div>
           } @else {
-            <div class="tni-empty"><span class="tni-empty-icon" aria-hidden="true">☺</span><strong class="text-text-primary">Không tìm thấy khách hàng</strong><span>Thử tên, email hoặc số điện thoại khác.</span></div>
+            <div class="tni-empty"><strong class="text-text-primary">Không tìm thấy khách hàng</strong><span>Thử tên, email hoặc số điện thoại khác.</span></div>
           }
           <app-paginator [page]="customersPage()" [totalPages]="customersTotalPages()" (pageChange)="goToCustomersPage($event)" />
         </section>
@@ -1212,7 +1300,7 @@ export class AdminCockpitComponent implements OnInit {
 
   private flattenCategories(categories: Category[], depth = 0): Category[] {
     return categories.flatMap((category) => [
-      { ...category, name: '— '.repeat(depth) + category.name, children: undefined },
+      { ...category, name: `${depth > 0 ? '[Danh mục con] ' : ''}${category.name}`, children: undefined },
       ...this.flattenCategories(category.children || [], depth + 1),
     ]);
   }

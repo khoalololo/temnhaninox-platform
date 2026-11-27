@@ -36,7 +36,7 @@ interface MegaMenuColumn {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, LucideAngularModule, ButtonDirective],
   template: `
-    <header class="sticky top-0 z-50 bg-bg-elevated text-text-primary border-b border-border shadow-sm">
+    <header class="relative z-50 bg-bg-elevated text-text-primary">
       <!-- Top Forest-Green Contact Strip (matches temnhaninox.com #187115 bar) -->
       <div class="bg-accent text-white text-xs sm:text-sm">
         <div class="max-w-7xl mx-auto px-4 h-8 flex items-center justify-between">
@@ -60,7 +60,13 @@ interface MegaMenuColumn {
       </div>
 
       <!-- Main Header Bar -->
-      <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-4 bg-bg-elevated">
+      <div
+        class="z-50 bg-bg-elevated shadow-sm"
+        [class.fixed]="mainHeaderSticky()"
+        [class.inset-x-0]="mainHeaderSticky()"
+        [class.top-0]="mainHeaderSticky()"
+      >
+      <div class="mx-auto flex h-24 max-w-7xl items-center justify-between gap-4 px-4">
         <!-- Mobile Menu + Brand Logo -->
         <div class="flex items-center gap-3 shrink-0">
           <button
@@ -78,18 +84,18 @@ interface MegaMenuColumn {
                 src="/assets/images/logo-nvx.png"
                 alt="Tem Nhãn Inox NVX"
                 (error)="logoBroken.set(true)"
-                class="h-12 sm:h-14 w-auto object-contain"
+                class="h-14 w-auto object-contain sm:h-16"
               />
             } @else {
-              <div class="w-10 h-10 rounded-[8px] bg-accent flex items-center justify-center font-bold text-base text-white">
+              <div class="flex h-12 w-12 items-center justify-center rounded-[8px] bg-accent text-lg font-bold text-white">
                 NVX
               </div>
             }
             <div class="leading-tight hidden sm:block">
-              <div class="font-bold tracking-wide text-base sm:text-lg text-accent">
+              <div class="text-lg font-bold tracking-wide text-accent sm:text-xl">
                 TEM NHÃN INOX
               </div>
-              <div class="text-xs text-text-secondary font-medium">
+              <div class="text-sm font-medium text-text-secondary">
                 KĨ NGHỆ NVX · SÀI GÒN
               </div>
             </div>
@@ -97,7 +103,7 @@ interface MegaMenuColumn {
         </div>
 
         <!-- Search bar -->
-        <form (ngSubmit)="onSearch()" class="hidden lg:flex flex-1 max-w-md">
+        <form (ngSubmit)="onSearch()" class="hidden min-w-0 max-w-sm flex-1 lg:flex">
           <div class="relative w-full flex">
             <input
               type="text"
@@ -106,13 +112,13 @@ interface MegaMenuColumn {
               name="searchQuery"
               autocomplete="off"
               placeholder="Tìm tem inox 304, tem nhôm, khắc laser..."
-              class="w-full bg-surface border border-border text-sm text-text-primary placeholder-text-muted rounded-l-[6px] px-3.5 py-2 focus:outline-none focus:border-accent"
+              class="w-full rounded-l-[6px] border border-border bg-surface px-4 py-3 text-base text-text-primary placeholder-text-muted focus:border-accent focus:outline-none"
             />
             <button
               type="submit"
               appButton
               variant="primary"
-              size="sm"
+              size="md"
               class="rounded-l-none"
             >
               <lucide-icon [img]="SearchIcon" [size]="15" />
@@ -137,32 +143,87 @@ interface MegaMenuColumn {
           </div>
         </form>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-2.5 shrink-0">
+        <!-- Header actions align with search and share the category navigation hover style. -->
+        <div class="ml-auto flex h-24 shrink-0 items-center justify-end gap-3 sm:gap-5">
           @if (!authService.isAdmin()) {
             <a
               routerLink="/quote-builder"
-              appButton
-              variant="primary"
-              size="sm"
+              class="fs-nav-underline inline-flex h-full items-center gap-2.5 whitespace-nowrap px-1 text-base font-semibold text-text-primary transition-colors hover:text-accent"
+              aria-label="Báo giá và xem mẫu 3D"
+              title="Báo giá và xem mẫu 3D"
             >
-              <span class="hidden sm:inline">Báo Giá & Xem Mẫu 3D</span>
-              <span class="sm:hidden">Báo Giá 3D</span>
+              <svg viewBox="0 0 24 24" class="h-6 w-6 shrink-0 text-accent" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-4-1L4 19v1Z" />
+                <path d="m13.5 7.5 3 3M5 4h6M5 8h4" />
+              </svg>
+              <span class="hidden whitespace-nowrap text-sm font-bold uppercase tracking-wide xl:inline">Báo giá &amp; Xem mẫu 3D</span>
             </a>
 
             <a
               routerLink="/cart"
-              appButton
-              variant="secondary"
-              size="sm"
+              class="fs-nav-underline inline-flex h-full items-center gap-2.5 whitespace-nowrap px-1 text-base font-semibold text-text-primary transition-colors hover:text-accent"
+              aria-label="Giỏ hàng"
+              title="Giỏ hàng"
             >
-              <lucide-icon [img]="CartIcon" [size]="16" />
-              <span class="hidden sm:inline">Giỏ hàng</span>
-              @if (cartService.cartCount() > 0) {
-                <span class="bg-accent text-white font-mono tabular-nums text-xs font-bold px-2 py-0.5 rounded-full">
-                  {{ cartService.cartCount() }}
-                </span>
+              <span class="relative inline-flex">
+                <lucide-icon [img]="CartIcon" [size]="23" class="text-accent" />
+                @if (cartService.cartCount() > 0) {
+                  <span class="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold leading-none text-white">
+                    {{ cartService.cartCount() }}
+                  </span>
+                }
+              </span>
+              <span class="hidden text-sm font-bold uppercase tracking-wide xl:inline">Giỏ hàng</span>
+            </a>
+          }
+
+          @if (authService.isAuthenticated()) {
+            <div class="relative h-full">
+              <button
+                type="button"
+                (click)="menuOpen.set(!menuOpen())"
+                class="fs-nav-underline inline-flex h-full items-center gap-2.5 whitespace-nowrap px-1 text-base font-semibold text-text-primary transition-colors hover:text-accent"
+                [attr.aria-expanded]="menuOpen()"
+                aria-haspopup="menu"
+                aria-label="Tài khoản"
+                title="Tài khoản"
+              >
+                <svg viewBox="0 0 24 24" class="h-6 w-6 shrink-0 text-accent" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 20a7 7 0 0 1 14 0" />
+                </svg>
+                <span class="hidden max-w-[145px] truncate text-sm font-bold uppercase tracking-wide xl:inline">{{ authService.currentUser()?.fullName }}</span>
+                <lucide-icon [img]="ChevronDownIcon" [size]="14" class="hidden text-text-muted xl:block" />
+              </button>
+
+              @if (menuOpen()) {
+                <div class="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-[10px] border border-border bg-bg-elevated py-1.5 text-text-primary shadow-card-hover" role="menu">
+                  @if (!authService.isAdmin()) {
+                    <a routerLink="/account/orders" (click)="menuOpen.set(false)" role="menuitem" class="block px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-raised hover:text-accent">
+                      Đơn hàng & Tiến độ xưởng
+                    </a>
+                  }
+                  <a routerLink="/account/profile" (click)="menuOpen.set(false)" role="menuitem" class="block px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-raised hover:text-accent">
+                    Hồ sơ & MST (VAT đỏ)
+                  </a>
+                  @if (authService.isAdmin()) {
+                    <a routerLink="/admin" (click)="menuOpen.set(false)" role="menuitem" class="block px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-surface-raised">
+                      Quản trị xưởng (Admin)
+                    </a>
+                  }
+                  <button type="button" (click)="logout()" role="menuitem" class="w-full px-4 py-2.5 text-left text-sm font-medium text-danger transition-colors hover:bg-danger/10">
+                    Đăng xuất
+                  </button>
+                </div>
               }
+            </div>
+          } @else {
+            <a routerLink="/login" class="fs-nav-underline inline-flex h-full items-center gap-2.5 whitespace-nowrap px-1 text-base font-semibold text-text-primary transition-colors hover:text-accent" aria-label="Đăng nhập" title="Đăng nhập">
+              <svg viewBox="0 0 24 24" class="h-6 w-6 shrink-0 text-accent" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5 20a7 7 0 0 1 14 0" />
+              </svg>
+              <span class="hidden text-sm font-bold uppercase tracking-wide xl:inline">Đăng nhập</span>
             </a>
           }
 
@@ -171,79 +232,16 @@ interface MegaMenuColumn {
             (click)="themeService.toggle()"
             [attr.aria-label]="themeService.theme() === 'light' ? 'Chuyển sang giao diện tối' : 'Chuyển sang giao diện sáng'"
             [title]="themeService.theme() === 'light' ? 'Giao diện tối' : 'Giao diện sáng'"
-            appButton
-            variant="ghost"
-            size="sm"
-            class="px-2.5 border border-border"
+            class="inline-flex h-full items-center px-2 text-base text-text-secondary transition-colors hover:text-accent"
           >
-            <lucide-icon [img]="themeService.theme() === 'light' ? MoonIcon : SunIcon" [size]="16" />
+            <lucide-icon [img]="themeService.theme() === 'light' ? MoonIcon : SunIcon" [size]="20" />
           </button>
-
-          @if (authService.isAuthenticated()) {
-            <div class="relative">
-              <button
-                type="button"
-                (click)="menuOpen.set(!menuOpen())"
-                appButton
-                variant="secondary"
-                size="sm"
-              >
-                <span class="max-w-[110px] truncate">{{ authService.currentUser()?.fullName }}</span>
-                <lucide-icon [img]="ChevronDownIcon" [size]="15" />
-              </button>
-
-              @if (menuOpen()) {
-                <div
-                  class="absolute right-0 mt-1.5 w-56 bg-bg-elevated text-text-primary border border-border rounded-[10px] py-1.5 z-50 shadow-card-hover"
-                >
-                  @if (!authService.isAdmin()) {
-                    <a
-                      routerLink="/account/orders"
-                      (click)="menuOpen.set(false)"
-                      class="block px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-raised hover:text-accent transition-colors border-b border-border"
-                    >
-                      Đơn hàng & Tiến độ xưởng
-                    </a>
-                  }
-                  <a
-                    routerLink="/account/profile"
-                    (click)="menuOpen.set(false)"
-                    class="block px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-raised hover:text-accent transition-colors"
-                  >
-                    Hồ sơ & MST (VAT đỏ)
-                  </a>
-                  @if (authService.isAdmin()) {
-                    <a
-                      routerLink="/admin"
-                      (click)="menuOpen.set(false)"
-                      class="block px-4 py-2.5 text-sm font-semibold text-accent hover:bg-surface-raised border-t border-border transition-colors"
-                    >
-                      Quản trị xưởng (Admin)
-                    </a>
-                  }
-                  <button
-                    type="button"
-                    (click)="logout()"
-                    class="w-full text-left px-4 py-2.5 text-sm font-medium text-danger hover:bg-danger/10 border-t border-border transition-colors"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
-              }
-            </div>
-          } @else {
-            <a
-              routerLink="/login"
-              appButton
-              variant="ghost"
-              size="sm"
-              class="hidden sm:inline-flex"
-            >
-              Đăng nhập
-            </a>
-          }
         </div>
       </div>
+      </div>
+      @if (mainHeaderSticky()) {
+        <div class="h-24" aria-hidden="true"></div>
+      }
 
       <!-- Desktop Navigation Bar (Flatsome uppercase green-bar hover links + Mega-menu) -->
       <nav class="hidden md:block bg-surface border-t border-border relative">
@@ -547,6 +545,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   readonly megaMenuOpen = signal(false);
   readonly mobileDrawerOpen = signal(false);
   readonly logoBroken = signal(false);
+  readonly mainHeaderSticky = signal(false);
   readonly categories = signal<Category[]>([]);
   readonly searchSuggestions = signal<Product[]>([]);
   readonly searchSuggestionsOpen = signal(false);
@@ -659,6 +658,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.megaMenuOpen.set(false);
       this.searchSuggestionsOpen.set(false);
     }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.mainHeaderSticky.set(window.scrollY > 32);
   }
 
   @HostListener('document:keydown.escape')

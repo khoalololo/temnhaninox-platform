@@ -111,7 +111,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                         }
                       </td>
 
-                      <td class="px-3 py-3.5 text-right font-mono tabular-nums align-top text-text-primary">
+                      <td class="price-text px-3 py-3.5 text-right font-mono tabular-nums align-top text-text-primary">
                         {{ item.estimatedUnitPrice | vnd }}
                       </td>
 
@@ -142,7 +142,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                         }
                       </td>
 
-                      <td class="px-4 py-3.5 text-right font-mono tabular-nums font-semibold text-text-primary align-top">
+                      <td class="price-text px-4 py-3.5 text-right font-mono tabular-nums font-semibold text-text-primary align-top">
                         {{ item.lineTotal | vnd }}
                       </td>
 
@@ -153,7 +153,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                           class="text-text-muted hover:text-danger font-mono text-xs transition-colors"
                           title="Xóa hạng mục"
                         >
-                          ✕
+                          <svg viewBox="0 0 24 24" class="mx-auto h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
                         </button>
                       </td>
                     </tr>
@@ -175,7 +175,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               </div>
               <div class="flex justify-between text-text-secondary">
                 <span>Tạm tính (chưa VAT):</span>
-                <span class="font-mono tabular-nums text-base font-bold text-text-primary">
+                <span class="price-text font-mono tabular-nums text-base font-bold text-text-primary">
                   {{ cartService.cart()!.estimatedSubtotal | vnd }}
                 </span>
               </div>
@@ -191,7 +191,8 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               size="lg"
               [fullWidth]="true"
             >
-              Tiến hành đặt hàng →
+              <span>Tiến hành đặt hàng</span>
+              <svg viewBox="0 0 24 24" class="ml-2 inline h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
             </a>
           </div>
         </div>

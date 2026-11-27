@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogApiService } from '../../core/services/catalog-api.service';
 import { QuoteApiService } from '../../core/services/quote-api.service';
 import { CartApiService } from '../../core/services/cart-api.service';
+import { ToastService } from '../../shared/components/toast/toast.component';
 import { AuthService } from '../../core/services/auth.service';
 import { Material, ProcessingMethod } from '../../core/models/catalog.models';
 import { FileUploadResponse, QuoteCalculationResponse } from '../../core/models/quote.models';
@@ -17,37 +18,54 @@ import { ButtonDirective } from '../../shared/components/button/button.component
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, Nameplate3dViewerComponent, ButtonDirective],
   template: `
-    <div class="max-w-[1440px] mx-auto px-4 py-6">
+    <div class="mx-auto max-w-[1600px] px-3 py-5 sm:px-5 lg:px-8 lg:py-8">
       <!-- Top Workstation Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-border">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between lg:mb-7">
         <div>
-          <div class="text-[11px] font-mono uppercase tracking-wider text-accent font-medium">
+          <div class="font-mono text-xs font-semibold uppercase tracking-wider text-accent">
             Xưởng Gia Công Chính Xác · Báo Giá Tự Động
           </div>
-          <h1 class="font-heading text-xl font-bold text-text-primary">Công Cụ Thiết Lập Kích Thước & Xem Mẫu 3D</h1>
+          <h1 class="mt-1 font-heading text-2xl font-bold leading-tight text-text-primary sm:text-3xl">Thiết kế tem &amp; báo giá 3D</h1>
+          <p class="mt-1 max-w-2xl text-sm text-text-secondary">Nhập thông số, xem trước mẫu tem và nhận dự toán sản xuất theo thời gian thực.</p>
         </div>
-        <div class="text-xs font-mono text-text-secondary">
+        <div class="max-w-xl rounded-lg bg-surface px-4 py-3 text-xs leading-5 text-text-secondary sm:text-right">
           Công thức xưởng: Tấm mỏng (≤1.0mm) theo m² · Phôi dày (&gt;1.0mm) theo khối lượng kg
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <!-- LEFT PANEL: Technical Specification Controls (4 cols) -->
-        <div class="lg:col-span-4 industrial-card p-4 space-y-4">
-          <div class="border-b border-border pb-2.5 flex items-center justify-between">
-            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary">
-              1. Thông Số Phôi & Công Nghệ
-            </h2>
-            <span class="text-[11px] font-mono text-text-muted">Đơn vị: mm</span>
+      <nav class="mb-5 grid grid-cols-3 gap-2 rounded-xl border border-border bg-bg-elevated p-2 shadow-sm lg:mb-7" aria-label="Các bước thiết kế báo giá">
+        <a href="#quote-configuration" (click)="scrollToSection($event, 'quote-configuration')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-white">1</span>
+          <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Thông số</span><span class="hidden text-xs text-text-muted sm:block">Vật liệu &amp; kích thước</span></span>
+        </a>
+        <a href="#quote-preview" (click)="scrollToSection($event, 'quote-preview')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-raised text-sm font-bold text-accent">2</span>
+          <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Xem mẫu 3D</span><span class="hidden text-xs text-text-muted sm:block">Xoay &amp; kiểm tra thiết kế</span></span>
+        </a>
+        <a href="#quote-summary" (click)="scrollToSection($event, 'quote-summary')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-raised text-sm font-bold text-accent">3</span>
+          <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Báo giá</span><span class="hidden text-xs text-text-muted sm:block">Dự toán &amp; thêm vào giỏ</span></span>
+        </a>
+      </nav>
+
+      <div class="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6">
+        <!-- Configuration -->
+        <section id="quote-configuration" class="industrial-card min-w-0 scroll-mt-28 space-y-5 p-4 sm:p-6 lg:col-span-5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-accent">Bước 1</span>
+              <h2 class="mt-1 font-heading text-base font-bold text-text-primary sm:text-lg">Thông số &amp; công nghệ</h2>
+            </div>
+            <span class="rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary">Đơn vị: mm</span>
           </div>
 
           <!-- Material Selector -->
           <div>
-            <label class="block text-xs font-medium text-text-secondary mb-1">Vật liệu kim loại / nhựa *</label>
+            <label class="mb-2 block text-sm font-semibold text-text-secondary">Vật liệu kim loại / nhựa *</label>
             <select
               [(ngModel)]="selectedMaterialId"
               (ngModelChange)="onMaterialChange()"
-              class="industrial-input w-full px-3 py-2 text-xs font-medium"
+              class="industrial-input min-h-12 w-full px-3.5 py-3 text-sm font-medium"
             >
               @for (mat of materials(); track mat.id) {
                 <option [value]="mat.id">
@@ -59,11 +77,11 @@ import { ButtonDirective } from '../../shared/components/button/button.component
 
           <!-- Processing Method Selector -->
           <div>
-            <label class="block text-xs font-medium text-text-secondary mb-1">Công nghệ gia công bề mặt *</label>
+            <label class="mb-2 block text-sm font-semibold text-text-secondary">Công nghệ gia công bề mặt *</label>
             <select
               [(ngModel)]="selectedMethodId"
               (ngModelChange)="recalculate()"
-              class="industrial-input w-full px-3 py-2 text-xs font-medium"
+              class="industrial-input min-h-12 w-full px-3.5 py-3 text-sm font-medium"
             >
               @for (pm of availableMethods(); track pm.id) {
                 <option [value]="pm.id">
@@ -74,9 +92,9 @@ import { ButtonDirective } from '../../shared/components/button/button.component
           </div>
 
           <!-- Dimensions Grid -->
-          <div class="grid grid-cols-3 gap-2.5">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <label class="block text-[11px] font-medium text-text-secondary mb-1">Chiều dài (mm)</label>
+              <label class="mb-1.5 block text-xs font-semibold text-text-secondary sm:text-sm">Chiều dài (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="widthMm"
@@ -84,11 +102,11 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                 min="5"
                 max="2000"
                 step="1"
-                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
+                class="industrial-input min-h-12 w-full px-3 py-2.5 text-base font-mono tabular-nums"
               />
             </div>
             <div>
-              <label class="block text-[11px] font-medium text-text-secondary mb-1">Chiều rộng (mm)</label>
+              <label class="mb-1.5 block text-xs font-semibold text-text-secondary sm:text-sm">Chiều rộng (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="heightMm"
@@ -96,11 +114,11 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                 min="5"
                 max="2000"
                 step="1"
-                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
+                class="industrial-input min-h-12 w-full px-3 py-2.5 text-base font-mono tabular-nums"
               />
             </div>
             <div>
-              <label class="block text-[11px] font-medium text-text-secondary mb-1">Độ dày (mm)</label>
+              <label class="mb-1.5 block text-xs font-semibold text-text-secondary sm:text-sm">Độ dày (mm)</label>
               <input
                 type="number"
                 [(ngModel)]="thicknessMm"
@@ -108,7 +126,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                 [min]="selectedMaterial()?.minThicknessMm || 0.2"
                 [max]="selectedMaterial()?.maxThicknessMm || 10"
                 step="0.1"
-                class="industrial-input w-full px-2.5 py-2 text-xs font-mono tabular-nums"
+                class="industrial-input min-h-12 w-full px-3 py-2.5 text-base font-mono tabular-nums"
               />
             </div>
           </div>
@@ -116,13 +134,13 @@ import { ButtonDirective } from '../../shared/components/button/button.component
           <!-- Quantity & Volume Tiers -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-medium text-text-secondary">Số lượng đặt sản xuất (tem)</label>
-              <div class="flex gap-1 font-mono text-[10px]">
+              <label class="text-sm font-semibold text-text-secondary">Số lượng đặt sản xuất (tem)</label>
+              <div class="flex flex-wrap gap-1.5 font-mono text-xs">
                 @for (presetQty of [50, 200, 500, 1000]; track presetQty) {
                   <button
                     type="button"
                     (click)="quantity = presetQty; recalculate()"
-                    class="px-1.5 py-0.5 rounded-[6px] border transition-colors"
+                    class="rounded-[6px] border px-2.5 py-1.5 transition-colors"
                     [class]="quantity === presetQty ? 'bg-accent text-bg border-accent font-semibold' : 'bg-bg text-text-secondary border-border hover:border-steel hover:text-steel'"
                   >
                     {{ presetQty }}
@@ -136,15 +154,15 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               (ngModelChange)="recalculate()"
               min="1"
               step="1"
-              class="industrial-input w-full px-3 py-2 text-sm font-mono tabular-nums font-bold"
+              class="industrial-input min-h-12 w-full px-3 py-2.5 text-lg font-mono font-bold tabular-nums"
             />
           </div>
 
           <!-- 3D Engraving Text & Rivets -->
-          <div class="border-t border-border pt-3 space-y-2.5">
+          <div class="space-y-3 rounded-lg bg-surface p-4 sm:p-5">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-medium text-text-secondary">Nội dung mô phỏng trên mặt tem 3D</label>
-              <label class="flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer">
+              <label class="text-sm font-semibold text-text-secondary">Nội dung hiển thị trên tem 3D</label>
+              <label class="flex cursor-pointer items-center gap-1.5 text-xs text-text-secondary">
                 <input type="checkbox" [(ngModel)]="cornerRivets" class="accent-accent" />
                 <span>4 lỗ đinh tán góc</span>
               </label>
@@ -152,49 +170,61 @@ import { ButtonDirective } from '../../shared/components/button/button.component
             <textarea
               rows="3"
               [(ngModel)]="previewText"
-              class="industrial-input w-full px-2.5 py-1.5 text-xs font-mono"
+              class="industrial-input w-full px-3 py-2.5 text-sm font-mono"
             ></textarea>
           </div>
 
           <!-- Technical Artwork File Upload (SeaweedFS S3) -->
-          <div class="border-t border-border pt-3">
-            <label class="block text-xs font-medium text-text-secondary mb-1">
+          <div class="space-y-2">
+            <label class="mb-1 block text-sm font-semibold text-text-secondary">
               Tải lên bản vẽ thiết kế (.CDR, .AI, .PDF, .DXF, .PNG)
             </label>
             <input
               type="file"
               (change)="onFileSelected($event)"
               accept=".cdr,.ai,.pdf,.dxf,.svg,.png,.jpg,.jpeg,.zip"
-              class="block w-full text-xs text-text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-[6px] file:border file:border-steel file:text-xs file:font-medium file:bg-transparent file:text-steel hover:file:bg-steel/10"
+              class="block min-h-12 w-full rounded-lg border border-border bg-bg p-2 text-sm text-text-secondary file:mr-3 file:rounded-md file:border file:border-steel file:bg-transparent file:px-3 file:py-2 file:text-sm file:font-medium file:text-steel hover:file:bg-steel/10"
             />
             @if (fileUploadError()) {
-              <div class="text-[11px] text-danger mt-1">{{ fileUploadError() }}</div>
+              <div class="mt-1 text-sm text-danger">{{ fileUploadError() }}</div>
             }
             @if (uploading()) {
-              <div class="text-[11px] font-mono text-accent mt-1">Đang tải file lên máy chủ xưởng...</div>
+              <div class="mt-1 text-sm font-mono text-accent">Đang tải file lên máy chủ xưởng...</div>
             }
             @if (uploadedFile()) {
-              <div class="mt-1.5 p-2 rounded-[6px] bg-success/10 border border-success/50 text-[11px] text-success flex items-center justify-between">
-                <span class="truncate font-mono">✓ {{ uploadedFile()!.fileName }}</span>
-                <button type="button" (click)="uploadedFile.set(null)" class="text-danger font-bold ml-2">✕</button>
+              <div class="mt-1.5 flex items-center justify-between rounded-[6px] border border-success/50 bg-success/10 p-3 text-sm text-success">
+                <span class="flex min-w-0 items-center gap-2 truncate font-mono">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                  {{ uploadedFile()!.fileName }}
+                </span>
+                <button type="button" (click)="uploadedFile.set(null)" class="ml-2 text-danger" aria-label="Xóa tệp đã tải lên">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
+                </button>
               </div>
             }
           </div>
 
           <!-- Customer Note -->
           <div>
-            <label class="block text-xs font-medium text-text-secondary mb-1">Ghi chú kỹ thuật cho xưởng</label>
+            <label class="mb-2 block text-sm font-semibold text-text-secondary">Ghi chú kỹ thuật cho xưởng</label>
             <input
               type="text"
               [(ngModel)]="customerNote"
               placeholder="VD: Bo góc R3, đổ sơn đen nền, dán sẵn keo 3M mặt sau..."
-              class="industrial-input w-full px-3 py-2 text-xs"
+              class="industrial-input min-h-12 w-full px-3.5 py-3 text-sm"
             />
           </div>
-        </div>
+        </section>
 
-        <!-- CENTER PANEL: Interactive Three.js 3D Viewport (5 cols) -->
-        <div class="lg:col-span-5 space-y-3">
+        <!-- Interactive 3D preview -->
+        <section id="quote-preview" class="min-w-0 scroll-mt-28 space-y-4 lg:col-span-7">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-accent">Bước 2</span>
+              <h2 class="mt-1 font-heading text-base font-bold text-text-primary sm:text-lg">Xem trước sản phẩm</h2>
+            </div>
+            <span class="text-xs text-text-muted sm:text-sm">Tương tác trực tiếp với mẫu</span>
+          </div>
           <app-nameplate-3d-viewer
             [widthMm]="widthMm"
             [heightMm]="heightMm"
@@ -209,22 +239,23 @@ import { ButtonDirective } from '../../shared/components/button/button.component
             [cadFileName]="uploadedFile()?.fileName || null"
           />
 
-          <div class="industrial-card p-3 text-xs text-text-secondary flex flex-wrap items-center justify-between gap-2">
-            <span>Quy trình đảm bảo chất lượng:</span>
-            <span class="font-mono font-medium text-text-primary">
-              1. Gửi đơn → 2. Xưởng làm 1 tem mẫu chụp ảnh duyệt → 3. Cọc 50% sản xuất
+          <div class="industrial-card flex flex-col gap-2 p-4 text-sm text-text-secondary sm:p-5">
+            <span class="font-semibold text-text-primary">Quy trình đảm bảo chất lượng</span>
+            <span class="leading-6">
+              1. Gửi đơn; 2. Xưởng làm tem mẫu và gửi ảnh duyệt; 3. Đặt cọc 50% để sản xuất
             </span>
           </div>
-        </div>
+        </section>
 
-        <!-- RIGHT PANEL: Live Deterministic Pricing Receipt (3 cols) -->
-        <div class="lg:col-span-3 industrial-card p-4 space-y-4">
-          <div class="border-b border-border pb-2.5 flex items-center justify-between">
-            <h2 class="font-heading text-xs font-bold uppercase tracking-wider text-text-primary">
-              2. Bảng Tính Báo Giá
-            </h2>
+        <!-- Live pricing summary -->
+        <section id="quote-summary" class="industrial-card min-w-0 scroll-mt-28 space-y-5 p-4 sm:p-6 lg:col-span-12">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-accent">Bước 3</span>
+              <h2 class="mt-1 font-heading text-base font-bold text-text-primary sm:text-lg">Bảng tính báo giá</h2>
+            </div>
             @if (calculating()) {
-              <span class="text-[11px] font-mono text-accent">Đang tính...</span>
+              <span class="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">Đang tính...</span>
             }
           </div>
 
@@ -235,47 +266,45 @@ import { ButtonDirective } from '../../shared/components/button/button.component
           }
 
           @if (quote()) {
-            <div class="space-y-2.5 text-xs">
-              <div class="bg-bg border border-border rounded-[6px] p-2.5 space-y-1 font-mono text-[11px]">
+            <div class="grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-4">
+              <div class="space-y-2 rounded-lg border border-border bg-bg p-4">
                 <div class="flex justify-between">
-                  <span class="text-text-muted">Chế độ tính:</span>
-                  <span class="font-medium text-steel">{{ quote()!.pricingFormulaMode }}</span>
+                  <span class="text-text-secondary">Chế độ tính</span>
+                  <span class="text-right font-medium text-steel">{{ quote()!.pricingFormulaMode }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-text-muted">Diện tích 1 tem:</span>
+                  <span class="text-text-secondary">Diện tích / tem</span>
                   <span class="tabular-nums text-text-primary">{{ quote()!.areaM2 }} m²</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-text-muted">Khối lượng 1 tem:</span>
+                  <span class="text-text-secondary">Khối lượng / tem</span>
                   <span class="tabular-nums text-text-primary">{{ quote()!.calculatedWeightKg }} kg</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-text-muted">Thời gian dự kiến:</span>
-                  <span class="tabular-nums font-medium text-text-primary">~{{ quote()!.estimatedLeadTimeDays }} ngày làm việc</span>
+                  <span class="text-text-secondary">Thời gian dự kiến</span>
+                  <span class="text-right tabular-nums font-medium text-text-primary">~{{ quote()!.estimatedLeadTimeDays }} ngày</span>
                 </div>
               </div>
 
-              <div class="flex justify-between items-baseline pt-1">
-                <span class="text-text-secondary">Đơn giá / 1 tem:</span>
-                <span class="font-mono tabular-nums font-bold text-sm text-text-primary">
-                  {{ quote()!.unitPrice | vnd }}
-                </span>
-              </div>
-
-              <div class="flex justify-between">
-                <span class="text-text-secondary">Tạm tính ({{ quote()!.quantity }} tem):</span>
-                <span class="font-mono tabular-nums text-text-primary">{{ quote()!.subtotalAmount | vnd }}</span>
-              </div>
-
-              @if ((quote()!.discountAmount || 0) > 0) {
-                <div class="flex justify-between text-success font-medium">
-                  <span>Chiết khấu số lượng:</span>
-                  <span class="font-mono tabular-nums">-{{ quote()!.discountAmount | vnd }}</span>
+              <div class="space-y-3 rounded-lg border border-border bg-bg p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-text-secondary">Đơn giá / tem</span>
+                  <span class="price-text text-right font-mono font-bold tabular-nums">{{ quote()!.unitPrice | vnd }}</span>
                 </div>
-              }
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-text-secondary">Tạm tính ({{ quote()!.quantity }} tem)</span>
+                  <span class="price-text text-right font-mono tabular-nums">{{ quote()!.subtotalAmount | vnd }}</span>
+                </div>
+                @if ((quote()!.discountAmount || 0) > 0) {
+                  <div class="flex items-center justify-between gap-3 font-medium text-success">
+                    <span>Chiết khấu</span>
+                    <span class="price-text text-right font-mono tabular-nums">-{{ quote()!.discountAmount | vnd }}</span>
+                  </div>
+                }
+              </div>
 
-              <div class="pt-1 border-t border-border">
-                <label class="flex items-center justify-between cursor-pointer">
+              <div class="space-y-3 rounded-lg border border-border bg-bg p-4">
+                <label class="flex cursor-pointer items-center justify-between gap-3">
                   <span class="text-text-secondary font-medium">Xuất hóa đơn VAT đỏ (10%)</span>
                   <input
                     type="checkbox"
@@ -285,51 +314,60 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                   />
                 </label>
                 @if (requiresVatInvoice) {
-                  <div class="flex justify-between text-text-secondary mt-1.5">
+                  <div class="flex justify-between gap-3 text-text-secondary">
                     <span>Thuế GTGT (VAT):</span>
-                    <span class="font-mono tabular-nums text-text-primary">{{ quote()!.vatAmount | vnd }}</span>
+                    <span class="price-text text-right font-mono tabular-nums text-text-primary">{{ quote()!.vatAmount | vnd }}</span>
                   </div>
                 }
               </div>
 
-              <div class="border-t border-border pt-3 flex justify-between items-baseline">
-                <span class="font-bold text-text-primary">TỔNG CỘNG:</span>
-                <span class="font-mono tabular-nums text-lg font-bold text-accent">
-                  {{ quote()!.totalAmount | vnd }}
-                </span>
-              </div>
-
-              <div class="bg-bg border border-accent/60 rounded-[6px] p-2.5 flex justify-between items-center">
-                <span class="text-accent font-medium">Cọc sản xuất (50%):</span>
-                <span class="font-mono tabular-nums font-bold text-accent">
-                  {{ quote()!.depositRequiredAmount | vnd }}
-                </span>
+              <div class="flex flex-col justify-center gap-3 rounded-lg bg-surface p-4">
+                <div>
+                  <span class="block text-xs font-semibold uppercase tracking-wide text-text-secondary">Tổng cộng</span>
+                  <span class="price-text mt-1 block break-words font-mono text-2xl font-bold tabular-nums sm:text-3xl">{{ quote()!.totalAmount | vnd }}</span>
+                </div>
+                <div class="flex flex-wrap items-baseline justify-between gap-2 rounded-md border border-accent/30 bg-bg-elevated px-3 py-2.5">
+                  <span class="text-sm font-medium text-accent">Cọc sản xuất (50%)</span>
+                  <span class="price-text font-mono font-bold tabular-nums">{{ quote()!.depositRequiredAmount | vnd }}</span>
+                </div>
               </div>
             </div>
           }
 
-          @if (authService.isAdmin()) {
-            <p class="text-xs text-text-muted">Đang xem với tư cách quản trị viên</p>
-          } @else {
-            <button
+          <div class="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            @if (authService.isAdmin()) {
+              <p class="text-sm text-text-muted">Đang xem với tư cách quản trị viên</p>
+            } @else {
+              <p class="text-sm text-text-secondary">Kiểm tra kỹ thông số trước khi lưu cấu hình vào giỏ hàng.</p>
+              <button
               type="button"
               (click)="addCustomItemToCart()"
               [disabled]="addingToCart() || !quote() || !!quoteError()"
               appButton
               variant="primary"
               size="lg"
-              [fullWidth]="true"
+              class="min-h-12 w-full sm:w-auto"
             >
-              {{ addingToCart() ? 'Đang thêm vào giỏ...' : '+ Thêm Cấu Hình Này Vào Giỏ' }}
-            </button>
+                {{ addingToCart() ? 'Đang thêm vào giỏ...' : '+ Thêm cấu hình vào giỏ hàng' }}
+              </button>
 
-            @if (addedSuccess()) {
-              <div class="p-2.5 rounded-[6px] bg-success/10 border border-success/50 text-xs text-success text-center">
-                ✓ Đã lưu cấu hình vào giỏ! <a routerLink="/cart" class="underline font-semibold text-steel hover:text-steel-hover">Mở giỏ hàng →</a>
-              </div>
+              @if (addedSuccess()) {
+                <div class="rounded-[6px] border border-success/50 bg-success/10 p-3 text-sm text-success sm:ml-auto">
+                <svg viewBox="0 0 24 24" class="mr-1 inline h-4 w-4 align-text-bottom" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h8.5a2 2 0 0 0 1.9-1.4L21 8H6" />
+                  <circle cx="10" cy="19" r="1.3" />
+                  <circle cx="18" cy="19" r="1.3" />
+                </svg>
+                Đã lưu cấu hình vào giỏ!
+                <a routerLink="/cart" class="inline-flex items-center gap-1 underline font-semibold text-steel hover:text-steel-hover">
+                  Mở giỏ hàng
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
+                </a>
+                </div>
+              }
             }
-          }
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   `,
@@ -338,6 +376,7 @@ export class QuoteBuilderComponent implements OnInit {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly quoteApi = inject(QuoteApiService);
   private readonly cartApi = inject(CartApiService);
+  private readonly toast = inject(ToastService);
   readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -376,6 +415,11 @@ export class QuoteBuilderComponent implements OnInit {
   readonly selectedMethod = computed(
     () => this.availableMethods().find((pm) => pm.id === this.selectedMethodId) || null
   );
+
+  scrollToSection(event: Event, sectionId: string): void {
+    event.preventDefault();
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
@@ -509,13 +553,22 @@ export class QuoteBuilderComponent implements OnInit {
         customerNote: this.customerNote.trim() || undefined,
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.addingToCart.set(false);
+          if (!res.success || !res.data) {
+            const message = res.message || 'Không thể thêm vào giỏ hàng.';
+            this.quoteError.set(message);
+            this.toast.show(message, 'error', 'Không thể thêm cấu hình');
+            return;
+          }
           this.addedSuccess.set(true);
+          this.toast.show('Cấu hình gia công đã được thêm vào giỏ hàng của bạn.', 'success', 'Đã thêm vào giỏ hàng', 'cart');
         },
         error: (err) => {
           this.addingToCart.set(false);
-          this.quoteError.set(err?.error?.message || 'Không thể thêm vào giỏ hàng.');
+          const message = err?.error?.message || 'Không thể thêm vào giỏ hàng.';
+          this.quoteError.set(message);
+          this.toast.show(message, 'error', 'Không thể thêm cấu hình');
         },
       });
   }

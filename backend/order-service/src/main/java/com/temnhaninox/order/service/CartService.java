@@ -63,8 +63,7 @@ public class CartService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Cart item not found"));
 
         if (item.getItemType() == ItemType.STANDARD_ITEM) {
-            CatalogProductDto product = catalogPricingClient.findProductById(item.getProductId())
-                    .filter(CatalogProductDto::isActive)
+            CatalogProductDto product = catalogPricingClient.findActiveProductById(item.getProductId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                             "Product not found or inactive"));
 
@@ -127,8 +126,7 @@ public class CartService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "productId is required for STANDARD_ITEM");
         }
 
-        CatalogProductDto product = catalogPricingClient.findProductById(request.getProductId())
-                .filter(CatalogProductDto::isActive)
+        CatalogProductDto product = catalogPricingClient.findActiveProductById(request.getProductId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                         "Product not found or inactive"));
 
