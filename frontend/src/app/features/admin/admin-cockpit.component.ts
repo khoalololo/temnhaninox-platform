@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { QuoteApiService } from '../../core/services/quote-api.service';
@@ -22,7 +23,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
 @Component({
   selector: 'app-admin-cockpit',
   standalone: true,
-  imports: [CommonModule, FormsModule, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent],
   template: `
     <div class="admin-page max-w-[1440px] mx-auto px-4 py-8 space-y-7">
       <!-- Header & Tabs -->
@@ -41,6 +42,7 @@ import { ToastService } from '../../shared/components/toast/toast.component';
         >
           Đơn hàng
         </button>
+        <a routerLink="/admin/board" class="admin-tab">Bảng Kanban</a>
         <button
           type="button"
           (click)="setActiveTab('pricing')"
@@ -818,6 +820,7 @@ export class AdminCockpitComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   private readonly quoteApi = inject(QuoteApiService);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly activeTab = signal<'orders' | 'pricing' | 'products' | 'customers'>('orders');
   readonly summary = signal<AdminDashboardSummary | null>(null);
@@ -882,6 +885,8 @@ export class AdminCockpitComponent implements OnInit {
   ngOnInit(): void {
     this.refreshDashboard();
     this.loadOrders();
+    const deepLinkedOrder = this.route.snapshot.queryParamMap.get('order');
+    if (deepLinkedOrder) this.openOrder(deepLinkedOrder); // coming from the Kanban board
     this.loadPricingRules();
     this.fetchAdminProducts();
     this.adminApi.getAdminCategories().subscribe({
