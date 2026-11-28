@@ -77,6 +77,7 @@ export class AdminApiService {
     payload: {
       targetStatus: OrderStatus;
       productionWorkerNote?: string;
+      customerProgressNote?: string;
       adminInternalNote?: string;
       note?: string;
     }

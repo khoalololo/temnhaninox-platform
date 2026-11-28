@@ -130,3 +130,12 @@
 - [ ] Enter the Mica/Decal đ/m² in Admin to Định giá (needs the uncle's number) - until then mica quotes return a validation error
 - [ ] Verify UC-13 (Kanban drag-and-drop in a real browser), UC-14, UC-15, UC-16 and visually review latest no-scroll layout at desktop/tablet/mobile sizes
 - [ ] Open: customer-visible progress note separate from the internal worker note (backend change in order-service); Kanban has no touch drag (use buttons on phones)
+
+### Phase H: Customer progress note, VNPAY/Telegram wiring (branch `feature/customer-note-and-ops`) [WRITTEN — backend NOT compiled]
+- [x] Internal worker note vs customer-visible progress note split (order-service Flyway `V2__customer_progress_note.sql`, entity/DTO/mapper, admin inputs, customer display); the customer API no longer returns the internal note (+3 tests)
+- [x] Telegram alert when VNPAY confirms a payment (`notifyPaymentConfirmed`)
+- [x] `VNPAY_RETURN_URL` / `VNPAY_PAY_URL` passed through docker-compose and `.env.example`
+- [ ] `mvn test -pl order-service` (new tests: `OrderMapperVisibilityTest`, `AdminOrderServiceTest`), then start the service so Flyway applies V2
+- [ ] VNPAY sandbox run (needs merchant credentials + public IPN URL), Telegram bot token/chat id
+- [ ] Future: AI chatbot, enhanced 3D quote builder (see plan section 6)
+
