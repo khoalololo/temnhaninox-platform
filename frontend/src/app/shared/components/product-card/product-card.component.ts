@@ -27,10 +27,8 @@ import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholde
         }
 
         <span
-          class="absolute top-2.5 left-2.5 text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full border shadow-sm"
-          [ngClass]="product.productType === 'CUSTOM_TEMPLATE'
-            ? 'bg-[#187115]/95 text-white border-white/80'
-            : 'bg-white/95 text-[#187115] border-white'"
+          class="tni-chip no-dot absolute left-2.5 top-2.5 shadow-sm"
+          [attr.data-tone]="product.productType === 'CUSTOM_TEMPLATE' ? 'info' : 'success'"
         >
           {{ product.productType === 'CUSTOM_TEMPLATE' ? 'Gia công 3D' : 'Có sẵn' }}
         </span>

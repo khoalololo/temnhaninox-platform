@@ -243,6 +243,15 @@ class AdminOrderServiceTest {
                 .proofImageUrl("https://s3.local/receipts/tx1.jpg")
                 .build();
         order.addPaymentTransaction(tx);
+        PaymentTransaction otherAttempt = PaymentTransaction.builder()
+                .id(UUID.randomUUID())
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .amount(new BigDecimal("500000.00"))
+                .status(PaymentStatus.PENDING)
+                .proofImageUrl("https://s3.local/receipts/tx2.jpg")
+                .build();
+        order.addPaymentTransaction(otherAttempt);
 
         when(paymentTransactionRepository.findById(paymentId)).thenReturn(Optional.of(tx));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -254,14 +263,15 @@ class AdminOrderServiceTest {
         assertThat(response.getPaidAmount()).isEqualByComparingTo("500000.00");
         assertThat(response.getStatus()).isEqualTo(OrderStatus.IN_PRODUCTION);
         assertThat(response.getPaymentTransactions().get(0).getStatus()).isEqualTo(PaymentStatus.VERIFIED);
+        assertThat(response.getPaymentTransactions().get(1).getStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.getStatusLogs()).hasSize(1);
         assertThat(response.getStatusLogs().get(0).getToStatus()).isEqualTo(OrderStatus.IN_PRODUCTION);
     }
 
     @Test
-    void verifyPayment_rejectsDepositBeforeOrderReachesAwaitingDeposit() {
+    void verifyPayment_rejectsManualVnpayVerification() {
         UUID paymentId = UUID.randomUUID();
-        Order order = baseOrder(OrderStatus.QUOTE_PENDING, OrderType.CUSTOM_QUOTE_ORDER, false);
+        Order order = baseOrder(OrderStatus.AWAITING_DEPOSIT, OrderType.CUSTOM_QUOTE_ORDER, false);
         PaymentTransaction tx = PaymentTransaction.builder()
                 .id(paymentId)
                 .paymentPhase(PaymentPhase.DEPOSIT_50)
@@ -276,7 +286,31 @@ class AdminOrderServiceTest {
                 adminId, paymentId,
                 AdminVerifyPaymentRequest.builder().status(PaymentStatus.VERIFIED).build()))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Payment cannot be verified");
+                .hasMessageContaining("VNPAY transactions are processed automatically");
+
+        assertThat(order.getPaidAmount()).isEqualByComparingTo("0");
+        assertThat(tx.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    }
+
+    @Test
+    void verifyPayment_requiresReceiptBeforeVerifyingBankTransfer() {
+        UUID paymentId = UUID.randomUUID();
+        Order order = baseOrder(OrderStatus.AWAITING_DEPOSIT, OrderType.CUSTOM_QUOTE_ORDER, false);
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .id(paymentId)
+                .paymentPhase(PaymentPhase.DEPOSIT_50)
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .amount(new BigDecimal("500000.00"))
+                .status(PaymentStatus.PENDING)
+                .build();
+        order.addPaymentTransaction(tx);
+        when(paymentTransactionRepository.findById(paymentId)).thenReturn(Optional.of(tx));
+
+        assertThatThrownBy(() -> adminOrderService.verifyPayment(
+                adminId, paymentId,
+                AdminVerifyPaymentRequest.builder().status(PaymentStatus.VERIFIED).build()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("bank transfer receipt is required");
 
         assertThat(order.getPaidAmount()).isEqualByComparingTo("0");
         assertThat(tx.getStatus()).isEqualTo(PaymentStatus.PENDING);

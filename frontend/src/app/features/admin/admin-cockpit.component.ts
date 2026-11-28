@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { QuoteApiService } from '../../core/services/quote-api.service';
@@ -37,47 +37,59 @@ import {
 @Component({
   selector: 'app-admin-cockpit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe, ButtonDirective, PaginatorComponent, ImageLightboxComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, VndCurrencyPipe, ButtonDirective, PaginatorComponent, ImageLightboxComponent],
   template: `
     <div class="admin-page mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-7">
-      <!-- Header & Tabs -->
+      <!-- Header & Navigation -->
       <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 border-b border-border pb-5">
         <div>
         <div class="text-sm text-text-muted mb-1">Quản trị</div>
         <h1 class="font-heading text-2xl sm:text-3xl font-semibold text-text-primary">Quản lý xưởng</h1>
       </div>
 
-      <nav class="flex flex-wrap gap-2" aria-label="Khu vực quản trị">
+      <nav class="admin-navigation" aria-label="Khu vực quản trị">
         <button
           type="button"
           (click)="setActiveTab('orders')"
-          class="admin-tab"
+          class="admin-tab fs-nav-underline"
           [class.admin-tab-active]="activeTab() === 'orders'"
+          [class.active-nav]="activeTab() === 'orders'"
+          [class.text-accent]="activeTab() === 'orders'"
+          [attr.aria-current]="activeTab() === 'orders' ? 'page' : null"
         >
           Đơn hàng
         </button>
-        <a routerLink="/admin/board" class="admin-tab">Bảng Kanban</a>
+        <a routerLink="/admin/board" routerLinkActive="text-accent active-nav" [routerLinkActiveOptions]="{ exact: true }" class="admin-tab fs-nav-underline">Bảng Kanban</a>
         <button
           type="button"
           (click)="setActiveTab('pricing')"
-          class="admin-tab"
+          class="admin-tab fs-nav-underline"
           [class.admin-tab-active]="activeTab() === 'pricing'"
+          [class.active-nav]="activeTab() === 'pricing'"
+          [class.text-accent]="activeTab() === 'pricing'"
+          [attr.aria-current]="activeTab() === 'pricing' ? 'page' : null"
         >
           Định giá
         </button>
         <button
           type="button"
           (click)="setActiveTab('products')"
-          class="admin-tab"
+          class="admin-tab fs-nav-underline"
           [class.admin-tab-active]="activeTab() === 'products'"
+          [class.active-nav]="activeTab() === 'products'"
+          [class.text-accent]="activeTab() === 'products'"
+          [attr.aria-current]="activeTab() === 'products' ? 'page' : null"
         >
           Sản phẩm <span class="tab-count">{{ productsTotalElements() }}</span>
         </button>
         <button
           type="button"
           (click)="setActiveTab('customers')"
-          class="admin-tab"
+          class="admin-tab fs-nav-underline"
           [class.admin-tab-active]="activeTab() === 'customers'"
+          [class.active-nav]="activeTab() === 'customers'"
+          [class.text-accent]="activeTab() === 'customers'"
+          [attr.aria-current]="activeTab() === 'customers' ? 'page' : null"
         >
           Khách hàng
         </button>
@@ -137,9 +149,9 @@ import {
         }
       </section>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div class="grid grid-cols-1 gap-6 items-start">
           <!-- Orders Queue -->
-          <div [class]="selectedOrder() ? 'lg:col-span-7' : 'lg:col-span-12'" class="industrial-card overflow-hidden">
+          <div class="industrial-card overflow-hidden">
             <div class="px-3 py-3 bg-surface border-b border-border sm:px-5 sm:py-4">
               <div class="flex flex-nowrap items-center gap-2">
                 <select
@@ -166,8 +178,8 @@ import {
             @if (ordersLoading()) {
               <div class="h-52 animate-pulse bg-surface-raised" aria-label="Đang tải đơn hàng"></div>
             } @else {
-            <div class="hidden overflow-x-auto md:block">
-              <table class="tni-table">
+            <div class="hidden lg:block">
+              <table class="tni-table w-full table-fixed">
                 <thead>
                   <tr>
                     <th>Mã đơn</th>
@@ -175,7 +187,7 @@ import {
                     <th>Trạng thái</th>
                     @if (!selectedOrder()) { <th>Thanh toán</th> }
                     <th class="!text-right">Tổng tiền</th>
-                    <th class="!text-right"></th>
+                    <th class="w-24 !text-right"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,21 +204,21 @@ import {
                         <span class="text-sm font-semibold text-text-primary">{{ ord.recipientName }}</span>
                         <div class="text-[13px] text-text-secondary">{{ ord.itemCount }} mặt hàng · {{ ord.createdAt | date:'dd/MM/yyyy' }}</div>
                       </td>
-                      <td><span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span></td>
+                      <td><span class="tni-chip no-dot" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span></td>
                       @if (!selectedOrder()) {
                         <td class="min-w-[9rem]">
                           <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid(ord)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid(ord)"></span></div>
                           <div class="mt-1 text-[13px] font-sans font-medium tabular-nums text-text-secondary">{{ percentPaid(ord) }}% đã thu</div>
                         </td>
                       }
-                      <td class="price-text text-right font-sans font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</td>
-                      <td class="text-right"><span class="tni-row-action">Xử lý</span></td>
+                      <td class="price-text min-w-36 whitespace-nowrap text-right font-sans font-semibold tabular-nums text-text-primary">{{ ord.totalAmount | vnd }}</td>
+                      <td class="w-24 min-w-24 whitespace-nowrap text-right"><span class="tni-row-action inline-flex whitespace-nowrap">Xử lý</span></td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
-            <div class="space-y-3 p-3 md:hidden">
+            <div class="space-y-3 p-3 lg:hidden">
               @for (ord of orders(); track ord.id) {
                 <button
                   type="button"
@@ -220,7 +232,7 @@ import {
                       <div class="break-words font-sans text-sm font-semibold tabular-nums text-text-primary">{{ ord.orderCode }}</div>
                       <div class="mt-1 truncate text-sm text-text-secondary">{{ ord.recipientName }}</div>
                     </div>
-                    <span class="tni-chip shrink-0" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
+                    <span class="tni-chip no-dot shrink-0" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
                   </div>
                   <div class="mt-3 flex items-end justify-between gap-3 border-t border-border pt-3">
                     <div class="min-w-0">
@@ -248,11 +260,11 @@ import {
 
           <!-- Right Detail Inspector Drawer -->
           @if (selectedOrder(); as ord) {
-            <div class="lg:col-span-5 industrial-card border-steel p-6 pb-20 space-y-6 text-sm">
+            <div class="industrial-card w-full min-w-0 border-steel p-4 pb-20 space-y-6 text-sm sm:p-6">
               <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-mono font-bold text-base text-text-primary">{{ ord.orderCode }}</span>
-                  <span class="tni-chip" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
+                  <span class="tni-chip no-dot" [attr.data-tone]="statusTone(ord.status)">{{ statusLabel(ord.status) }}</span>
                 </div>
                 <button type="button" (click)="selectedOrder.set(null)" appButton variant="ghost" size="xs">
                   <span class="inline-flex items-center gap-1">
@@ -403,35 +415,42 @@ import {
                       <div class="min-w-0 space-y-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                           <span class="font-semibold text-sm text-text-primary">{{ phaseLabel(tx.paymentPhase) }}</span>
-                          <span class="tni-chip" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
+                          <span class="tni-chip no-dot" [attr.data-tone]="payTone(tx.status)">{{ payLabel(tx.status) }}</span>
                         </div>
                         <div class="price-text font-sans tabular-nums text-lg font-semibold text-text-primary">{{ tx.amount | vnd }}</div>
                         <div class="text-sm text-text-secondary break-words">{{ methodLabel(tx.paymentMethod) }} · Mã GD: {{ tx.transactionRef || 'Chưa cập nhật' }}</div>
                         @if (tx.proofImageUrl) {
-                          @if (isImage(tx.proofImageUrl)) {
-                            <button type="button" class="tni-thumb mt-2" (click)="openPreview(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))">
-                              <img [src]="tx.proofImageUrl" alt="Biên lai chuyển khoản" loading="lazy" />
-                              <span>Xem biên lai</span>
-                            </button>
-                          } @else {
-                            <a [href]="tx.proofImageUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-steel hover:text-steel-hover underline">
-                              Xem biên lai
-                              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9" /><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" /></svg>
-                            </a>
-                          }
-                        }
-                      </div>
-                      @if (tx.status === 'PENDING' && canVerifyPayment(ord, tx)) {
-                        <div class="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            (click)="verifyTx(tx.id, 'VERIFIED')"
-                            appButton
-                            variant="primary"
-                            size="xs"
+                            class="mt-2 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-steel transition-colors hover:border-steel hover:text-steel-hover"
+                            (click)="openPaymentProof(tx.proofImageUrl, 'Biên lai · ' + phaseLabel(tx.paymentPhase))"
                           >
-                            Duyệt tiền
+                            Xem biên lai
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9" /><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" /></svg>
                           </button>
+                        }
+                      </div>
+                      @if (tx.status === 'PENDING' && tx.paymentMethod === 'VNPAY_SANDBOX') {
+                        <span class="text-xs font-medium text-text-muted">
+                          Chờ VNPAY xác nhận tự động. Không thể duyệt thủ công.
+                        </span>
+                      } @else if (tx.status === 'PENDING' && canVerifyPayment(ord, tx)) {
+                        <div class="flex flex-wrap items-center gap-2">
+                          @if (tx.paymentMethod !== 'BANK_TRANSFER' || tx.proofImageUrl) {
+                            <button
+                              type="button"
+                              (click)="verifyTx(tx.id, 'VERIFIED')"
+                              appButton
+                              variant="primary"
+                              size="xs"
+                            >
+                              Duyệt tiền
+                            </button>
+                          } @else {
+                            <span class="text-xs font-medium text-text-muted">
+                              Chưa có biên lai chuyển khoản, chưa thể duyệt.
+                            </span>
+                          }
                           <button
                             type="button"
                             (click)="verifyTx(tx.id, 'FAILED')"
@@ -661,7 +680,7 @@ import {
           </div>
 
           @if (showCreateProduct()) {
-            <form (ngSubmit)="createProduct()" class="industrial-card p-5 sm:p-7 space-y-7">
+            <form id="product-editor" (ngSubmit)="createProduct()" class="industrial-card scroll-mt-24 p-5 sm:p-7 space-y-7">
               <div class="border-b border-border pb-4">
                 <h3 class="font-heading text-xl font-semibold text-text-primary">
                   {{ editingProductId() ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm' }}
@@ -769,16 +788,16 @@ import {
                   @if (newProd.images.length) {
                     <div class="flex flex-wrap gap-4">
                       @for (image of newProd.images; track image; let idx = $index) {
-                        <div class="w-36 overflow-hidden rounded-lg border border-border bg-bg">
+                        <div class="w-48 overflow-hidden rounded-lg border border-border bg-bg">
                           <img [src]="image" [alt]="'Ảnh sản phẩm ' + (idx + 1)" class="w-full h-32 object-cover" />
                           <div class="flex items-center justify-between gap-1 border-t border-border px-2 py-1.5 text-xs">
-                            <span class="truncate text-text-secondary">{{ idx === 0 ? 'Ảnh đại diện' : 'Ảnh ' + (idx + 1) }}</span>
+                            <span class="min-w-0 flex-1 truncate text-text-secondary" [title]="idx === 0 ? 'Ảnh đại diện' : 'Ảnh ' + (idx + 1)">{{ idx === 0 ? 'Ảnh đại diện' : 'Ảnh ' + (idx + 1) }}</span>
                             <div class="flex shrink-0 gap-1">
-                              <button type="button" (click)="moveProductImage(idx, -1)" [disabled]="idx === 0" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' lên trước'">
+                              <button type="button" (click)="moveProductImage(idx, -1)" [disabled]="idx === 0" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' lên trước'" [title]="idx === 0 ? 'Đã ở đầu danh sách' : 'Đưa lên trước'">
                                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" /></svg>
                               </button>
-                              <button type="button" (click)="removeProductImage(idx)" class="image-action image-action-remove" [attr.aria-label]="'Xóa ảnh ' + (idx + 1)">×</button>
-                              <button type="button" (click)="moveProductImage(idx, 1)" [disabled]="idx === newProd.images.length - 1" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' xuống sau'">
+                              <button type="button" (click)="removeProductImage(idx)" class="image-action image-action-remove" [attr.aria-label]="'Xóa ảnh ' + (idx + 1)" title="Gỡ ảnh">×</button>
+                              <button type="button" (click)="moveProductImage(idx, 1)" [disabled]="idx === newProd.images.length - 1" class="image-action" [attr.aria-label]="'Đưa ảnh ' + (idx + 1) + ' xuống sau'" [title]="idx === newProd.images.length - 1 ? 'Đã ở cuối danh sách' : 'Đưa xuống sau'">
                                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14m0 0 6-6m-6 6-6-6" /></svg>
                               </button>
                             </div>
@@ -854,7 +873,7 @@ import {
                     </td>
                     <td>
                       @if (p.productType === 'STANDARD_ITEM') {
-                        <span class="tni-chip" [attr.data-tone]="(p.stockQuantity ?? 0) === 0 ? 'danger' : (p.stockQuantity ?? 0) < 10 ? 'warning' : 'success'">
+                        <span class="tni-chip no-dot" [attr.data-tone]="(p.stockQuantity ?? 0) === 0 ? 'danger' : (p.stockQuantity ?? 0) < 10 ? 'warning' : 'success'">
                           {{ (p.stockQuantity ?? 0) === 0 ? 'Hết hàng' : p.stockQuantity + ' cái' }}
                         </span>
                       } @else { <span class="text-text-muted">Không áp dụng</span> }
@@ -863,8 +882,8 @@ import {
                       <button type="button" role="switch" class="tni-switch" [attr.aria-checked]="p.isActive !== false" (click)="toggleProductActive(p)" [attr.aria-label]="(p.isActive !== false ? 'Ẩn ' : 'Hiện ') + p.name"></button>
                     </td>
                     <td class="text-right whitespace-nowrap">
-                      <button type="button" (click)="editProduct(p)" class="tni-row-action mr-2">Sửa</button>
-                      <button type="button" (click)="removeProduct(p.id)" class="tni-row-action danger">Xóa</button>
+                      <button type="button" (click)="editProduct(p)" class="admin-product-action">Sửa</button>
+                      <button type="button" (click)="removeProduct(p.id)" class="admin-product-action danger">Xóa</button>
                     </td>
                   </tr>
                 }
@@ -906,8 +925,8 @@ import {
                     }
                   </div>
                   <div class="mt-3 flex gap-2">
-                    <button type="button" (click)="editProduct(p)" class="tni-row-action flex-1">Sửa sản phẩm</button>
-                    <button type="button" (click)="removeProduct(p.id)" class="tni-row-action danger flex-1">Xóa</button>
+                    <button type="button" (click)="editProduct(p)" class="admin-product-action">Sửa sản phẩm</button>
+                    <button type="button" (click)="removeProduct(p.id)" class="admin-product-action danger">Xóa sản phẩm</button>
                   </div>
                 </article>
               }
@@ -963,7 +982,7 @@ import {
                       </td>
                       <td class="tabular-nums text-text-secondary">{{ customer.phone || 'Chưa cập nhật' }}</td>
                       <td class="text-text-secondary max-w-[22rem]">{{ customer.defaultAddress || 'Chưa cập nhật' }}</td>
-                      <td><span class="tni-chip" [attr.data-tone]="customer.isActive ? 'success' : 'muted'">{{ customer.isActive ? 'Hoạt động' : 'Đã khóa' }}</span></td>
+                      <td>                      <span class="tni-chip no-dot" [attr.data-tone]="customer.isActive ? 'success' : 'muted'">{{ customer.isActive ? 'Hoạt động' : 'Đã khóa' }}</span></td>
                       <td class="tabular-nums text-text-secondary">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
                     </tr>
                   }
@@ -978,7 +997,7 @@ import {
       }
 
       @if (preview(); as pv) {
-        <app-image-lightbox [url]="pv.url" [caption]="pv.caption" (closed)="preview.set(null)" />
+        <app-image-lightbox [url]="pv.url" [caption]="pv.caption" (closed)="closePreview()" />
       }
 
       @if (deleteProductId()) {
@@ -998,7 +1017,7 @@ import {
     </div>
   `,
 })
-export class AdminCockpitComponent implements OnInit {
+export class AdminCockpitComponent implements OnInit, OnDestroy {
   private readonly adminApi = inject(AdminApiService);
   private readonly quoteApi = inject(QuoteApiService);
   private readonly toastService = inject(ToastService);
@@ -1037,6 +1056,7 @@ export class AdminCockpitComponent implements OnInit {
   readonly preview = signal<{ url: string; caption: string } | null>(null);
   readonly materialSavingId = signal<string | null>(null);
   materialRates: Record<string, number | null> = {};
+  private proofPreviewObjectUrl: string | null = null;
 
   readonly statusOptions: { value: OrderStatus | ''; label: string }[] = [
     { value: '', label: 'Tất cả' },
@@ -1070,6 +1090,68 @@ export class AdminCockpitComponent implements OnInit {
 
   openPreview(url: string | undefined, caption: string): void {
     if (url) this.preview.set({ url, caption });
+  }
+
+  openPaymentProof(proofUrl: string | undefined, caption: string): void {
+    if (!proofUrl) return;
+    const key = this.paymentProofKey(proofUrl);
+    if (!key) {
+      this.notifyError('Đường dẫn biên lai không hợp lệ.');
+      return;
+    }
+
+    const isImage = this.isImage(proofUrl);
+    const documentWindow = isImage ? null : window.open('about:blank', '_blank');
+    this.adminApi.getPaymentProof(key).subscribe({
+      next: (file) => {
+        const objectUrl = URL.createObjectURL(file);
+        if (isImage) {
+          this.clearProofPreviewObjectUrl();
+          this.proofPreviewObjectUrl = objectUrl;
+          this.preview.set({ url: objectUrl, caption });
+        } else if (documentWindow) {
+          documentWindow.opener = null;
+          documentWindow.location.href = objectUrl;
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+          this.notifyError('Cho phép cửa sổ bật lên để xem tệp biên lai.');
+        }
+      },
+      error: (err) => {
+        documentWindow?.close();
+        this.notifyError(err?.error?.message || 'Không thể tải biên lai thanh toán.');
+      },
+    });
+  }
+
+  closePreview(): void {
+    this.preview.set(null);
+    this.clearProofPreviewObjectUrl();
+  }
+
+  ngOnDestroy(): void {
+    this.clearProofPreviewObjectUrl();
+  }
+
+  private clearProofPreviewObjectUrl(): void {
+    if (this.proofPreviewObjectUrl) {
+      URL.revokeObjectURL(this.proofPreviewObjectUrl);
+      this.proofPreviewObjectUrl = null;
+    }
+  }
+
+  private paymentProofKey(proofUrl: string): string | null {
+    try {
+      const path = new URL(proofUrl, window.location.origin).pathname;
+      const prefix = '/payment-proofs/';
+      const start = path.indexOf(prefix);
+      if (start < 0) return null;
+      const key = decodeURIComponent(path.slice(start + prefix.length));
+      return /^[A-Za-z0-9._-]+$/.test(key) ? key : null;
+    } catch {
+      return null;
+    }
   }
 
   materialRateChanged(m: Material): boolean {
@@ -1581,6 +1663,9 @@ export class AdminCockpitComponent implements OnInit {
       isActive: product.isActive ?? true,
     };
     this.showCreateProduct.set(true);
+    window.setTimeout(() => {
+      document.getElementById('product-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   uploadProductImages(event: Event): void {

@@ -35,6 +35,7 @@ export interface OrderSummary {
   paidAmount: number;
   requiresVatInvoice: boolean;
   itemCount: number;
+  totalQuantity?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -12,7 +12,7 @@ interface BoardColumn {
   status: OrderStatus;
   title: string;
   hint: string;
-  /** Orders sitting here need someone at the workshop to act (drives the accent dot). */
+  /** Indicates a stage that requires an admin action. */
   needsAction: boolean;
   /** Max cards fetched for this column (finished orders are capped). */
   size: number;
@@ -40,63 +40,15 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
   selector: 'app-admin-order-board',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, VndCurrencyPipe],
-  styles: [`
-    :host { display: block; }
-    .board-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x proximity; }
-    .col {
-      flex: 0 0 292px; scroll-snap-align: start; display: flex; flex-direction: column;
-      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px;
-      max-height: calc(100vh - 290px); min-height: 220px;
-      transition: border-color 160ms ease, background-color 160ms ease, opacity 160ms ease;
-    }
-    .col { border-top: 3px solid var(--stage, var(--color-border)); }
-    .col-head { padding: 12px 14px 10px; position: sticky; top: 0; }
-    .col-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
-    .col.drop-ok { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface)); }
-    .col.drop-ok .col-body { outline: 2px dashed var(--color-accent); outline-offset: -6px; border-radius: 8px; }
-    .col.drop-no { opacity: 0.45; }
-    .card {
-      background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 8px;
-      padding: 11px 12px; text-align: left; width: 100%; cursor: pointer;
-      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
-    }
-    .card:hover { border-color: var(--color-accent); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10); transform: translateY(-1px); }
-    .card:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-    .card[draggable='true'] { cursor: grab; }
-    .card.dragging { opacity: 0.4; transform: rotate(1.2deg); }
-    .chip {
-      display: inline-flex; align-items: center; gap: 4px; font-size: 11px; line-height: 1;
-      padding: 4px 7px; border-radius: 999px; border: 1px solid var(--color-border);
-      color: var(--color-text-secondary); background: var(--color-surface);
-    }
-    .chip-accent { border-color: var(--color-accent); color: var(--color-accent); }
-    .chip-warn { border-color: var(--color-warning); color: var(--color-warning); }
-    .bar { height: 5px; border-radius: 999px; background: var(--color-surface-raised); overflow: hidden; }
-    .bar > span { display: block; height: 100%; background: var(--color-accent); transition: width 300ms ease; }
-    .bar.full > span { background: var(--color-success); }
-    .skeleton { border-radius: 8px; height: 112px; background: var(--color-surface-raised); animation: pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 50% { opacity: 0.55; } }
-    .step-btn {
-      font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px;
-      border: 1px solid var(--color-accent); color: var(--color-accent); background: transparent; cursor: pointer;
-    }
-    .step-btn:hover:not(:disabled) { background: var(--color-accent); color: #fff; }
-    .step-btn:disabled { opacity: 0.45; cursor: not-allowed; border-color: var(--color-border); color: var(--color-text-muted); }
-    @media (prefers-reduced-motion: reduce) {
-      .card, .col, .bar > span { transition: none; }
-      .skeleton { animation: none; }
-      .card:hover { transform: none; }
-    }
-    @media (max-width: 640px) { .col { flex-basis: 84vw; max-height: none; } }
-  `],
+  styles: [':host { display: block; }'],
   template: `
-    <div class="max-w-[1680px] mx-auto px-4 py-8 space-y-5">
+    <div class="admin-order-board max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-7 space-y-5">
       <!-- Header -->
       <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <div class="text-sm text-text-muted mb-1">Quản trị</div>
           <h1 class="font-heading text-2xl sm:text-3xl font-semibold text-text-primary">Bảng tiến độ đơn hàng</h1>
-          <p class="text-sm text-text-secondary mt-1">
+          <p class="text-sm text-text-secondary mt-1 max-w-2xl">
             Kéo thả để chuyển bước đơn giản: sản xuất, sẵn sàng giao, hoàn tất. Các bước cần dữ liệu sẽ mở chi tiết đơn.
           </p>
         </div>
@@ -107,27 +59,28 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
       </div>
 
       <!-- Toolbar -->
-      <div class="flex flex-wrap items-center gap-3">
-        <input
-          type="search"
-          [ngModel]="search()"
-          (ngModelChange)="search.set($event)"
-          placeholder="Tìm mã đơn hoặc tên người nhận…"
-          aria-label="Tìm đơn hàng"
-          class="industrial-input px-3 py-2 text-sm w-full sm:w-72"
-        />
-        <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)" aria-label="Lọc loại đơn" class="industrial-input px-3 py-2 text-sm">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <label class="board-control w-full sm:w-64">
+          <input
+            type="search"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            placeholder="Tìm mã đơn hoặc tên người nhận…"
+            aria-label="Tìm đơn hàng"
+            class="w-full"
+          />
+        </label>
+        <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)" aria-label="Lọc loại đơn" class="board-control">
           <option value="">Tất cả loại đơn</option>
           <option value="CUSTOM_QUOTE_ORDER">Báo giá gia công riêng</option>
           <option value="DIRECT_STORE_ORDER">Đơn mua có sẵn</option>
         </select>
-        <label class="flex items-center gap-2 text-sm text-text-secondary cursor-pointer select-none">
-          <input type="checkbox" [ngModel]="showCancelled()" (ngModelChange)="toggleCancelled($event)" />
+        <label class="board-control cursor-pointer select-none">
+          <input type="checkbox" class="board-checkbox" [ngModel]="showCancelled()" (ngModelChange)="toggleCancelled($event)" />
           Hiện đơn đã hủy
         </label>
-        <div class="ml-auto flex items-center gap-3 text-sm text-text-muted">
-          <span>{{ totalVisible() }} đơn</span>
-          @if (updatedAt()) { <span>Cập nhật {{ updatedAt() | date:'HH:mm:ss' }}</span> }
+        <div class="ml-auto flex items-center gap-3 text-xs text-text-muted">
+          @if (updatedAt()) { <span>Cập nhật {{ updatedAt() | date:'HH:mm' }}</span> }
           <button type="button" (click)="load()" class="admin-tab" [disabled]="loading()">{{ loading() ? 'Đang tải…' : 'Làm mới' }}</button>
         </div>
       </div>
@@ -139,8 +92,15 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
         </div>
       }
 
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div class="flex items-center gap-4 text-sm">
+          <span class="font-semibold text-text-primary">{{ totalVisible() }} đơn</span>
+          <span class="text-text-secondary"><strong class="font-semibold text-text-primary">{{ needsAttentionCount() }}</strong> cần xử lý</span>
+        </div>
+      </div>
+
       <!-- Board -->
-      <div class="board-scroll" #scroller (dragover)="autoScroll($event, scroller)" role="list" aria-label="Các cột trạng thái đơn hàng">
+      <div class="board-scroll" [class.with-cancelled]="showCancelled()" role="list" aria-label="Các cột trạng thái đơn hàng">
         @for (col of visibleColumns(); track col.status) {
           <section
             class="col"
@@ -152,17 +112,17 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
             (dragover)="onDragOver($event, col.status)"
             (drop)="onDrop($event, col.status)"
           >
-            <header class="col-head bg-[var(--color-surface)] rounded-t-[10px]">
-              <div class="flex items-center justify-between gap-2">
-                <h2 class="font-heading text-[15px] font-semibold text-text-primary flex items-center gap-2">
-                  @if (col.needsAction && counts()[col.status]) {
-                    <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-warning)]" aria-hidden="true"></span>
-                  }
+            <header class="col-head">
+              <div class="flex items-start justify-between gap-2">
+                <h2 class="min-w-0 font-heading text-[15px] leading-5 font-semibold text-text-primary">
                   {{ col.title }}
                 </h2>
-                <span class="chip tabular-nums" [attr.aria-label]="(counts()[col.status] || 0) + ' đơn'">{{ counts()[col.status] || 0 }}</span>
+                <span class="count" [attr.aria-label]="(counts()[col.status] || 0) + ' đơn'">{{ counts()[col.status] || 0 }}</span>
               </div>
-              <p class="text-xs text-text-muted mt-1">{{ col.hint }}</p>
+              <div class="mt-2 flex items-center justify-between gap-2">
+                <p class="min-w-0 text-[11px] leading-4 text-text-muted">{{ col.hint }}</p>
+                @if (col.needsAction && counts()[col.status]) { <span class="attention-label">Cần xử lý</span> }
+              </div>
             </header>
 
             <div class="col-body">
@@ -183,45 +143,45 @@ const OPEN_ORDER_HINT: Partial<Record<OrderStatus, string>> = {
                     (dragstart)="onDragStart($event, o)"
                     (dragend)="onDragEnd()"
                   >
-                    <div class="flex items-start justify-between gap-2">
-                      <span class="font-mono text-[13px] font-semibold text-text-primary">{{ o.orderCode }}</span>
-                      <span class="chip" [class.chip-accent]="o.orderType === 'CUSTOM_QUOTE_ORDER'">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-mono text-[12px] font-semibold tracking-tight text-text-primary">{{ o.orderCode }}</span>
+                      <span class="tni-chip no-dot order-type-tag" [attr.data-tone]="o.orderType === 'CUSTOM_QUOTE_ORDER' ? 'info' : 'success'">
                         {{ o.orderType === 'CUSTOM_QUOTE_ORDER' ? 'Gia công' : 'Có sẵn' }}
                       </span>
                     </div>
-                    <div class="mt-1 text-sm text-text-primary truncate">{{ o.recipientName }}</div>
-                    <div class="mt-0.5 text-xs text-text-muted">{{ o.itemCount }} mặt hàng</div>
+                    <div class="mt-2 text-[13px] font-medium text-text-primary truncate">{{ o.recipientName }}</div>
 
-                    <div class="mt-3 flex items-baseline justify-between">
-                      <span class="price-text font-semibold tabular-nums text-text-primary">{{ o.totalAmount | vnd }}</span>
-                      <span class="text-xs tabular-nums text-text-muted">{{ paidPercent(o) }}% đã thu</span>
+                    <div class="mt-2 flex items-baseline justify-between gap-2">
+                      <span class="amount">{{ o.totalAmount | vnd }}</span>
+                      <span class="text-[11px] tabular-nums text-text-muted">{{ paidPercent(o) }}% đã thu</span>
                     </div>
-                    <div class="bar mt-1.5" [class.full]="paidPercent(o) >= 100" role="progressbar"
+                    <div class="bar mt-1" [class.full]="paidPercent(o) >= 100" role="progressbar"
                          [attr.aria-valuenow]="paidPercent(o)" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ thanh toán">
                       <span [style.width.%]="paidPercent(o)"></span>
                     </div>
 
-                    <div class="mt-3 flex flex-wrap items-center gap-1.5">
-                      @if (o.requiresVatInvoice) { <span class="chip">VAT đỏ</span> }
-                      @if (isStale(o)) { <span class="chip chip-warn" title="Đơn nằm yên ở cột này khá lâu">{{ ageLabel(o) }} chưa đổi</span> }
-                      @else { <span class="chip">{{ ageLabel(o) }}</span> }
+                    <div class="mt-2 flex flex-wrap items-center gap-1">
+                      <span class="tni-chip no-dot" data-tone="success">{{ o.totalQuantity ?? o.itemCount }} {{ o.totalQuantity == null ? 'mặt hàng' : 'cái' }}</span>
+                      <span class="tni-chip no-dot" [attr.data-tone]="isStale(o) ? 'warning' : 'muted'" [title]="isStale(o) ? 'Đơn nằm yên ở cột này khá lâu' : null">{{ isStale(o) ? 'Chậm' : ageLabel(o) }}</span>
+                      @if (o.requiresVatInvoice) { <span class="tni-chip no-dot" data-tone="warning">VAT</span> }
                     </div>
 
                     @if (nextStep(o); as next) {
-                      <div class="mt-3 pt-3 border-t border-border flex items-center justify-between gap-2">
+                      <div class="mt-2 pt-1 border-t border-border flex flex-col items-start gap-1">
                         <button type="button" class="step-btn"
                                 [disabled]="!!next.blocked || moving() === o.id"
                                 [attr.title]="next.blocked || null"
                                 (click)="$event.stopPropagation(); move(o, next.to)">
-                          {{ next.label }}
+                          {{ next.label }} <span aria-hidden="true">→</span>
                         </button>
-                        @if (next.blocked) { <span class="text-[11px] text-text-muted">{{ next.blocked }}</span> }
+                        @if (next.blocked) { <span class="text-[11px] leading-4 text-text-muted">{{ next.blocked }}</span> }
                       </div>
                     }
                   </article>
                 } @empty {
-                  <div class="text-center text-sm text-text-muted py-8 border border-dashed border-border rounded-[8px]">
-                    {{ dragging() && canDrop(col.status) ? 'Thả vào đây' : 'Không có đơn' }}
+                  <div class="empty">
+                    <span class="empty-mark" aria-hidden="true"></span>
+                    <span>{{ dragging() && canDrop(col.status) ? 'Thả đơn vào giai đoạn này' : search() || typeFilter() ? 'Không tìm thấy đơn phù hợp' : 'Chưa có đơn ở giai đoạn này' }}</span>
                   </div>
                 }
                 @if (hiddenCount(col) > 0) {
@@ -273,6 +233,11 @@ export class AdminOrderBoardComponent implements OnInit {
   readonly counts = computed(() => this.totals());
   readonly totalVisible = computed(() =>
     this.visibleColumns().reduce((sum, c) => sum + this.cardsFor(c.status).length, 0)
+  );
+  readonly needsAttentionCount = computed(() =>
+    this.columns
+      .filter((c) => c.needsAction)
+      .reduce((sum, c) => sum + this.cardsFor(c.status).length, 0)
   );
 
   ngOnInit(): void {
@@ -336,15 +301,6 @@ export class AdminOrderBoardComponent implements OnInit {
       CANCELLED: 'var(--color-danger)',
     };
     return map[s];
-  }
-
-  /** Scroll the board sideways while dragging near its edges, so far columns are reachable. */
-  autoScroll(ev: DragEvent, el: HTMLElement): void {
-    if (!this.dragging()) return;
-    const rect = el.getBoundingClientRect();
-    const edge = 90;
-    if (ev.clientX < rect.left + edge) el.scrollLeft -= 22;
-    else if (ev.clientX > rect.right - edge) el.scrollLeft += 22;
   }
 
   hiddenCount(col: BoardColumn): number {

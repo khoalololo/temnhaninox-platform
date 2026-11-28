@@ -79,10 +79,8 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                       <td class="px-4 py-3.5 align-top">
                         <div class="flex items-center gap-2 mb-1">
                           <span
-                            class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full border"
-                            [class]="item.itemType === 'CUSTOM_ITEM'
-                              ? 'border-accent/70 text-accent bg-bg'
-                              : 'border-steel/70 text-steel bg-bg'"
+                            class="tni-chip no-dot"
+                            [attr.data-tone]="item.itemType === 'CUSTOM_ITEM' ? 'info' : 'success'"
                           >
                             {{ item.itemType === 'CUSTOM_ITEM' ? 'GIA CÔNG 3D' : 'CÓ SẴN' }}
                           </span>

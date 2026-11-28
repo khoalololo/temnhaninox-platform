@@ -177,6 +177,16 @@ interface MegaMenuColumn {
             </a>
           }
 
+          <button
+            type="button"
+            (click)="themeService.toggle()"
+            [attr.aria-label]="themeService.theme() === 'light' ? 'Chuyển sang giao diện tối' : 'Chuyển sang giao diện sáng'"
+            [title]="themeService.theme() === 'light' ? 'Giao diện tối' : 'Giao diện sáng'"
+            class="inline-flex h-full items-center px-2 text-base text-text-secondary transition-colors hover:text-accent"
+          >
+            <lucide-icon [img]="themeService.theme() === 'light' ? MoonIcon : SunIcon" [size]="20" />
+          </button>
+
           @if (authService.isAuthenticated()) {
             <div class="relative h-full">
               <button
@@ -227,15 +237,6 @@ interface MegaMenuColumn {
             </a>
           }
 
-          <button
-            type="button"
-            (click)="themeService.toggle()"
-            [attr.aria-label]="themeService.theme() === 'light' ? 'Chuyển sang giao diện tối' : 'Chuyển sang giao diện sáng'"
-            [title]="themeService.theme() === 'light' ? 'Giao diện tối' : 'Giao diện sáng'"
-            class="inline-flex h-full items-center px-2 text-base text-text-secondary transition-colors hover:text-accent"
-          >
-            <lucide-icon [img]="themeService.theme() === 'light' ? MoonIcon : SunIcon" [size]="20" />
-          </button>
         </div>
       </div>
       </div>
@@ -319,7 +320,7 @@ interface MegaMenuColumn {
 
                   <div class="col-span-4 bg-surface border border-border rounded-[10px] p-5 flex flex-col justify-between">
                     <div>
-                      <span class="inline-block text-xs font-semibold uppercase px-2.5 py-0.5 rounded-full bg-accent/10 text-accent">
+                      <span class="tni-chip no-dot" data-tone="info">
                         Báo giá tự động tại xưởng
                       </span>
                       <h4 class="text-base font-bold text-text-primary mt-2.5">

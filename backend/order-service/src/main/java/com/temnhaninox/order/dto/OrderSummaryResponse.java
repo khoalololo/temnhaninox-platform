@@ -27,6 +27,7 @@ public class OrderSummaryResponse {
     private BigDecimal paidAmount;
     private boolean requiresVatInvoice;
     private int itemCount;
+    private int totalQuantity;
     private Instant createdAt;
     private Instant updatedAt;
 }

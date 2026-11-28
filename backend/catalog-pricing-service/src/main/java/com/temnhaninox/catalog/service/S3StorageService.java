@@ -9,12 +9,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.Set;
@@ -96,6 +100,24 @@ public class S3StorageService {
                 .size(file.getSize())
                 .url(url)
                 .build();
+    }
+
+    public ResponseInputStream<GetObjectResponse> getPaymentProof(String key) {
+        if (!StringUtils.hasText(key) || !key.matches("[A-Za-z0-9._-]+")) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid payment proof key");
+        }
+
+        try {
+            return s3Client.getObject(GetObjectRequest.builder()
+                    .bucket("payment-proofs")
+                    .key(key)
+                    .build());
+        } catch (S3Exception ex) {
+            if (ex.statusCode() == 404) {
+                throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Payment proof not found");
+            }
+            throw ex;
+        }
     }
 
     private void ensureBucketExists(String bucket) {

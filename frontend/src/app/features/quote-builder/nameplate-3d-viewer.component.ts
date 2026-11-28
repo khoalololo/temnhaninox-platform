@@ -22,13 +22,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
       <div #canvasHost class="w-full h-full min-h-[380px]"></div>
 
       <!-- Technical Dimension Overlay -->
-      <div class="absolute top-3 left-3 bg-surface/90 border border-border rounded-[6px] px-2.5 py-1.5 text-[11px] font-mono text-text-primary space-y-0.5 pointer-events-none">
-        <div class="text-accent font-semibold uppercase">MÔ PHỎNG VẬT LIỆU 3D (PBR)</div>
-        <div class="tabular-nums">Dài × Rộng: {{ widthMm }} × {{ heightMm }} mm</div>
-        <div class="tabular-nums">Độ dày phôi: {{ thicknessMm }} mm</div>
-        <div class="text-text-secondary">Bề mặt: {{ materialName || 'Inox 304' }} · {{ processName || 'Gia công' }}</div>
+      <div class="viewer-info absolute left-3 top-3 space-y-1 rounded-[6px] px-3 py-2.5 text-[11px] font-mono pointer-events-none">
+        <div class="viewer-title font-semibold uppercase">MÔ PHỎNG VẬT LIỆU 3D (PBR)</div>
+        <div class="viewer-detail tabular-nums">Dài × Rộng: {{ widthMm }} × {{ heightMm }} mm</div>
+        <div class="viewer-detail tabular-nums">Độ dày phôi: {{ thicknessMm }} mm</div>
+        <div class="viewer-surface">Bề mặt: {{ materialName || 'Inox 304' }} · {{ processName || 'Gia công' }}</div>
         @if (cadFileName) {
-          <div class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/50 text-accent font-bold text-[10px]">
+          <div class="viewer-cad inline-flex items-center gap-1 mt-1 rounded px-2 py-0.5 font-bold text-[10px]">
             CAD / ARTWORK: {{ cadFileName }}
           </div>
         }
@@ -36,28 +36,28 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
       <!-- Camera Controls -->
       <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
-        <span class="text-[11px] font-mono text-text-secondary bg-surface/90 px-2 py-1 rounded-[6px] border border-border">
+        <span class="viewer-instruction text-[11px] font-mono px-2.5 py-1.5 rounded-[6px]">
           Kéo chuột trái: Xoay 360° · Cuộn: Phóng to · Chuột phải: Di chuyển
         </span>
         <div class="flex items-center gap-1.5">
           <button
             type="button"
             (click)="setCameraPreset('front')"
-            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
+            class="viewer-camera-action"
           >
             Mặt trước
           </button>
           <button
             type="button"
             (click)="setCameraPreset('iso')"
-            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
+            class="viewer-camera-action"
           >
             Góc nghiêng 3D
           </button>
           <button
             type="button"
             (click)="setCameraPreset('edge')"
-            class="px-2.5 py-1 bg-surface hover:bg-surface-raised text-steel border border-steel/70 rounded-[6px] text-[11px] font-mono transition-colors"
+            class="viewer-camera-action"
           >
             Soi độ dày
           </button>

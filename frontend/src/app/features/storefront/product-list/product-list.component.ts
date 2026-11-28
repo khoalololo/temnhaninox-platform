@@ -82,17 +82,18 @@ import { ToastService } from '../../../shared/components/toast/toast.component';
                 <button
                   type="button"
                   (click)="selectCategory('')"
-                  class="w-full text-left px-2.5 py-1.5 rounded-[6px] transition-colors border"
-                  [class]="selectedCategoryId === '' ? 'bg-surface-raised text-steel border-steel font-medium' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-text-primary'"
+                  class="catalog-category-button catalog-category-all"
+                  [class.is-active]="selectedCategoryId === ''"
                 >
                   Tất cả danh mục
                 </button>
-                @for (cat of categories(); track cat.id) {
+                @for (cat of categories(); track cat.id; let categoryIndex = $index) {
                   <button
                     type="button"
                     (click)="selectCategory(cat.id)"
-                    class="w-full text-left px-2.5 py-1.5 rounded-[6px] transition-colors border"
-                    [class]="selectedCategoryId === cat.id ? 'bg-surface-raised text-accent border-accent font-semibold' : 'border-transparent text-text-primary font-medium hover:bg-surface-raised hover:text-accent'"
+                    class="catalog-category-button"
+                    [class.is-active]="selectedCategoryId === cat.id"
+                    [style.--category-hue]="categoryHue(categoryIndex)"
                   >
                     {{ cat.name }}
                   </button>
@@ -100,8 +101,9 @@ import { ToastService } from '../../../shared/components/toast/toast.component';
                     <button
                       type="button"
                       (click)="selectCategory(sub.id)"
-                      class="w-full text-left pl-6 pr-2.5 py-1 rounded-[6px] transition-colors border text-[11px]"
-                      [class]="selectedCategoryId === sub.id ? 'bg-surface-raised text-accent border-accent font-semibold' : 'border-transparent text-text-secondary hover:bg-surface-raised hover:text-accent'"
+                      class="catalog-category-button catalog-category-child"
+                      [class.is-active]="selectedCategoryId === sub.id"
+                      [style.--category-hue]="categoryHue(categoryIndex)"
                     >
                       <span class="mr-1 inline-flex align-middle text-text-muted" aria-hidden="true">
                         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 5v8a5 5 0 0 0 5 5h7m0 0-4-4m4 4-4 4" /></svg>
@@ -117,7 +119,7 @@ import { ToastService } from '../../../shared/components/toast/toast.component';
               type="button"
               (click)="resetFilters()"
               appButton
-              variant="ghost"
+              variant="secondary"
               size="sm"
               [fullWidth]="true"
             >
@@ -187,6 +189,10 @@ export class ProductListComponent implements OnInit {
   selectedCategoryId = '';
   selectedType: ProductType | '' = '';
   search = '';
+
+  categoryHue(index: number): number {
+    return (28 + index * 137.508) % 360;
+  }
 
   ngOnInit(): void {
     this.catalogApi.getCategories().subscribe({

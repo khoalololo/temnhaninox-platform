@@ -8,9 +8,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-accent text-white hover:bg-accent-hover border border-transparent font-semibold tracking-wide',
-        secondary: 'bg-transparent text-accent border border-accent hover:bg-accent/10 hover:border-accent-hover hover:text-accent-hover font-semibold',
-        ghost: 'bg-transparent text-text-secondary border border-transparent hover:text-accent hover:bg-surface-raised font-medium',
-        danger: 'bg-transparent text-danger border border-danger/60 hover:bg-danger/10 font-medium',
+        secondary: 'bg-[#e5e7eb] text-[#202124] border border-[#d1d5db] hover:bg-[#d9dde3] hover:border-[#b8bec8] font-semibold',
+        ghost: 'bg-[#f7df91] text-[#202124] border border-[#edcf6c] hover:bg-[#f2d579] hover:border-[#dfbe4f] font-medium',
+        danger: 'bg-[#f3b9b9] text-[#202124] border border-[#e89b9b] hover:bg-[#eda8a8] hover:border-[#dc8585] font-semibold',
       },
       size: {
         xs: 'px-3 py-1.5 text-xs',

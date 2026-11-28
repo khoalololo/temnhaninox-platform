@@ -29,6 +29,11 @@ public final class OrderMapper {
                 .paidAmount(order.getPaidAmount())
                 .requiresVatInvoice(order.isRequiresVatInvoice())
                 .itemCount(order.getItems() != null ? order.getItems().size() : 0)
+                .totalQuantity(order.getItems() != null
+                        ? order.getItems().stream()
+                                .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                                .sum()
+                        : 0)
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();

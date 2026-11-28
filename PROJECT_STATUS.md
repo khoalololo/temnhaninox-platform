@@ -2,7 +2,9 @@
 
 ## Current Phase: Phase 5 (End-to-End Integration & Verification) - all feature phases written; verification in progress
 
-**Last updated: 2026-11-27.** Owner-confirmed: `mvn test` passes on all modules (through Phases B/E/F) and Google sign-in works. Not yet done: `node scripts/e2e-smoke.mjs`, `docker compose up --build`, manual UC-01 and UC-03-UC-16, and `mvn test` for the newest backend change (Phase G5, uncompiled by the author). See `docs/feature_completion_plan.md` for the detailed spec, use-case table and open questions.
+**Last updated: 2026-11-28.** The latest frontend changes build successfully with `npm run build`; `git diff --check` passes. Backend tests were not run for the current uncompiled changes because Maven and `backend/mvnw.cmd` are unavailable in this environment. Owner-confirmed historical verification remains: `mvn test` passed on all modules through Phases B/E/F, and Google sign-in works. Still pending: `node scripts/e2e-smoke.mjs`, `docker compose up --build`, manual UC-01 and UC-03-UC-16, and backend verification for current Phase G changes. See `docs/feature_completion_plan.md` for implementation details and open questions.
+
+**Recent work summary (2026-11-27 to 2026-11-28):** Fixed private payment-proof viewing through an admin-authorized API stream and gateway route. Tightened payment verification so an individual bank-transfer receipt is required, VNPAY transactions cannot be manually changed, and verifying one transaction does not approve sibling transactions. Added total unit quantity to order summaries. Refined responsive admin order/payment inspection and the no-horizontal-scroll Kanban while preserving transition and payment guards. Refreshed storefront/admin navigation, theme/account controls, product editing and image ordering, product detail galleries, quantity controls, account/cart/order views, and quote-builder/3D preview readability. Standardized square solid-fill tags and filled action buttons, with distinct semantic colors and individually varied catalog category colors. See Phase G in `docs/feature_completion_plan.md` for implementation details and remaining verification.
 
 **Owner decisions recorded 2026-11-27:** 1 ly = 1 mm; the 5,000,000 đ/m² thin-sheet rate applies to metals only (Mica/Decal need their own rate - value still to be provided); this project is the previous SE project, not the capstone.
 
@@ -38,6 +40,7 @@
 ### Phase 3B: `order-service` (8083) - State Machine, Payments & Notifications [COMPLETED]
 - [x] Customer workflow & payment endpoints (`POST /api/v1/orders/{id}/approve-prototype`, `POST /api/v1/orders/{id}/cancel`, `POST /api/v1/orders/{id}/payments/proof`) with immutable `OrderStatusLog` audit entries
 - [x] Admin order cockpit (`AdminOrderController`, `AdminOrderService`) enforcing `X-User-Role: ADMIN`: `GET /api/v1/admin/orders` (filterable by `status`, `orderType`, `search`), `GET /api/v1/admin/orders/{id}`, `PATCH /api/v1/admin/orders/{id}/quote` (item price override + total/VAT/50% deposit recalculation), `POST /api/v1/admin/orders/{id}/items/{itemId}/prototype`, `PATCH /api/v1/admin/orders/{id}/status` (7-step state machine + deposit gate before `IN_PRODUCTION` + `productionWorkerNote`), `PATCH /api/v1/admin/orders/{id}/vat-invoice`, `PATCH /api/v1/admin/payments/{paymentId}/verify`
+- [x] Payment verification safeguards: require a receipt before verifying a bank transfer, reject manual verification of VNPAY transactions, and update only the selected payment transaction
 - [x] VNPAY sandbox integration (`POST /api/v1/payments/vnpay/create-url`, `GET /api/v1/payments/vnpay-return` with `HMAC-SHA512` signature verification and auto-advance to `IN_PRODUCTION`)
 - [x] Async `TelegramNotificationService` (`@Async` + `RestClient`, no-ops safely when credentials are blank) for new custom quotes & payment proofs
 - [x] Admin dashboard KPI endpoint (`GET /api/v1/admin/dashboard/summary`: `pendingQuotesCount`, `awaitingDepositCount`, `inProductionCount`, `vatPendingCount`, `monthlyRevenue`)
@@ -54,6 +57,9 @@
 - [x] `/products` filterable catalog (search by keyword/SKU, filter by `STANDARD_ITEM` vs `CUSTOM_TEMPLATE`, nested category tree sidebar, `CatalogApiService` `images[]` normalization with `(error)` placeholder fallback, `font-sans tabular-nums` readability styling on prices/dimensions)
 - [x] `/products` pagination, data-driven category mega-menu, responsive mobile drawer, and `/products/:slug` gallery/specification/CTA page
 - [x] Expanded the workshop showcase with additional product photos and an infinite, momentum-driven drag/trackpad carousel; product detail has a larger infinite image carousel, thumbnail navigation, and a compact zoom control with keyboard-accessible lightbox
+- [x] Refined storefront navigation, product detail quantity selection and image gallery controls; product stock/type badges use the shared solid-fill square tag style
+- [x] Product category filters use individually varied colors, with lighter related shades for subcategories and a separate neutral “all categories” control
+- [x] Applied shared semantic badge colors across product, cart, quote, account, and admin surfaces; primary CTAs remain white text on brand green
 - [x] Shopping cart view
 - [x] Consistent list/detail loading, empty, retry/error states; search autocomplete; shared toast notifications; static About/Contact and custom 404/500 views
 
@@ -68,13 +74,21 @@
 - [x] Paginated/filterable admin orders and customer directory; admin customer search endpoint guarded at gateway and controller
 - [x] Unit-aware pricing rule editor; product active toggle; shared notifications and accessible delete confirmation
 - [x] Refined admin navigation and typography, reorganized product editor into clear sections, and moved live order/revenue summary into the Orders tab with loading/error/empty states
+- [x] Admin payment-proof preview uses an authenticated admin endpoint to stream private S3 objects; API gateway routes the endpoint to catalog-pricing-service
+- [x] Admin order interface now supports responsive order inspection and payment-proof preview; admin navigation, theme/account controls, and product image ordering were visually refined
+- [x] Admin navigation uses the shared hover/underline treatment and compact icon controls; storefront theme/account order and product edit navigation were refined
+- [x] Kanban presentation refreshed to compact responsive lanes with no horizontal scrolling, solid semantic tags, and simplified order cards; existing direct-move rules and payment guards remain unchanged
+- [x] Shared button variants use role-based fills: green/white primary, neutral secondary, amber ghost, red destructive; quote-builder navigation, catalog category controls, quantity presets, file selection, and 3D preview controls follow the system
+- [x] Catalog category buttons now use a distinct hue per top-level category and lighter shades for child categories; semantic status tags intentionally retain consistent colors for the same meaning
+- [x] Quote 3D preview information and interaction instructions use opaque high-contrast panels
 - [x] Restyled pricing, order, product, and customer admin views to match storefront spacing/type; localized order statuses and standardized paginator order, controls, and spacing across list pages
 - [x] Vietnamese phone/MST validation and print-friendly order summary (browser Save as PDF; not a tax invoice)
 
 ### Phase 5: End-to-End Integration & Verification [PENDING]
 - [ ] Full cross-service workflow test (Quote -> Sample Upload -> 50% Deposit -> Production -> Completion)[cite: 123, 128, 129]
 - [ ] Manually verify UC-03 through UC-12 at desktop and 375px mobile; no live-browser verification was performed in this task
-- [x] Verification in this task: production `npm run build`; Maven tests for `auth-service`, `catalog-pricing-service`, and `api-gateway`
+- [x] Latest frontend production build passed on 2026-11-28 after the shared button/tag, catalog navigation, Kanban, and 3D preview changes; `git diff --check` passed
+- [ ] Run backend tests for the latest order summary quantity field, payment-proof streaming endpoint and gateway route (Maven/wrapper unavailable in current environment)
 - [x] Admin/customer separation: backend denies ADMIN access to cart, customer order, and VNPAY create-url routes; customer route flows remain enabled. `mvn test -pl order-service` passed (39/39), and frontend `npm run build` passed.
 
 ### Phase E: Hardening [MERGED - `mvn test` passes (owner-run); stack start-up on an empty DB not yet verified]
@@ -100,16 +114,18 @@
 - [x] `mvn test` passed (owner)
 - [ ] Start the stack, run `node scripts/e2e-smoke.mjs`, fix whatever it reports
 
-### Phase G: Admin Kanban, UI/UX polish, image previews, per-material pricing (branch `feature/kanban-and-gaps`) [FRONTEND BUILT + SCREENSHOT-CHECKED; BACKEND PART NOT COMPILED]
+### Phase G: Admin Kanban, UI/UX polish, image previews, per-material pricing [IMPLEMENTED IN WORKTREE; FRONTEND BUILDS; LATEST BACKEND CHANGES UNVERIFIED]
 - [x] Site-wide UI glyph cleanup: replaced visible text arrows and status marks with inline SVGs or plain text; the iconography rule is recorded in `.junie/guidelines.md` and `docs/feature_completion_plan.md`
-- [x] Admin Kanban board at `/admin/board` - columns per status, drag simple steps (`IN_PRODUCTION to READY_FOR_DELIVERY to COMPLETED`), cancel by drag, one-click next-step buttons, search/type filter, 60 s refresh, balance guard mirrored for `COMPLETED`; steps that need data open the inspector
-- [x] Shared UI primitives (`.tni-*` classes, `shared/utils/order-ui.ts`, `app-image-lightbox`): status/type/payment chips, progress bars, switches, avatars, thumbnails, empty states, sticky tables
-- [x] Admin cockpit polish: orders (status pills, chips, payment progress, previews of customer design / prototype / payment proof), pricing (new “Giá theo vật liệu” panel), products (thumbnails, stock chips, on/off switch, button actions), customers (avatars, status chips)
+- [x] Admin Kanban board at `/admin/board` - responsive grid of all visible workflow stages with no horizontal scrolling (7 columns normally, 8 when cancelled is shown; 4 at medium widths and 2 on small screens), compact order cards, solid semantic tags; drag/drop and direct-move/payment guards remain unchanged
+- [x] Shared UI primitives (`.tni-*` classes, `shared/utils/order-ui.ts`, `app-image-lightbox`): semantic solid-fill square status/type/payment tags, progress bars, switches, avatars, thumbnails, empty states, sticky tables
+- [x] Admin cockpit polish: responsive order queue/inspector, payment progress, customer design/prototype previews, authenticated private payment-proof preview, pricing by material, product thumbnails/stock and customer state indicators
+- [x] Private payment-proof stream: fixed-bucket object retrieval with key validation, admin-role guarded controller, safe response content types, and gateway route. Current backend changes still need Maven compilation/tests.
+- [x] Order summary API now provides total item quantity for the Kanban cards, in addition to line-item count. Current DTO/mapper change still needs Maven compilation/tests.
 - [x] Customer order screens: card list with “cần thao tác” hints and filters; detail with numbered stepper, localized timeline, correct VAT %, payment history, previewable images; the internal `productionWorkerNote` is no longer shown to customers
 - [x] Bug fixes found during review: VAT rate displayed as `0.1%` instead of `10%`; raw enum names in the customer timeline and admin inspector; native checkbox for product visibility
 - [x] Pricing: 5,000,000 đ/m² is metal-only; per-material rate for Mica/Decal (Flyway `V2__material_specific_thin_sheet_rate.sql`, `PricingEngineService`, +1 test, 1 test updated) - **uncompiled; run `mvn test -pl catalog-pricing-service`**
-- [x] `ng build` passes; screenshots reviewed at 1440 px light, 1440 px dark and 390 px dark using mocked API responses
-- [ ] Run `mvn test` for catalog-pricing-service; apply the V2 migration to your DB (Flyway does this on start)
+- [x] Earlier Phase G frontend build and screenshots reviewed at 1440 px light, 1440 px dark and 390 px dark using mocked API responses; latest no-horizontal-scroll and color-system changes have a passing build but still need a browser visual review
+- [ ] Run backend tests for catalog-pricing-service and order-service; compile/test payment-proof controller and gateway route changes; apply Flyway migrations on startup
 - [ ] Enter the Mica/Decal đ/m² in Admin to Định giá (needs the uncle's number) - until then mica quotes return a validation error
-- [ ] Verify UC-13 (Kanban drag-and-drop in a real browser), UC-14, UC-15, UC-16
+- [ ] Verify UC-13 (Kanban drag-and-drop in a real browser), UC-14, UC-15, UC-16 and visually review latest no-scroll layout at desktop/tablet/mobile sizes
 - [ ] Open: customer-visible progress note separate from the internal worker note (backend change in order-service); Kanban has no touch drag (use buttons on phones)

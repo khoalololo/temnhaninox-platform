@@ -33,16 +33,16 @@ import { ButtonDirective } from '../../shared/components/button/button.component
         </div>
       </div>
 
-      <nav class="mb-5 grid grid-cols-3 gap-2 rounded-xl border border-border bg-bg-elevated p-2 shadow-sm lg:mb-7" aria-label="Các bước thiết kế báo giá">
-        <a href="#quote-configuration" (click)="scrollToSection($event, 'quote-configuration')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+      <nav class="quote-step-navigation mb-5 grid grid-cols-3 gap-2 rounded-xl border border-border bg-bg-elevated p-2 shadow-sm lg:mb-7" aria-label="Các bước thiết kế báo giá">
+        <a href="#quote-configuration" (click)="scrollToSection($event, 'quote-configuration')" class="quote-step-link group flex min-h-16 items-center gap-2 rounded-lg px-2 py-2 transition-colors sm:gap-3 sm:px-4">
           <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-white">1</span>
           <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Thông số</span><span class="hidden text-xs text-text-muted sm:block">Vật liệu &amp; kích thước</span></span>
         </a>
-        <a href="#quote-preview" (click)="scrollToSection($event, 'quote-preview')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+        <a href="#quote-preview" (click)="scrollToSection($event, 'quote-preview')" class="quote-step-link group flex min-h-16 items-center gap-2 rounded-lg px-2 py-2 transition-colors sm:gap-3 sm:px-4">
           <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-raised text-sm font-bold text-accent">2</span>
           <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Xem mẫu 3D</span><span class="hidden text-xs text-text-muted sm:block">Xoay &amp; kiểm tra thiết kế</span></span>
         </a>
-        <a href="#quote-summary" (click)="scrollToSection($event, 'quote-summary')" class="group flex min-h-14 items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-raised sm:gap-3 sm:px-4">
+        <a href="#quote-summary" (click)="scrollToSection($event, 'quote-summary')" class="quote-step-link group flex min-h-16 items-center gap-2 rounded-lg px-2 py-2 transition-colors sm:gap-3 sm:px-4">
           <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-raised text-sm font-bold text-accent">3</span>
           <span class="min-w-0"><span class="block truncate text-xs font-bold text-text-primary sm:text-sm">Báo giá</span><span class="hidden text-xs text-text-muted sm:block">Dự toán &amp; thêm vào giỏ</span></span>
         </a>
@@ -56,7 +56,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               <span class="text-xs font-semibold uppercase tracking-wider text-accent">Bước 1</span>
               <h2 class="mt-1 font-heading text-base font-bold text-text-primary sm:text-lg">Thông số &amp; công nghệ</h2>
             </div>
-            <span class="rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary">Đơn vị: mm</span>
+            <span class="tni-chip no-dot" data-tone="muted">Đơn vị: mm</span>
           </div>
 
           <!-- Material Selector -->
@@ -140,8 +140,8 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                   <button
                     type="button"
                     (click)="quantity = presetQty; recalculate()"
-                    class="rounded-[6px] border px-2.5 py-1.5 transition-colors"
-                    [class]="quantity === presetQty ? 'bg-accent text-bg border-accent font-semibold' : 'bg-bg text-text-secondary border-border hover:border-steel hover:text-steel'"
+                    class="quote-quantity-preset"
+                    [class.is-active]="quantity === presetQty"
                   >
                     {{ presetQty }}
                   </button>
@@ -183,7 +183,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               type="file"
               (change)="onFileSelected($event)"
               accept=".cdr,.ai,.pdf,.dxf,.svg,.png,.jpg,.jpeg,.zip"
-              class="block min-h-12 w-full rounded-lg border border-border bg-bg p-2 text-sm text-text-secondary file:mr-3 file:rounded-md file:border file:border-steel file:bg-transparent file:px-3 file:py-2 file:text-sm file:font-medium file:text-steel hover:file:bg-steel/10"
+              class="quote-file-input block min-h-12 w-full rounded-lg border border-border bg-bg p-2 text-sm text-text-secondary file:mr-3 file:min-h-9 file:rounded-[5px] file:border file:border-[#9acb98] file:bg-[#c8e6c1] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#202124] hover:file:bg-[#b6dcae]"
             />
             @if (fileUploadError()) {
               <div class="mt-1 text-sm text-danger">{{ fileUploadError() }}</div>
@@ -197,7 +197,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
                   <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
                   {{ uploadedFile()!.fileName }}
                 </span>
-                <button type="button" (click)="uploadedFile.set(null)" class="ml-2 text-danger" aria-label="Xóa tệp đã tải lên">
+                <button type="button" (click)="uploadedFile.set(null)" class="site-action-danger ml-2" aria-label="Xóa tệp đã tải lên">
                   <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -255,7 +255,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
               <h2 class="mt-1 font-heading text-base font-bold text-text-primary sm:text-lg">Bảng tính báo giá</h2>
             </div>
             @if (calculating()) {
-              <span class="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">Đang tính...</span>
+              <span class="tni-chip no-dot" data-tone="info">Đang tính...</span>
             }
           </div>
 

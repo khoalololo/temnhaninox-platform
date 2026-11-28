@@ -81,7 +81,7 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
                 (pointerup)="endProductGalleryDrag($event)"
                 (pointercancel)="endProductGalleryDrag($event)"
               >
-                <span class="absolute right-3 top-3 z-10 rounded-full border border-border bg-bg-elevated px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-text-primary shadow-sm">
+                <span class="tni-chip no-dot absolute right-3 top-3 z-10 shadow-sm" [attr.data-tone]="product()!.productType === 'CUSTOM_TEMPLATE' ? 'info' : 'success'">
                   {{ product()!.productType === 'CUSTOM_TEMPLATE' ? 'Gia công 3D' : 'Hàng có sẵn' }}
                 </span>
                 @if (activeImage() && !mainImageBroken()) {
@@ -131,23 +131,44 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
 
             @if (product()!.productType === 'STANDARD_ITEM') {
               <div class="mt-5">
-                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">Số lượng đặt nhanh</div>
-                <div class="flex flex-wrap items-center gap-2">
-                  @for (preset of [1, 5, 10]; track preset) {
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">Số lượng</div>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
+                  <div class="product-quantity-control" aria-label="Điều chỉnh số lượng">
                     <button
                       type="button"
-                      (click)="setQuantityPreset(preset)"
-                      class="rounded-[6px] border bg-bg-elevated px-3 py-2 text-sm text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:px-4"
-                      [class]="quantity === preset
-                        ? 'border-accent bg-accent font-semibold text-white hover:border-accent-hover hover:bg-accent-hover'
-                        : 'border-border bg-bg-elevated text-text-primary hover:border-accent hover:bg-accent hover:text-white'"
-                      [attr.aria-pressed]="quantity === preset"
-                    >{{ preset }} cái</button>
-                  }
-                  <div class="flex items-center overflow-hidden rounded-[6px] border border-border bg-bg-elevated">
-                    <button type="button" (click)="quantity = quantity > 1 ? quantity - 1 : 1" class="px-3 py-2 text-text-primary hover:bg-surface-raised" aria-label="Giảm số lượng">-</button>
-                    <input type="number" [(ngModel)]="quantity" min="1" class="w-14 border-x border-border bg-bg-elevated py-2 text-center text-sm text-text-primary focus:outline-none" aria-label="Số lượng" />
-                    <button type="button" (click)="quantity = quantity + 1" class="px-3 py-2 text-text-primary hover:bg-surface-raised" aria-label="Tăng số lượng">+</button>
+                      (click)="adjustQuantity(-1)"
+                      aria-label="Giảm số lượng"
+                      class="product-quantity-step"
+                    >−</button>
+                    <input
+                      type="number"
+                      [ngModel]="quantity"
+                      (ngModelChange)="setQuantity($event)"
+                      min="1"
+                      [max]="product()!.stockQuantity ?? null"
+                      inputmode="numeric"
+                      aria-label="Số lượng sản phẩm"
+                      class="product-quantity-input"
+                    />
+                    <span class="product-quantity-unit">cái</span>
+                    <button
+                      type="button"
+                      (click)="adjustQuantity(1)"
+                      aria-label="Tăng số lượng"
+                      class="product-quantity-step"
+                    >+</button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label for="quick-quantity" class="text-xs font-medium text-text-muted">Chọn nhanh</label>
+                    <select
+                      id="quick-quantity"
+                      class="product-quantity-select"
+                      (change)="selectQuickQuantity($event)"
+                    >
+                      <option value="" selected>Chọn số lượng</option>
+                      <option value="5">5 cái</option>
+                      <option value="10">10 cái</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -253,7 +274,7 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
                 </button>
               }
               @if (galleryImages().length > 1) {
-                <span class="absolute left-3 bottom-3 rounded-full bg-bg-elevated/95 border border-border px-2.5 py-1 text-xs tabular-nums text-text-secondary">
+                <span class="tni-chip no-dot absolute bottom-3 left-3 z-10" data-tone="muted">
                   {{ activeImageIndex() + 1 }} / {{ galleryImages().length }}
                 </span>
               }
@@ -279,14 +300,12 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
           <!-- Technical Specs & Order Actions -->
           <div class="lg:col-span-6 flex flex-col">
             <div class="flex items-center gap-2 mb-2">
-              <span class="font-sans tabular-nums text-xs px-2.5 py-0.5 bg-bg border border-border rounded-full text-text-secondary">
+              <span class="tni-chip no-dot" data-tone="muted">
                 SKU: {{ product()!.sku }}
               </span>
               <span
-                class="font-sans text-xs px-2.5 py-0.5 rounded-full border font-medium"
-                [class]="product()!.productType === 'CUSTOM_TEMPLATE'
-                  ? 'border-accent/70 text-accent bg-bg'
-                  : 'border-steel/70 text-steel bg-bg'"
+                class="tni-chip no-dot"
+                [attr.data-tone]="product()!.productType === 'CUSTOM_TEMPLATE' ? 'info' : 'success'"
               >
                 {{ product()!.productType === 'CUSTOM_TEMPLATE' ? 'Gia công theo kích thước' : 'Hàng có sẵn' }}
               </span>
@@ -596,6 +615,24 @@ export class ProductDetailComponent implements OnInit {
   setQuantityPreset(quantity: number): void {
     const max = this.product()?.stockQuantity;
     this.quantity = Math.min(quantity, max && max > 0 ? max : quantity);
+  }
+
+  setQuantity(value: number | string): void {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    const max = this.product()?.stockQuantity;
+    this.quantity = Math.max(1, Math.min(Math.floor(parsed), max && max > 0 ? max : Number.MAX_SAFE_INTEGER));
+  }
+
+  adjustQuantity(delta: number): void {
+    this.setQuantity(this.quantity + delta);
+  }
+
+  selectQuickQuantity(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (!select.value) return;
+    this.setQuantityPreset(Number(select.value));
+    select.value = '';
   }
 
   downloadSpecification(): void {

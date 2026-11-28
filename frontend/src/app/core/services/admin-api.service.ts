@@ -100,6 +100,12 @@ export class AdminApiService {
     );
   }
 
+  getPaymentProof(key: string): Observable<Blob> {
+    return this.http.get(`/api/v1/admin/files/payment-proofs/${encodeURIComponent(key)}`, {
+      responseType: 'blob',
+    });
+  }
+
   // Catalog & Pricing Admin
   getAdminCategories(): Observable<ApiResponse<Category[]>> {
     return this.http.get<ApiResponse<Category[]>>('/api/v1/admin/catalog/categories');

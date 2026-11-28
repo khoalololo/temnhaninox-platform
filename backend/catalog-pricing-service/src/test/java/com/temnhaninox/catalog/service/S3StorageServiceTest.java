@@ -11,8 +11,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -28,6 +31,9 @@ class S3StorageServiceTest {
 
     @Mock
     private S3Client s3Client;
+
+    @Mock
+    private ResponseInputStream<GetObjectResponse> paymentProofObject;
 
     private S3StorageService s3StorageService;
 
@@ -103,5 +109,25 @@ class S3StorageServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.FILE_UPLOAD_ERROR);
+    }
+
+    @Test
+    void getPaymentProof_readsOnlyFromPaymentProofBucket() {
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(paymentProofObject);
+
+        assertThat(s3StorageService.getPaymentProof("ef610cfe-c022-4257-ae85-f1a0c9378e03-receipt.png"))
+                .isSameAs(paymentProofObject);
+
+        verify(s3Client).getObject(org.mockito.ArgumentMatchers.argThat(request ->
+                request.bucket().equals("payment-proofs")
+                        && request.key().equals("ef610cfe-c022-4257-ae85-f1a0c9378e03-receipt.png")));
+    }
+
+    @Test
+    void getPaymentProof_rejectsPathSeparators() {
+        assertThatThrownBy(() -> s3StorageService.getPaymentProof("../receipt.png"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 }

@@ -1,6 +1,6 @@
 # TEM NHÃN INOX - UI/UX Overhaul & Feature Completion Plan
 **Document type:** Agent execution plan (phases A-D, follows completed Phase 1-3 backend and initial Phase 4 storefront work)
-**Status (2026-11-27):** Phases A-F are implemented. Owner-confirmed: `mvn test` passes on all modules (as of the merged Phase B/E/F work) and Google sign-in works end to end. Added on branch `feature/kanban-and-gaps` (Phase G, below): an admin Kanban board, a UI/UX polish pass over the admin cockpit and the customer order screens, in-app preview of uploaded images, and a pricing change for Mica/Decal that follows the uncle's answers. **The Phase G backend change (Flyway `V2` in catalog-pricing-service, `PricingEngineService`, `Material`, `MaterialRequest`, one new test) has not been compiled or run by the author - run `mvn test` before merging.** Manual Use-Case Checklist (Section 3), `scripts/e2e-smoke.mjs`, and a `docker compose up --build` run are still pending.
+**Status (2026-11-28):** Phases A-F are implemented. Owner-confirmed historical verification: `mvn test` passed through Phases B/E/F, and Google sign-in works end to end. Phase G includes payment-verification safeguards, authenticated private payment-proof preview, order summary quantity, responsive admin order/payment views, Kanban, per-material pricing, and a broad storefront/admin UI refresh. UI work covers navigation/theme/account controls, product editing and image ordering, product detail galleries, category filters, shared tags/buttons, account/cart/order views, and quote-builder/3D preview readability. The latest Angular production build and `git diff --check` pass. **Backend changes currently in the worktree have not been Maven-compiled or tested; Maven and a wrapper are unavailable in the current environment.** Manual Use-Case Checklist (Section 3), `scripts/e2e-smoke.mjs`, and a `docker compose up --build` run remain pending.
 
 > **How to use this document:** Execute ONE phase at a time. After each phase, stop and manually verify against the Use-Case Checklist (Section 3) before telling the agent to proceed to the next phase. Do not trust a "done" report from the agent without clicking through the actual running app yourself - this is the same rule as the Master Implementation Plan review: an agent's report of completion and the feature actually working are two different facts.
 
@@ -9,42 +9,47 @@
 ## 1. Design System Specification
 
 ### 1.1 Current Visual Direction & Resolved Fixes
-The storefront uses an industrial green/slate palette (`#146c2e` primary brand green on clean light/dark surfaces) with local NVX workshop & product photography mapped from `public/assets/products/`.
+The storefront uses the NVX forest-green palette (`#187115` primary brand green) on clean light/dark surfaces with local workshop and product photography mapped from `public/assets/products/`.
 
 Resolved in recent updates:
 - **Database & Asset Seeding:** `infra/postgres/init.sql` (`DROP SCHEMA IF EXISTS ... CASCADE`) and `infra/postgres/seed_products.sql` (11 categories, 37 products) run cleanly; `CatalogApiService` normalizes `images[]` to `imageUrl` and `galleryUrls` with an `(error)` fallback to the diagonal-hatch `"Chưa có ảnh"` placeholder for any missing upstream image.
 - **Numeric Readability:** Replaced narrow `font-mono` glyphs on product prices (`60.000 đ`), dimensions (`400 × 300 × 1.2 mm`), SKUs, and stock counters with `font-sans tabular-nums` so numbers align cleanly and remain legible at card sizes.
-- **Remaining Visual Polish:**
-  - Upgrade top-left photo status badges (`GIA CÔNG 3D`, `CÓ SẴN`) from translucent dark pills to high-contrast solid pills (`bg-emerald-900/90 text-white backdrop-blur-sm`) so they remain legible over dark product photos.
-  - Keep card border radii at `<= 10px` with `1px` borders at rest and subtle elevation on hover only.
+- **Solid tags and semantic action colors:** Shared `.tni-chip` tags are compact square-corner labels with full-color fills and dark text. Use semantic tones consistently: green for success/available, amber for pending/warning, blue for informational/custom-work states, mauve for active production/accent states, red for rejected/destructive states, and gray for neutral states.
+- **Button hierarchy:** Keep primary actions as white-on-brand-green. Use neutral gray for secondary actions, amber for low-emphasis/ghost actions, and red for destructive actions; use other filled colors only when the action/status meaning supports it. Keep text dark on all non-primary fills.
+- **Navigation and compact controls:** Use clear, larger navigation targets and consistent hover/active states. Category filters and other selection controls should be readable, squared, and visibly selected without using pills by default. Give each top-level catalog category its own varied hue, with lighter related shades for its child categories; reserve the neutral fill for “all categories.” Reuse colors for tags/buttons only when they convey the same semantic nature, not merely to create a repeating palette.
+- **Kanban layout:** Show all active workflow stages without horizontal scrolling. Use responsive grids (7 stages normally, 8 with cancelled visible; collapse to 4 and 2 columns at narrower breakpoints), slim lanes, readable cards, and internal vertical scrolling where needed. Preserve business transitions and payment guards.
+- **3D preview contrast:** Keep dimensions, material details, camera instructions, and camera preset controls on opaque/high-contrast panels above the dark render.
 
 ### 1.2 Color Tokens
 
 ```css
 :root {
   /* Light / Industrial Storefront Surfaces */
-  --color-bg: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-raised: #F1F5F9;
-  --color-border: #E2E8F0;
+  --color-bg: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-surface: #F7F9F7;
+  --color-surface-raised: #EEF4EE;
+  --color-border: #DCE5DC;
 
   /* Text */
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748B;
+  --color-text-primary: #1A241A;
+  --color-text-secondary: #445244;
+  --color-text-muted: #6E7D6E;
 
   /* Brand Accents */
-  --color-primary: #146C2E;       /* NVX industrial green - primary CTA & active states */
-  --color-primary-hover: #0F5423;
-  --color-accent: #F97316;        /* industrial amber - quote/highlight secondary accent */
-  --color-steel: #4C7FA8;         /* steel blue - informational tags & secondary links */
+  --color-accent: #187115;        /* Brand green; primary CTA stays white on green */
+  --color-accent-hover: #1E8A1B;
+  --color-steel: #397500;
+  --color-steel-hover: #2B5900;
 
   /* Status */
-  --color-success: #16A34A;
-  --color-danger: #DC2626;
-  --color-warning: #EAB308;
+  --color-success: #187115;
+  --color-danger: #B20000;
+  --color-warning: #D97706;
 }
 ```
+
+Semantic badge fills are intentionally distinct from the theme tokens so that tag text remains dark and legible: warning `#F7DF91`, info `#B8E4F2`, accent/production `#DFC5EB`, success `#C8E6C1`, danger `#F3B9B9`, and muted `#D9DDDA`.
 
 ### 1.3 Typography
 
@@ -56,7 +61,7 @@ Resolved in recent updates:
 
 ### 1.4 Spacing, Radius & Elevation
 - Base spacing unit: `4px` (`4, 8, 12, 16, 24, 32, 48, 64, 96`).
-- Border radius: `6px` for inputs/buttons/badges, `10px` max for cards, `999px` for pills/tags.
+- Border radius: approximately `4-6px` for inputs/buttons/tags, `10px` max for cards. Prefer square-corner tags over pill badges.
 - Elevation: `1px` `--color-border` outline on cards at rest; introduce subtle shadow only on hover/focus (`0 4px 16px rgba(0, 0, 0, 0.08)` in light mode, `rgba(0, 0, 0, 0.3)` in dark mode).
 
 ### 1.5 Iconography and UI Punctuation
@@ -80,9 +85,9 @@ This audit combines the gaps in the original Phase 0-5 checklist with the Phase 
 ### Tier 2 - Align implementation with the Phase 0/3/5 architecture checklist
 | # | Gap | Current evidence / status | Required follow-up |
 |---|---|---|---|
-| 4 | Repeatable Docker/Nginx deployment setup (Dockerfiles for 4 services + frontend added, gateway routes parametrized via `*_SERVICE_URL`, compose env names fixed (S3_*), Mailpit added - **docker build not run yet**) | `docker-compose.yml` and `nginx/default.conf` were deleted by the UI overhaul commit and restored by the owner in `65ed853` (check they are pushed). `infra/.env.example` is new. In compose, publish ONLY the gateway/nginx port; keep 8081-8083, Postgres and S3 on the internal network. | Add the agreed Compose topology and Nginx config if these remain deployment requirements; document ports, health checks, and gateway-only routing. |
-| 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and allows `design-files` and `product-images` (two bucket names). The screenshot checklist refers to MinIO and three verified buckets, while the repository has no Compose setup to provision/verify them. | Confirm SeaweedFS vs. MinIO and define the intended third bucket/use before changing storage; then provision and verify the agreed buckets reproducibly. |
-| 6 | Admin order UI differs from the requested Phase 5 layout | **Addressed in Phase G (2026-11-27):** `/admin/board` is a Kanban view (one column per status, drag simple steps, one-click next step, cancel by drag, search/type filter, 60 s refresh) next to the existing list + inspector at `/admin`. Steps that need data (quote price, prototype image, deposit verification) deliberately open the inspector. The list/inspector now also uses status chips, payment progress, and inline image previews. | Verify UC-13 in a real browser (drag-and-drop was only tested with synthetic events in the author's headless sandbox). |
+| 4 | Repeatable Docker/Nginx deployment setup is not runtime-verified | Dockerfiles, `infra/docker-compose.yml`, Nginx configuration, environment-driven gateway URLs, and Mailpit wiring are present. The stack has not been built or started in this verification cycle. | Run Compose from a clean environment, verify health checks and gateway-only exposure, and document any reproducibility gaps found. |
+| 5 | Storage topology/bucket acceptance criteria do not match | The app uses SeaweedFS S3 configuration and the `design-files`, `product-images`, and private `payment-proofs` buckets. Payment proofs are streamed via an authenticated admin endpoint. The repository still needs a reproducible Compose/startup check proving all required buckets and storage behavior. | Confirm SeaweedFS vs. MinIO and provision/verify the intended buckets reproducibly; run the stack and test authenticated proof viewing. |
+| 6 | Admin order UI differs from the requested Phase 5 layout | **Addressed in Phase G (2026-11-27/28):** `/admin/board` provides a no-horizontal-scroll responsive Kanban grid next to the existing list + inspector at `/admin`. Simple workflow transitions remain draggable/actionable; steps needing quote, prototype, or payment data open the inspector. The list/inspector supports status tags, payment progress, and authenticated image previews. | Verify UC-13 and the responsive board in a real browser; latest no-scroll/color redesign has build verification but no visual browser pass yet. |
 | 7 | Order-state logic is not factored into the named state-machine service | Transition validation and deposit gates exist in `AdminOrderService`/`OrderService`; there is no separate `OrderStateMachineService` as named in the Phase 3 checklist. | Extract a dedicated service only if the architecture requirement is retained; preserve and test the existing transition and deposit rules. |
 
 ### Tier 3 - Evidence and quality gates
@@ -262,28 +267,32 @@ Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
 - Run: start Postgres + object storage + the 4 services (or compose), then `node scripts/e2e-smoke.mjs`. Exit code 1 on any failure.
 
 **Decisions recorded for the remaining Tier 2 items**
-- Admin layout (#6, Kanban + single-screen cockpit): the tabbed inspector already supports the full workflow; build a board only if the uncle asks to see orders by status at a glance.
+- Admin layout (#6, Kanban + single-screen cockpit): the tabbed inspector supports full order handling; the requested at-a-glance board is now implemented at `/admin/board`. Continue to validate the board in a real browser.
 - `OrderStateMachineService` (#7): transitions live in `AdminOrderService`/`OrderService` and are unit-tested; extract only if you want it as a showcase of design, not for correctness.
-- Storage (#5): decide MinIO vs SeaweedFS (compose uses SeaweedFS) and whether a third bucket (e.g. `payment-proofs`) is wanted; payment proofs currently go through `design-files`.
+- Storage (#5): decide whether to retain SeaweedFS or move to MinIO. Payment proofs are stored in the private `payment-proofs` bucket and are displayed through an authenticated admin stream, not by exposing a direct public object URL.
 
 ---
 
-### Phase G - Admin Kanban, UI/UX polish, image previews & per-material pricing [IMPLEMENTED on branch `feature/kanban-and-gaps`; frontend built (`ng build`) and screenshot-checked in light/dark/375px with mocked API data; backend part NOT compiled]
+### Phase G - Admin Kanban, UI/UX polish, image previews & per-material pricing [IMPLEMENTED IN WORKTREE; latest frontend build passes; latest backend changes NOT compiled]
 
 **G1 - Kanban board** (`frontend/src/app/features/admin/order-board/`, route `/admin/board`, guarded by `adminGuard`)
-- One column per status with counts, a dot on “needs action” columns, completed/cancelled hidden by default. Data via one `getOrders` request per status (`forkJoin`); search + type filter client-side; silent 60 s refresh (paused while dragging or when the tab is hidden).
-- Cards: order code, type chip, recipient, item count, total, paid-% bar, VAT chip, age chip (warning ≥ 3 days).
+- One lane per visible status with counts; completed/cancelled hidden by default. Lanes are arranged in a responsive grid with no horizontal scrolling. Data via one `getOrders` request per status (`forkJoin`); search + type filter client-side; silent 60 s refresh (paused while dragging or when the tab is hidden).
+- Cards: order code, order type, recipient, total units (separate from line-item count), total, paid-% bar, VAT tag, and age/stale tag.
 - Moves allowed by drag or the card's button: `IN_PRODUCTION to READY_FOR_DELIVERY`, `READY_FOR_DELIVERY to COMPLETED` (blocked until paid ≥ total, mirroring the backend `BALANCE_NOT_SETTLED` guard), and cancel from any non-terminal status. Everything else opens the inspector (`/admin?order=<id>`) because it needs data. Optimistic update with rollback + toast.
 - Limitation: drag-and-drop is HTML5 DnD (no touch drag on phones - use the card buttons there). Counts for completed/cancelled show only the page size (15).
+- The board's responsive layout is 7 columns normally and 8 when cancelled is shown on wide screens, 4 columns at medium widths, and 2 on phones. Cards may scroll vertically within their own lane.
 
 **G2 - Shared UI primitives** (`frontend/src/styles.css` `.tni-*`, `shared/utils/order-ui.ts`, `shared/components/image-lightbox/`)
-- Status/type/payment chips, progress bars, switch, avatars, thumbnails, empty states, sticky-header tables, pill filters; one place for Vietnamese status/phase/method labels and tones; `app-image-lightbox` (Esc to close, “open original”).
+- Status/type/payment solid-fill square tags, progress bars, switch, avatars, thumbnails, empty states, sticky-header tables, filters; one place for Vietnamese status/phase/method labels and tones; `app-image-lightbox` (Esc to close, “open original”). Palette rules: green success, amber warning, blue info, mauve accent, red danger, gray neutral, all with dark label text.
+- Shared action buttons: primary actions remain white on brand green; secondary actions use neutral gray, ghost actions amber, destructive actions red, with dark text on non-primary fills. Catalog sidebar, quote step navigation, quantity presets, file picker, and 3D camera controls use the same accessible filled-control direction.
+- Catalog category filters assign a varied hue to every top-level category and use lighter shades for its subcategories; “all categories” and reset remain neutral. These category colors are distinct from semantic status tags, whose shared colors remain consistent when the meaning is the same.
 
 **G3 - Admin cockpit polish** (`admin-cockpit.component.ts`)
 - Orders: status pill filter, table with type/VAT chips, payment progress, selected-row accent, helpful empty state; inspector shows a localized status chip, thumbnails for the customer's design, the prototype and payment proofs (click to enlarge), payment phase/method/status in Vietnamese.
 - Pricing: new “Giá theo vật liệu” panel (per-material đ/m², saves through `PUT /api/v1/admin/catalog/materials/{id}`); labels clarify that 1 ly = 1 mm and that the global thin-sheet rate is for metals.
-- Products: thumbnail + name/SKU cell, type chip, price, stock chip (out / low / ok), on/off switch instead of a bare checkbox, row actions as buttons, better search bar and empty state. Customers: avatar, e-mail under the name, active/blocked chip.
+- Products: thumbnail + name/SKU cell, type tag, price, stock tag (out / low / ok), on/off switch instead of a bare checkbox, row actions as text actions, better search bar and empty state. Customers: avatar, e-mail under the name, active/blocked tag.
 - Action columns keep clear of the floating contact buttons on wide screens.
+- Payment proofs are retrieved with an authenticated admin API call from the fixed private `payment-proofs` bucket. The catalog service validates object keys and streams safe image/PDF types; API gateway routes the admin endpoint. Do not render direct private S3 links.
 
 **G4 - Customer order screens** (`features/account/orders/`)
 - List to responsive cards with status/type chips, paid-% bar, a “Cần thao tác” banner and filters (Tất cả / Cần thao tác / Đang xử lý / Hoàn tất-Đã hủy), a contextual button (Duyệt mẫu / Đặt cọc / Theo dõi).
@@ -294,7 +303,13 @@ Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
 - `PricingEngineService`: thin-sheet price uses the material's own rate; if it is null a *metal* falls back to the global `THIN_SHEET_RATE_M2`, a *non-metal* throws `VALIDATION_ERROR` (“Price per m2 is not configured yet for ...”). `Material` no longer defaults the rate to 5,000,000; `MaterialRequest.thinSheetRatePerM2` is optional.
 - Tests: the mica test now uses an explicit 2,000,000 đ/m² test rate (100×50 mm to 10,000 đ/unit); new test `calculateQuote_nonMetalWithoutOwnRate_isRefusedInsteadOfUsingMetalRate`. **Not compiled - run `mvn test -pl catalog-pricing-service`.** The smoke script's pricing vector (INOX_304) is unaffected.
 
-**Verification for Phase G:** `cd backend && mvn test`; `cd frontend && npm run build`; UC-13 to UC-16; run `node scripts/e2e-smoke.mjs`.
+**Additional implementation notes (2026-11-28)**
+- Payment verification requires an uploaded receipt for bank-transfer approvals, rejects manual changes to VNPAY transactions, and verifies only the selected transaction; tests cover preserving other pending attempts.
+- `OrderSummaryResponse` now includes `totalQuantity`, mapped as the sum of each order item's quantity; the frontend model consumes it for Kanban quantity tags while retaining `itemCount` as the number of lines. This backend change still needs compilation/tests.
+- Admin theme/account controls and underline navigation, responsive order inspector/proof preview and order views, product editor navigation and image ordering, storefront theme/account order, product quantity selector and detail gallery, cart/profile tags, quote-builder controls, and 3D preview instructions/readability were refined during the UI pass.
+- Latest checked: `Push-Location frontend; npm run build; Pop-Location` succeeds and `git diff --check` is clean. No latest visual browser pass or backend test run has been performed.
+
+**Verification for Phase G:** Run Maven tests for `catalog-pricing-service` and `order-service` plus the gateway route; run `npm run build`; visually verify the new responsive grid and color hierarchy; verify UC-13 to UC-16; run `node scripts/e2e-smoke.mjs`.
 
 ---
 
@@ -307,4 +322,4 @@ Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
 3. The actual đ/m² price for Mica and for Decal (they may need two different materials/rates; today “Mica / Decal Công Nghiệp” is one material).
 4. Whether the ×5 multiplier for thick metal (> 1 mm, price = weight × price/kg × 5) is the intended rule or a placeholder.
 5. Whether customers should see a production progress note (see Tier 4 #14) and, if so, who writes it.
-6. Bucket decision: SeaweedFS vs MinIO, and whether payment proofs get their own bucket (Tier 2 #5).
+6. Bucket decision: SeaweedFS vs MinIO (Tier 2 #5). Payment proofs already use the private `payment-proofs` bucket.

@@ -114,7 +114,7 @@ import { ButtonDirective } from '../../../shared/components/button/button.compon
                     <div class="font-semibold text-text-primary flex items-center gap-2">
                       <span>{{ vp.companyName }}</span>
                       @if (vp.isDefault) {
-                        <span class="px-2 py-0.5 text-[10px] font-mono text-accent border border-accent/70 rounded-full">
+                        <span class="tni-chip no-dot" data-tone="success">
                           Mặc định
                         </span>
                       }

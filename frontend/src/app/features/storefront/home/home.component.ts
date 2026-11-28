@@ -63,7 +63,7 @@ interface VisualCategoryCard {
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 py-14 lg:py-20 w-full">
         <div class="max-w-2xl space-y-5">
-          <div class="hero-stagger inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#187115]/90 backdrop-blur-sm text-white text-xs sm:text-sm font-semibold shadow-sm" style="--hero-delay: 0ms;">
+          <div class="hero-stagger tni-chip no-dot" data-tone="success" style="--hero-delay: 0ms;">
             <span>INOX 304 · NHÔM · ĐỒNG · MICA</span>
           </div>
 

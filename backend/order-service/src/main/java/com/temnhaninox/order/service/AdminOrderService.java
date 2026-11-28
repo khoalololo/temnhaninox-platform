@@ -3,6 +3,7 @@ package com.temnhaninox.order.service;
 import com.temnhaninox.common.dto.PageResponse;
 import com.temnhaninox.common.enums.OrderStatus;
 import com.temnhaninox.common.enums.OrderType;
+import com.temnhaninox.common.enums.PaymentMethod;
 import com.temnhaninox.common.enums.PaymentPhase;
 import com.temnhaninox.common.enums.PaymentStatus;
 import com.temnhaninox.common.exception.BusinessException;
@@ -281,6 +282,16 @@ public class AdminOrderService {
         }
 
         Order order = tx.getOrder();
+        if (tx.getPaymentMethod() == PaymentMethod.VNPAY_SANDBOX) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "VNPAY transactions are processed automatically and cannot be changed manually");
+        }
+        if (request.getStatus() == PaymentStatus.VERIFIED
+                && tx.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
+                && isBlank(tx.getProofImageUrl())) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "A bank transfer receipt is required before verifying payment");
+        }
         if (request.getStatus() == PaymentStatus.VERIFIED && !isPaymentVerificationAllowed(order, tx)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                     "Payment cannot be verified for order status " + order.getStatus()
