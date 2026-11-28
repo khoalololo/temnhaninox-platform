@@ -20,6 +20,9 @@ public class AdminUpdateOrderStatusRequest {
     @Size(max = 255, message = "productionWorkerNote must not exceed 255 characters")
     private String productionWorkerNote;
 
+    @Size(max = 500, message = "customerProgressNote must not exceed 500 characters")
+    private String customerProgressNote;
+
     private String adminInternalNote;
     private String note;
 }

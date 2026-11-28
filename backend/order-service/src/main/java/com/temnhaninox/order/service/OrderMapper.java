@@ -39,6 +39,13 @@ public final class OrderMapper {
                 .build();
     }
 
+    /** Customer-facing detail: identical to the admin view minus internal-only fields. */
+    public static OrderDetailResponse toCustomerOrderDetailResponse(Order order) {
+        OrderDetailResponse response = toOrderDetailResponse(order);
+        response.setProductionWorkerNote(null);
+        return response;
+    }
+
     public static OrderDetailResponse toOrderDetailResponse(Order order) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(OrderMapper::toOrderItemResponse)
@@ -75,6 +82,7 @@ public final class OrderMapper {
                 .vatCompanyAddress(order.getVatCompanyAddress())
                 .vatInvoiceNumber(order.getVatInvoiceNumber())
                 .productionWorkerNote(order.getProductionWorkerNote())
+                .customerProgressNote(order.getCustomerProgressNote())
                 .estimatedCompletionDate(order.getEstimatedCompletionDate())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())

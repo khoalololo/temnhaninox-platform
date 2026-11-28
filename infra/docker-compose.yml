@@ -90,6 +90,8 @@ services:
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-SANDBOX}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-SANDBOXSECRET}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:4200/payment/vnpay-return}
+      VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
     depends_on:
       - catalog-pricing-service
     networks:

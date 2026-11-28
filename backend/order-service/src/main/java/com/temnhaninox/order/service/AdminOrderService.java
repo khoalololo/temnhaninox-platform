@@ -135,7 +135,10 @@ public class AdminOrderService {
             if (request.getEstimatedCompletionDate() != null) {
                 order.setEstimatedCompletionDate(request.getEstimatedCompletionDate());
             }
-            if (request.getAdminInternalNote() != null) {
+            if (request.getCustomerProgressNote() != null) {
+            order.setCustomerProgressNote(request.getCustomerProgressNote().trim());
+        }
+        if (request.getAdminInternalNote() != null) {
                 order.setAdminInternalNote(request.getAdminInternalNote().trim());
             }
         }

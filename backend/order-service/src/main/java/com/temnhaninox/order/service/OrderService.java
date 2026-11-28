@@ -233,7 +233,7 @@ public class OrderService {
             telegramNotificationService.notifyNewCustomQuote(savedOrder);
         }
 
-        return OrderMapper.toOrderDetailResponse(savedOrder);
+        return OrderMapper.toCustomerOrderDetailResponse(savedOrder);
     }
 
     @Transactional(readOnly = true)
@@ -264,7 +264,7 @@ public class OrderService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "You do not have permission to view this order");
         }
 
-        return OrderMapper.toOrderDetailResponse(order);
+        return OrderMapper.toCustomerOrderDetailResponse(order);
     }
 
     @Transactional
@@ -290,7 +290,7 @@ public class OrderService {
                 .build());
 
         Order savedOrder = orderRepository.save(order);
-        return OrderMapper.toOrderDetailResponse(savedOrder);
+        return OrderMapper.toCustomerOrderDetailResponse(savedOrder);
     }
 
     @Transactional
@@ -316,7 +316,7 @@ public class OrderService {
                 .build());
 
         Order savedOrder = orderRepository.save(order);
-        return OrderMapper.toOrderDetailResponse(savedOrder);
+        return OrderMapper.toCustomerOrderDetailResponse(savedOrder);
     }
 
     private void validateVatDetails(CheckoutRequest request) {

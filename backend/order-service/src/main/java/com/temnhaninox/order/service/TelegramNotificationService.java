@@ -63,6 +63,25 @@ public class TelegramNotificationService {
         sendMessage(text);
     }
 
+    /** Sent when VNPAY confirms a payment automatically (no admin action needed). */
+    @Async
+    public void notifyPaymentConfirmed(Order order, PaymentTransaction tx) {
+        if (isNotConfigured() || order == null || tx == null) {
+            return;
+        }
+        String text = String.format(
+                "✅ ĐÃ NHẬN THANH TOÁN (%s)\nMã đơn: %s\nĐợt: %s\nSố tiền: %s VNĐ\nĐã thu: %s / %s VNĐ\nTrạng thái đơn: %s",
+                tx.getPaymentMethod(),
+                order.getOrderCode(),
+                tx.getPaymentPhase(),
+                formatVnd(tx.getAmount()),
+                formatVnd(order.getPaidAmount()),
+                formatVnd(order.getTotalAmount()),
+                order.getStatus()
+        );
+        sendMessage(text);
+    }
+
     private void sendMessage(String text) {
         try {
             restClient.post()

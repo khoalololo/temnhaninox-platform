@@ -41,6 +41,7 @@ public class OrderDetailResponse {
     private String vatCompanyAddress;
     private String vatInvoiceNumber;
     private String productionWorkerNote;
+    private String customerProgressNote;
     private LocalDate estimatedCompletionDate;
     private Instant createdAt;
     private Instant updatedAt;

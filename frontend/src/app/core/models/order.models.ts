@@ -103,7 +103,10 @@ export interface OrderDetail {
   vatTaxCode?: string;
   vatCompanyAddress?: string;
   vatInvoiceNumber?: string;
+  /** Internal — only returned to admins. */
   productionWorkerNote?: string;
+  /** Visible to the customer. */
+  customerProgressNote?: string;
   estimatedCompletionDate?: string;
   createdAt: string;
   updatedAt: string;

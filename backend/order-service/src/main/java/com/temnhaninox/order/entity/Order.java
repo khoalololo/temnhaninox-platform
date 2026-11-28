@@ -112,6 +112,10 @@ public class Order {
     @Column(name = "production_worker_note", length = 255)
     private String productionWorkerNote;
 
+    /** Visible to the customer. The internal worker note above must never be returned to customers. */
+    @Column(name = "customer_progress_note", length = 500)
+    private String customerProgressNote;
+
     @Column(name = "estimated_completion_date")
     private LocalDate estimatedCompletionDate;
 

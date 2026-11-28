@@ -182,6 +182,25 @@ class AdminOrderServiceTest {
     }
 
     @Test
+    void updateOrderStatus_savesCustomerProgressNoteSeparatelyFromWorkerNote() {
+        Order order = baseOrder(OrderStatus.IN_PRODUCTION, OrderType.CUSTOM_QUOTE_ORDER, false);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AdminUpdateOrderStatusRequest request = AdminUpdateOrderStatusRequest.builder()
+                .targetStatus(OrderStatus.READY_FOR_DELIVERY)
+                .productionWorkerNote("internal only")
+                .customerProgressNote("  Đã đóng gói, chờ giao  ")
+                .build();
+
+        OrderDetailResponse response = adminOrderService.updateOrderStatus(adminId, orderId, request);
+
+        assertThat(response.getCustomerProgressNote()).isEqualTo("Đã đóng gói, chờ giao");
+        assertThat(response.getProductionWorkerNote()).isEqualTo("internal only");
+    }
+
+    @Test
     void updateOrderStatus_toCompletedBeforeFullBalancePaid_throwsBalanceNotSettled() {
         Order order = baseOrder(OrderStatus.READY_FOR_DELIVERY, OrderType.CUSTOM_QUOTE_ORDER, false);
         order.setPaidAmount(new BigDecimal("500000.00")); // only the 50% deposit of a 1,000,000 order

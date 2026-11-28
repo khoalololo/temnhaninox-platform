@@ -511,12 +511,17 @@ import {
               <div class="tni-progress" role="progressbar" [attr.aria-valuenow]="percentPaid()" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percentPaid()"></span></div>
               <div class="text-right text-[13px] text-text-secondary">Đã thanh toán {{ percentPaid() }}%</div>
 
-              @if (order()!.estimatedCompletionDate) {
-                <div class="mt-3 pt-3 border-t border-border space-y-1 bg-bg border rounded-[6px] p-2.5">
+              @if (order()!.estimatedCompletionDate || order()!.customerProgressNote) {
+                <div class="mt-3 pt-3 border-t border-border space-y-2 bg-bg border rounded-[6px] p-2.5">
                   @if (order()!.estimatedCompletionDate) {
                     <div class="flex justify-between">
                       <span class="text-text-secondary">Dự kiến hoàn thành:</span>
                       <span class="font-mono font-semibold text-text-primary">{{ order()!.estimatedCompletionDate | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  }
+                  @if (order()!.customerProgressNote) {
+                    <div class="text-[13px] text-text-secondary">
+                      <strong class="text-text-primary">Cập nhật từ xưởng:</strong> {{ order()!.customerProgressNote }}
                     </div>
                   }
                 </div>

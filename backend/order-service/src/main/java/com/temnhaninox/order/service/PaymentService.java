@@ -308,6 +308,9 @@ public class PaymentService {
             tx.setStatus(PaymentStatus.FAILED);
         }
         orderRepository.save(order);
+        if (isSuccess) {
+            telegramNotificationService.notifyPaymentConfirmed(order, tx);
+        }
     }
 
     public static String buildQueryString(Map<String, String> sortedParams) {

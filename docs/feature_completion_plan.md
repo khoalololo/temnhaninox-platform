@@ -103,7 +103,7 @@ This audit combines the gaps in the original Phase 0-5 checklist with the Phase 
 | 11 | Meaning of “1 ly” | **Resolved 2026-11-27: 1 ly = 1 mm.** The existing threshold (`THIN_SHEET_THRESHOLD_MM = 1.0`, thin when thickness ≤ 1.0 mm) is therefore correct; no code change. The admin label now reads “Ngưỡng tấm mỏng (1 ly = 1 mm)”. |
 | 12 | Mica/Decal pricing rate | **Resolved in principle 2026-11-27: the 5,000,000 đ/m² rate does NOT apply to mica or decal.** Implemented: the rate is per material; a non-metal material with no rate configured is refused by the quote engine with a clear message instead of silently using the metal rate. **Still needed from the uncle: the actual đ/m² for mica/decal** (enter it in Admin to Định giá to “Giá theo vật liệu”). Until then, mica/decal quotes return a validation error. |
 | 13 | Official VAT invoice PDF | Current print-friendly order summary is not a tax invoice; a compliant invoice integration remains out of scope until specified. |
-| 14 | Customer-visible vs internal order notes | Open. `productionWorkerNote` is currently an internal/worker note that the API also returns to customers; as a stopgap the customer order page no longer displays it (it shows only the estimated completion date). Proper fix: add a separate customer-facing progress note (backend Flyway V2 in order-service + entity/DTO/mapper/tests, admin input, customer display). |
+| 14 | Customer-visible vs internal order notes | **Done 2026-11-28 (branch `feature/customer-note-and-ops`, backend uncompiled — run `mvn test -pl order-service`):** new `customer_progress_note` column (order-service Flyway `V2__customer_progress_note.sql`), admin has two fields (internal worker note vs. “Cập nhật tiến độ cho khách”), the customer API (`OrderMapper.toCustomerOrderDetailResponse`) no longer returns `productionWorkerNote`, the customer order page shows “Cập nhật từ xưởng”. Tests: `OrderMapperVisibilityTest`, one new `AdminOrderServiceTest` case. |
 | 15 | Image size/optimisation | Reframed by the owner: the need is that admin and customer can *see and preview* uploaded images (designs, prototypes, payment proofs). Done in Phase G (thumbnails + lightbox). Resizing/compressing the static asset folder remains optional and untracked in git. |
 
 ---
@@ -323,5 +323,18 @@ Branch `feature/e2e-smoke-and-coverage` (includes Phase B):
 **Still open - ask the uncle**
 3. The actual đ/m² price for Mica and for Decal (they may need two different materials/rates; today “Mica / Decal Công Nghiệp” is one material).
 4. Whether the ×5 multiplier for thick metal (> 1 mm, price = weight × price/kg × 5) is the intended rule or a placeholder.
-5. Whether customers should see a production progress note (see Tier 4 #14) and, if so, who writes it.
+5. ~~Customer-visible progress note~~ — implemented (Tier 4 #14); admin writes it in the order panel when moving an order forward.
 6. Bucket decision: SeaweedFS vs MinIO (Tier 2 #5). Payment proofs already use the private `payment-proofs` bucket.
+
+---
+
+## 6. Roadmap After Verification (not started)
+Order matters: finish verification first (smoke script, Docker, UC list), then add features on a stable base.
+
+**H — VNPAY sandbox, proven end to end.** Needs from the owner: a VNPAY sandbox merchant (TMN code + hash secret) and a public HTTPS URL for the IPN (ngrok/cloudflared tunnel). Code is already in place (signature, amount check, idempotency, IPN, Telegram confirmation). Checklist: set `VNPAY_*` in `infra/.env`; pay a deposit with the sandbox test card; confirm (1) return page shows success, (2) IPN hit returns `00`, (3) order auto-advances to IN_PRODUCTION, (4) paying twice / replaying the IPN returns `02` and changes nothing, (5) tampered amount → `04`, tampered signature → `97`. `scripts/e2e-smoke.mjs` already automates 3–5 with a locally signed request.
+
+**I — Telegram bot.** Outbound alerts exist (new custom quote, payment proof submitted, VNPAY payment confirmed). To verify: create a bot with @BotFather, send it a message, read the chat id from `getUpdates`, put both in `infra/.env`. Possible next steps: alert on new standard orders and on orders stuck > 3 days (scheduled job), inline “Duyệt / Từ chối” buttons (needs a webhook endpoint — only if the uncle wants to work from Telegram).
+
+**J — Simple AI chatbot (side window).** Keep it a thin, read-only layer: a new `chat-service` (or a controller in catalog-pricing) that calls an OpenAI-compatible endpoint (llama.cpp `llama-server` locally) with a system prompt + retrieved facts (product list, price rules, FAQ, the logged-in customer's own order statuses via the existing APIs with the user's JWT). No write actions, no free-form price promises: the prompt must tell it to defer to the quote calculator. Frontend: a floating panel that replaces/extends the contact FABs, streaming responses, a clear “AI trợ lý” label, rate limit per user, and a kill switch env flag. Start with FAQ + order-status answers.
+
+**K — Enhanced 3D quote builder.** Highest-value ideas first: (1) live price delta while dragging size sliders (already wired — debounce + show breakdown), (2) real SVG/DXF/PNG artwork preview mapped onto the plate with per-material engraving look, (3) hole/corner-radius/mounting options as priced add-ons (needs `processing` rules in the DB, not frontend-only), (4) save/share a quote as a link, (5) 3D → printable spec sheet PDF. Do (2)–(3) only after the uncle confirms which options he really sells.

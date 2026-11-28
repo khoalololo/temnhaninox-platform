@@ -481,7 +481,14 @@ import {
                   <input
                     type="text"
                     [(ngModel)]="workerNote"
-                    placeholder="Ghi chú sản xuất (không bắt buộc)"
+                    placeholder="Ghi chú nội bộ cho xưởng (khách KHÔNG thấy)"
+                    class="industrial-input w-full px-3.5 py-2.5 text-sm"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="customerNote"
+                    maxlength="500"
+                    placeholder="Cập nhật tiến độ cho khách (khách sẽ thấy)"
                     class="industrial-input w-full px-3.5 py-2.5 text-sm"
                   />
                   @if (ord.status === 'IN_PRODUCTION') {
@@ -1206,6 +1213,7 @@ export class AdminCockpitComponent implements OnInit, OnDestroy {
   customerSearch = '';
   estimatedCompletionDate = '';
   workerNote = '';
+  customerNote = '';
   vatInvoiceNumberInput = '';
   itemPriceOverrides: Record<string, number> = {};
 
@@ -1422,6 +1430,7 @@ export class AdminCockpitComponent implements OnInit, OnDestroy {
         if (res.success && res.data) {
           this.selectedOrder.set(res.data);
           this.workerNote = res.data.productionWorkerNote || '';
+          this.customerNote = res.data.customerProgressNote || '';
           this.vatInvoiceNumberInput = res.data.vatInvoiceNumber || '';
           this.itemPriceOverrides = {};
           for (const item of res.data.items) {
@@ -1519,6 +1528,7 @@ export class AdminCockpitComponent implements OnInit, OnDestroy {
       .updateOrderStatus(orderId, {
         targetStatus,
         productionWorkerNote: this.workerNote.trim() || undefined,
+        customerProgressNote: this.customerNote.trim() || undefined,
       })
       .subscribe({
         next: (res) => {
