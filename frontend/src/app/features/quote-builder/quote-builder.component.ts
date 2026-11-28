@@ -226,6 +226,7 @@ import { ButtonDirective } from '../../shared/components/button/button.component
             <span class="text-xs text-text-muted sm:text-sm">Tương tác trực tiếp với mẫu</span>
           </div>
           <app-nameplate-3d-viewer
+            class="block"
             [widthMm]="widthMm"
             [heightMm]="heightMm"
             [thicknessMm]="thicknessMm"
@@ -396,8 +397,8 @@ export class QuoteBuilderComponent implements OnInit {
   selectedMaterialId = '';
   selectedMethodId = '';
   widthMm = 80;
-  heightMm = 50;
-  thicknessMm = 1.0;
+  heightMm = 40;
+  thicknessMm = 0.8;
   quantity = 100;
   requiresVatInvoice = true;
   cornerRivets = true;
@@ -424,9 +425,9 @@ export class QuoteBuilderComponent implements OnInit {
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
     this.productId = qp.get('productId') || undefined;
-    if (qp.get('w')) this.widthMm = Number(qp.get('w'));
-    if (qp.get('h')) this.heightMm = Number(qp.get('h'));
-    if (qp.get('t')) this.thicknessMm = Number(qp.get('t'));
+    this.widthMm = this.readDimension(qp.get('w'), this.widthMm, 5, 2000);
+    this.heightMm = this.readDimension(qp.get('h'), this.heightMm, 5, 2000);
+    this.thicknessMm = this.readDimension(qp.get('t'), this.thicknessMm, 0.1, 100);
 
     this.catalogApi.getMaterials().subscribe({
       next: (res) => {
@@ -445,6 +446,12 @@ export class QuoteBuilderComponent implements OnInit {
         }
       },
     });
+  }
+
+  private readDimension(value: string | null, fallback: number, min: number, max: number): number {
+    if (value === null) return fallback;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
   }
 
   onMaterialChange(): void {

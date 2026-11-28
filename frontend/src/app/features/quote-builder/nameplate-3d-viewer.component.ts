@@ -18,8 +18,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="relative w-full h-full min-h-[380px] bg-bg rounded-[10px] border border-border overflow-hidden select-none">
-      <div #canvasHost class="w-full h-full min-h-[380px]"></div>
+    <div class="relative h-[min(72vh,820px)] min-h-[460px] w-full overflow-hidden select-none rounded-[10px] border border-border bg-bg sm:min-h-[560px]">
+      <div #canvasHost class="h-full w-full"></div>
 
       <!-- Technical Dimension Overlay -->
       <div class="viewer-info absolute left-3 top-3 space-y-1 rounded-[6px] px-3 py-2.5 text-[11px] font-mono pointer-events-none">
@@ -76,8 +76,8 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
   @ViewChild('canvasHost', { static: true }) canvasHost!: ElementRef<HTMLDivElement>;
 
   @Input() widthMm = 80;
-  @Input() heightMm = 50;
-  @Input() thicknessMm = 1.0;
+  @Input() heightMm = 40;
+  @Input() thicknessMm = 0.8;
   @Input() materialCode = 'INOX_304';
   @Input() materialName = 'Inox 304';
   @Input() processCode = 'ETCHING';
@@ -100,12 +100,16 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
   ngAfterViewInit(): void {
     this.initScene();
     this.rebuildPlate();
+    this.fitCamera();
     this.animate();
   }
 
-  ngOnChanges(_changes: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
     if (this.scene) {
       this.rebuildPlate();
+      if (changes['widthMm'] || changes['heightMm'] || changes['thicknessMm']) {
+        this.fitCamera();
+      }
     }
   }
 
@@ -118,8 +122,7 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
 
   setCameraPreset(preset: 'front' | 'iso' | 'edge'): void {
     if (!this.camera || !this.controls) return;
-    const maxDim = Math.max(this.widthMm, this.heightMm, 40) * 0.05;
-    const dist = Math.max(4.5, maxDim * 1.45);
+    const dist = this.cameraDistance();
 
     if (preset === 'front') {
       this.camera.position.set(0, 0, dist);
@@ -142,7 +145,7 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
       this.scene.background = new THREE.Color('#090d16');
 
       this.camera = new THREE.PerspectiveCamera(38, width / height, 0.05, 100);
-      this.camera.position.set(3.2, 2.4, 5.2);
+      this.camera.position.set(0, 0, 8);
 
       this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
       this.renderer.setSize(width, height);
@@ -155,8 +158,8 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
       this.controls.enableDamping = true;
       this.controls.dampingFactor = 0.07;
-      this.controls.minDistance = 1.5;
-      this.controls.maxDistance = 25;
+      this.controls.minDistance = 3;
+      this.controls.maxDistance = 24;
 
       // Industrial Studio Lighting (Key, Rim, Fill)
       const ambient = new THREE.AmbientLight(0xffffff, 0.75);
@@ -189,6 +192,7 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
           this.camera.aspect = w / h;
           this.camera.updateProjectionMatrix();
           this.renderer.setSize(w, h);
+          this.fitCamera();
         }
       });
       this.resizeObserver.observe(host);
@@ -211,10 +215,12 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
       this.plateGroup.remove(child);
     }
 
-    // Scale 100mm -> 5.0 scene units
-    const scale = 0.05;
-    const w = Math.max(10, Number(this.widthMm) || 80) * scale;
-    const h = Math.max(10, Number(this.heightMm) || 50) * scale;
+    // Keep the model framed consistently while preserving its real proportions.
+    const widthMm = Math.max(5, Number(this.widthMm) || 80);
+    const heightMm = Math.max(5, Number(this.heightMm) || 40);
+    const scale = 5 / Math.max(widthMm, heightMm);
+    const w = widthMm * scale;
+    const h = heightMm * scale;
     const t = Math.max(0.2, Number(this.thicknessMm) || 1.0) * scale;
 
     const palette = this.resolveMaterialPalette();
@@ -266,6 +272,22 @@ export class Nameplate3dViewerComponent implements AfterViewInit, OnChanges, OnD
         this.plateGroup.add(rivet);
       }
     }
+  }
+
+  private cameraDistance(): number {
+    if (!this.camera) return 8;
+    const width = 5;
+    const height = 5 * Math.max(5, Number(this.heightMm) || 40) / Math.max(5, Number(this.widthMm) || 80);
+    const fitHeight = Math.max(height, width / Math.max(this.camera.aspect, 0.1));
+    return Math.max(7, fitHeight / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) * 1.35);
+  }
+
+  private fitCamera(): void {
+    if (!this.camera || !this.controls) return;
+    const distance = this.cameraDistance();
+    this.camera.position.set(distance * 0.55, distance * 0.42, distance * 0.82);
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
   }
 
   private resolveMaterialPalette(): {
