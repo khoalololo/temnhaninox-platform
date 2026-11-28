@@ -135,10 +135,7 @@ public class AdminOrderService {
             if (request.getEstimatedCompletionDate() != null) {
                 order.setEstimatedCompletionDate(request.getEstimatedCompletionDate());
             }
-            if (request.getCustomerProgressNote() != null) {
-            order.setCustomerProgressNote(request.getCustomerProgressNote().trim());
-        }
-        if (request.getAdminInternalNote() != null) {
+            if (request.getAdminInternalNote() != null) {
                 order.setAdminInternalNote(request.getAdminInternalNote().trim());
             }
         }
@@ -230,6 +227,9 @@ public class AdminOrderService {
 
         if (request.getProductionWorkerNote() != null) {
             order.setProductionWorkerNote(request.getProductionWorkerNote().trim());
+        }
+        if (request.getCustomerProgressNote() != null) {
+            order.setCustomerProgressNote(request.getCustomerProgressNote().trim());
         }
         if (request.getAdminInternalNote() != null) {
             order.setAdminInternalNote(request.getAdminInternalNote().trim());
@@ -369,9 +369,9 @@ public class AdminOrderService {
                     && tx.getPaymentPhase() == PaymentPhase.FULL_100;
         }
         return (order.getStatus() == OrderStatus.AWAITING_DEPOSIT
-                    && tx.getPaymentPhase() == PaymentPhase.DEPOSIT_50)
+                && tx.getPaymentPhase() == PaymentPhase.DEPOSIT_50)
                 || (order.getStatus() == OrderStatus.READY_FOR_DELIVERY
-                    && tx.getPaymentPhase() == PaymentPhase.BALANCE_50);
+                && tx.getPaymentPhase() == PaymentPhase.BALANCE_50);
     }
 
     private boolean isBlank(String value) {

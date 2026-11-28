@@ -118,7 +118,7 @@ class S3StorageServiceTest {
         assertThat(s3StorageService.getPaymentProof("ef610cfe-c022-4257-ae85-f1a0c9378e03-receipt.png"))
                 .isSameAs(paymentProofObject);
 
-        verify(s3Client).getObject(org.mockito.ArgumentMatchers.argThat(request ->
+        verify(s3Client).getObject(org.mockito.ArgumentMatchers.<GetObjectRequest>argThat(request ->
                 request.bucket().equals("payment-proofs")
                         && request.key().equals("ef610cfe-c022-4257-ae85-f1a0c9378e03-receipt.png")));
     }
